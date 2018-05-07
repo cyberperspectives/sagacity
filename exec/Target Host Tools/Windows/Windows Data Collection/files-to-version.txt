@@ -1,0 +1,4 @@
+C:\Windows\system32\notepad.exe
+C:\Program Files (x86)\Notepad++\notepad++.exe
+c:\Windows\system32\EnPasFltV2x86.dll
+c:\Windows\system32\EnPasFltV2x64.dll

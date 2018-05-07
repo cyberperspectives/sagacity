@@ -1,0 +1,4 @@
+name,hostname,ip,category,os
+Win7,test1.example.com,192.168.0.1,Win Client,Microsoft Windows 7
+Win2K8Svr,"test2.example.com,test2.example.com","192.168.0.2,192.168.0.3",,cpe:/o:microsoft:windows_server_2008:r2
+RHEL5,test3.example.com,192.168.0.4,Linux Svr,cpe:/o:redhat:enterprise_linux:5

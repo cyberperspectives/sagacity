@@ -1,0 +1,33 @@
+Sagacity is a project with a long history.  It began at SAIC in 2008 as a set of Perl scripts, text and CSV files and a spreadsheet used to reduce weeks of boredom, manually copying STIG results from paper checklists to a computer.  At Salient Federal Solutions in 2012 it gained a web interface and a database.  In 2016, thanks to foresighted Air Force personnel who decided to release it, it is an open source, collaborative effort, designed to save hundreds of man-hours assessing STIG and RMF compliance.  Cyber Perspectives, LLC is managing the Sagacity project in the hope that it will be a huge benefit to many in the DoD, Federal and commercial Cyber Security communities.
+
+The following individuals have contributed code or ideas to Sagacity, the original ST&E Manager or its components.  We are very grateful for everyone's vision and hard work.
+
+Jeff Odegard:  SAIC, Salient Federal Solutions, Engility Corporation, Cyber Perspectives, LLC
+	- Mastermind, ST&E process optimization, E-checklist and Perl script creator, parsers, tweak functions.  Lead hack.
+Ryan Prather:  Salient Federal Solutions, Cyber Perspectives, LLC
+	- Lead Developer, UI design and coding, database guru, the one responsible for the darn thing actually working.
+Matt Shuter:  SAIC, Salient Federal Solutions, Engility Corporation, UCCS Master's Project
+	- E-checklist design, script usability and bug hunting.  UI usability consultant
+Dan Hans:  BTAS, Salient Federal Solutions, Engility Corporation
+	- One of the best bug hunters we've ever known.  E-checklist design, script feedback.  Breaking the UI and demonstrating its shortcomings.
+George Sipos:  SAIC, 2SOPS/MAF, SMC/GPLI
+	- Mastermind behind FIFI, the Gold Disk parser.  E-Checklist feedback, script bug hunter and code consultation.  Asker of why we didn't write this in Python.
+Brian Copeland:  SAIC
+	- E-Checklist design, script usage feedback
+Scott Welker:  Quantech, Booz-Allen Hamilton
+	- Script and E-Checklist feedback, database SRR rewrite.  Convinced us of the need to use XAMPP and not tie ourselves to expensive Microsoft or Adobe products.
+Paul Porter:  Salient Federal Solutions
+	- Page layouts and design, reporting stylesheets, UI coding
+Teresa Campos:  STS Systems Integration
+	- Software design documentation, page layouts
+Douglas Rothnie:  The Aerospace Corporation
+	- Script and E-Checklist feedback, Perl programming support
+Ken Elliott:  The Aerospace Corporation
+	- Script and E-Checklist layout ideas
+Michael Cole:  The Aerospace Corporation
+	- SCAP handling ideas, script and E-Checklist feedback
+	- Procedural E-Checklist modifications to adapt to EMASS
+Erik Wohlgemuth:  Raytheon
+	- Fixes for Linux data collection script
+Jason Gagnon: Raytheon
+	- Fixes for Windows data collection script

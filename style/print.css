@@ -1,0 +1,216 @@
+@CHARSET "UTF-8";
+
+body {
+	background: white;
+	font-size: 12pt;
+	font-family: "Times New Roman", Times, Serif;
+	width: 8.5in !important;
+	margin: 0.5in;
+}
+
+#header-wrapper,
+#report-header {
+	display: none;
+}
+
+#wrapper {
+	width: auto;
+	border: 0;
+	padding: 0;
+	float: none !important;
+	color: black;
+	background: transparent;
+}
+
+a:link,
+a:visited {
+	color: #520;
+	background: transparent;
+	font-weight: bold;
+	text-decoration: underline;
+}
+
+#main-content a:link:after,
+#main-content a:link:after {
+	/* content: " (" attr(href) ") ";*/
+	font-size: 90%;
+}
+
+h1,h2,h3 {
+	font-weight: 600;
+	letter-spacing: 0px;
+	display: inline-block;
+	font-size: 1em;
+	page-break-after: avoid;
+	font-family: "Times Neww Roman", Times, Serif;
+}
+
+.toc_ol {
+	list-style-type: decimal;
+	counter-reset: item;
+	padding-left: 10px;
+}
+
+.pb {
+	page-break-before: always;
+}
+
+.app_toc_ol {
+	padding-left: 10px;
+	list-style-type: upper-alpha;
+}
+
+.app_toc_li {
+	content: counters(item, ".") ". ";
+	counter-increment: item;
+}
+
+.toc_li::before {
+	content: counters(item, ".") ". ";
+	counter-increment: item;
+	user-select: text;
+}
+
+li {
+	display: block;
+}
+
+ul {
+	list-style-type: disc;
+	list-style-position: inside;
+}
+
+ul li {
+	/* margin-left: 10px; */
+}
+
+.U,.FOUO {
+	color: green;
+}
+
+.S {
+	color: red;
+}
+
+#ra {
+	text-align:left;
+}
+
+#ra-ol {
+	counter-reset: item 3;
+}
+
+.italic {
+	font-style: italic;
+}
+
+#tech-container {
+	width:100%;
+}
+
+#tech-container td {
+	border: 0;
+	vertical-align: middle;
+}
+
+#tech-summary {
+	width: 49%;
+}
+
+#tech-table {
+	width: 50%;
+	text-align: center;
+	border-collapse: collapse;
+	vertical-align: top;
+}
+
+#tech-table table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+#tech-table table td {
+	border: solid 1px black;
+	font-family: "Times New Roman" Times Serif;
+}
+
+.tech-header {
+	background-color: #bfbfbf;
+	font-weight: bold;
+	text-align: center;
+}
+
+.tech-title {
+	background-color: #000;
+	color: #fff;
+}
+
+#vuln-sev {
+	color: white;
+	background-color: black;
+}
+
+#mit-ul {
+	list-style-type:'-';
+}
+
+.not_reviewed,.nr {
+	color: #000;
+	background-color: #ffff66;
+}
+
+.not_applicable,.na {
+	color: #000;
+	background-color: #8db4e2;
+}
+
+.failure {
+	background-color: #ff8c2c;
+}
+
+.not_planned,.no_data,.nd {
+	color: #fff;
+	background-color: #000;
+}
+
+.complete,.compliant,.c,.not_a_finding,.nf,.false_positive,.fp {
+	color: #000;
+	background-color: #92d050;
+}
+
+.non_compliant,.nc,.open,.exception,.exp {
+	background-color: #f00;
+	color: #fff;
+}
+
+.in_progress {
+	color: #000;
+	background-color: #ffff66;
+}
+
+.cat_I {
+    background-color: #f00;
+    color: #fff;
+}
+
+.cat_II {
+	color: #000;
+	background-color: #ff0;
+}
+
+.cat_III {
+	color: #000;
+	background-color: #ffc000;
+}
+
+.odd_row {
+	background-color: #80BFFF;
+	color: #000;
+	border: solid 1px #fff;
+}
+
+.even_row {
+	background-color: #E5F1FF;
+	color: #000;
+	border: solid 1px #fff;
+}

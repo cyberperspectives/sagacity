@@ -1,0 +1,14 @@
+Sagacity is Portions Copyright (c) 2016-2017 Cyber Perspectives, LLC.  All rights reserved.
+
+Sagacity is licensed under the Apache 2.0 license.  See license.txt or http://www.apache.org/licenses/ for details.
+
+Sagacity is a rebranded, much improved release of the ST&E Manager.
+
+ST&E Manager is Copyright (c) 2012-2015 Salient Federal Solutions.
+Portions Copyright (c) 2008-2011 SAIC.
+
+See copyright statement in individual files for author and attribution information.
+
+The ST&E Manager was written entirely by contractors on government contracted time using government funds.  Per DFARS 252.227-7013, the companies (Salient Federal Solutions and SAIC/Leidos) hold the copyrights, but per DFARS 252.227-7014(b)(1), the government has unlimited rights for licensing and distribution.
+
+The ST&E Manager was licensed, per government direction, under the Modified BSD (3 Clause) License.  See license.txt for details.

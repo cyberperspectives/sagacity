@@ -16,6 +16,8 @@ _Keen insight. Sound judgment. Wise decisions. Sagacity._
 - security assessment task tracking to ensure a complete and thorough test
 - statistical analysis of compliance rates, assessment completeness, Cat I, II, III findings and more.
 
+![Sagacity Screenshot](http://www.cyberperspectives.com/wp-content/uploads/2017/04/Sagacity-screenshot.png)
+
 ## Requirements
 
 ### Windows:
@@ -38,3 +40,5 @@ For Windows, you can install XAMPP 7.2.x from https://www.apachefriends.org/down
 ## Installation
 
 See README.pdf for complete installation instructions.
+
+![CyberPerspectives.com](http://www.cyberperspectives.com/wp-content/uploads/2018/05/CP-com-logo-black-e1525756646897.png)

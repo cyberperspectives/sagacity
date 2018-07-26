@@ -18,9 +18,21 @@
  *  - Oct 21, 2014 - File created
  *  - Sep 1, 2016 - Copyright updated and updated file purpose
  *  - May 19, 2017 - Migrated to filtering and changed save button to match buttons throughout
+ *  - May 31, 2018 - Commented out CKEditor library
  */
 $page = filter_input(INPUT_GET, 'p', FILTER_SANITIZE_STRING, FILTER_NULL_ON_FAILURE);
 $sys_id = filter_input(INPUT_POST, 'system', FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
+
+?>
+
+<style type="text/css">
+    #description {
+        width: 500px;
+        height: 150px;
+    }
+</style>
+
+<?php
 
 if ($page == 'MSMgmt') {
   ?>
@@ -58,12 +70,14 @@ elseif ($page == 'EditMS' && $sys_id) {
   <script src='/script/ckeditor/ckeditor.js'></script>
   <script type='text/javascript'>
       $(function () {
+          /*
         CKEDITOR.replace('description', {height: '100px', width: '950px', toolbar: [
             {name: 'document', items: ['Source']},
             {name: 'editor', items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PastFromWord', '-', 'Undo', 'Redo']},
             {name: 'basicstyles', groups: ['basicstyles', 'cleanup'], items: ['Bold', 'Italic', 'Underline', '-', 'RemoveFormat']},
             {name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align'], items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']}
           ]});
+          */
       });
   </script>
 
@@ -117,7 +131,7 @@ elseif ($page == 'EditMS' && $sys_id) {
               <?php print ($acred_type == accrediation_types::RMF ? ' selected' : ''); ?>>RMF</option>
     </select><br />
     System Description:<br />
-    <textarea name='description' id='description' cols='1' rows='1'><?php print $system->get_Description(); ?></textarea>
+    <textarea name='description' id='description' cols='1' rows='1'><?php print $system->get_Description(); ?></textarea><br />
     <input type='button' class='button' name='action' value='Save System' onclick='this.form.submit();' />
   </form>
 
@@ -165,7 +179,7 @@ elseif ($page == 'EditMS' && !$sys_id) {
       <option value='rmf'>RMF</option>
     </select><br />
     System Description:<br />
-    <textarea name='description' id='description' cols='1' rows='1'>[paste system description here]</textarea>
+    <textarea name='description' id='description' cols='1' rows='1'>[paste system description here]</textarea><br />
     <input type='button' class='button' name='action' value='Save System' onclick='this.form.submit();' />
   </form>
 

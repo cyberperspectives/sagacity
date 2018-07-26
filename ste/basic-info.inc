@@ -5,7 +5,7 @@
  * Purpose: Display the basic information from the target
  * Created: Sep 1, 2016
  *
- * Copyright 2016: Cyber Perspectives, All rights reserved
+ * Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * See license.txt for details
@@ -13,6 +13,7 @@
  * Change Log:
  *  - Sep 1, 2016 - File created
  *  - Mar 4, 2017 - Changed AJAX to use /ajax.php instead of /cgi-bin/ajax.php
+ *  - Apr 19, 2018 - Updated 3rd party libraries
  */
 ?>
 
@@ -74,9 +75,7 @@
   .ui-timepicker-div.ui-timepicker-oneLine .ui_tpicker_unit_hide,
   .ui-timepicker-div.ui-timepicker-oneLine .ui_tpicker_unit_hide:before{ display: none; }
 </style>
-<link
-  href="/script/jQueryUI/css/ui-lightness/jquery-ui-1.10.3.custom.min.css"
-  rel="stylesheet" type="text/css" />
+<link href="/script/jquery-ui/jquery-ui.min.css" rel="stylesheet" type="text/css" />
 
 <script src='/script/jQueryUI/jquery-ui-timepicker-addon.js' type='text/javascript'></script>
 <script type='text/javascript'>

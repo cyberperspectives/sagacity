@@ -13,6 +13,8 @@
  * Change Log:
  *  - Nov 28, 2017 - File created
  *  - Dec 27, 2017 - Added check for local mysql server and empty root password, updated include path to display root path
+ *  - Apr 29, 2018 - Updated 3rd party libraries
+ *  - May 10, 2018 - Added root confirmation password validation (bug #412)
  */
 set_time_limit(0);
 include_once 'helper.inc';
@@ -217,16 +219,14 @@ if (strtolower(substr(PHP_OS, 0, 3)) == 'win') {
 
         <link href='/style/fonts/fonts.css' rel='stylesheet' type='text/css' />
         <!--[if IE 9]><link rel="stylesheet" href="style/style-ie9.css" /><![endif]-->
-        <link href='/script/jquery-ui-1.11.4/jquery-ui.theme.min.css' rel='stylesheet' type='text/css' />
-        <link href='/script/jquery-ui-1.11.4/jquery-ui.min.css' rel='stylesheet' type='text/css' />
+        <link href='/script/jquery-ui/jquery-ui.min.css' rel='stylesheet' type='text/css' />
 
-        <script src="/style/5grid/jquery-1.11.3.min.js"></script>
+        <script src="/script/jquery-3.2.1.min.js"></script>
         <script src="/style/5grid/jquery.browser.min.js"></script>
-        <script type="text/javascript" src="/script/jquery-ui-1.11.4/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="/script/jquery-ui/jquery-ui.min.js"></script>
         <script
         src="/style/5grid/init.js?use=mobile,desktop,1000px&amp;mobileUI=1&amp;mobileUI.theme=none"></script>
         <script type="text/javascript" src="/script/default.js"></script>
-        <script type="text/javascript" src="/script/highcharts-custom.js"></script>
         <script type="text/javascript" src="/script/spin/spin.min.js"></script>
 
         <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
@@ -263,7 +263,7 @@ if (strtolower(substr(PHP_OS, 0, 3)) == 'win') {
                 background-color: green;
             }
 
-            #pwd-msg {
+            #pwd-msg, #root-pwd-msg {
                 display: none;
                 width: 25px;
             }
@@ -348,6 +348,16 @@ EOL;
             function next_step() {
               var params;
               if (current_step == 0) {
+                if ($('#web-pwd').val() != $('#conf').val()) {
+                  display_msg("Web passwords don't match");
+                  $('#web-pwd').focus();
+                  return;
+                }
+                if ($('#root-conf').is(":visible") && $('#root-pwd').val() != $('#root-conf').val()) {
+                  display_msg("Root passwords don't match");
+                  $('#root-pwd').focus();
+                  return;
+                }
                 var action = null;
                 if ($('#do').is(":checked")) {
                   action = 'do';
@@ -433,8 +443,8 @@ EOL;
                       .tabs('option', 'active', current_step)
                       .tabs('disable', current_step - 1);
               setTimeout(function () {
-                    enable_next(current_step);
-                }, 3000);
+                enable_next(current_step);
+              }, 3000);
             }
 
             function display_msg(msg, err_class, delay = 3000) {
@@ -443,7 +453,7 @@ EOL;
                       .html(msg)
                       .slideDown();
               setTimeout(function () {
-                    $('#msg').slideUp();
+                $('#msg').slideUp();
               }, delay);
             }
 
@@ -477,6 +487,18 @@ EOL;
                 $('#pwd-msg').attr('src', "/img/ok.png");
               }
               $('#pwd-msg').show();
+            }
+
+            function chk_root_pwd() {
+              if ($('#root-conf').is(":visible")) {
+                if ($('#root-pwd').val() != $('#root-conf').val()) {
+                  $('#root-pwd-msg').attr('src', '/img/X.png');
+                }
+                else {
+                  $('#root-pwd-msg').attr('src', '/img/ok.png');
+                }
+                $('#root-pwd-msg').show();
+              }
             }
         </script>
     </head>
@@ -529,7 +551,7 @@ EOL;
                         </span>
                         <input type='password' id='root-pwd' placeholder='Root password' /><br />
                         <label class='label'>&nbsp;</label>
-                        <input type='password' id='root-conf' placeholder='Confirm root password' /><br />
+                        <input type='password' id='root-conf' onkeyup='javascript:chk_root_pwd();' placeholder='Confirm root password' /> <img id='root-pwd-msg' /><br />
 
                         <label class='label' for='pwd'>Web user password:</label>
                         <input type='password' id='web-pwd' /><br />
@@ -551,13 +573,13 @@ EOL;
                         <label for='stig' class='label'>Load STIG's:</label>
                         <input type='checkbox' id='stig' checked title="Do you want to load STIG's upon completion?" /><br />
 
-<?php if ($is_online) { ?>
+                        <?php if ($is_online) { ?>
                             <label for='dp' class='label'>Online:</label>
                             <input type='radio' id='dp' name='action' value='dp' checked /><br />
 
                             <label for='do' class='label'>Download only:</label>
                             <input type='radio' id='do' name='action' value='do' /><br />
-<?php } ?>
+                        <?php } ?>
 
                         <label for='po' class='label'>Offline:</label>
                         <input type='radio' id='po' name='action' value='po' />&nbsp;&nbsp;

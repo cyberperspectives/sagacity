@@ -225,15 +225,6 @@ if ($items->length) {
     $sys->help->extended_replace("cve_web", $web_fields, $new_cve_web);
     $sys->help->execute();
   }
-
-  $sys->help->update("settings", ['meta_value' => 100], [
-    [
-      'field' => 'meta_key',
-      'op'    => IN,
-      'value' => ['cve-dl-progress', 'cve-progress']
-    ]
-  ]);
-  $sys->help->execute();
 }
 
 function usage() {

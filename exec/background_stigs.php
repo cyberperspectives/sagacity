@@ -26,8 +26,10 @@
  *  - Apr 5, 2017 - Hard coded parsing 20 STIGs instead of using MAX_RESULTS constant
  *  - Jun 27, 2017 - Cleanup
  *  - Jul 13, 2017 - Changed STIG parsing to serial instead of parallel to fix issue with duplicate STIGs from race conditions
+ *  - May 31, 2018 - Added deletion when files match exclusion
+ *  - Jun 2, 2018 - Added code to check STIG_EXCLUSIONS constant to for permanently excluded STIGs
  */
-$cmd = getopt("x::h::d::", ["debug::", "delete::", "ia::", "extract::", "help::"]);
+$cmd = getopt("x::h::d::", ["debug::", "delete::", "ia::", "extract::", "help::", 'exclude::']);
 
 if (isset($cmd['help']) || isset($cmd['h'])) {
     die(usage());
@@ -45,7 +47,7 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Formatter\LineFormatter;
 
 $log_level = Logger::ERROR;
-switch(LOG_LEVEL) {
+switch (LOG_LEVEL) {
     case E_WARNING:
         $log_level = Logger::WARNING;
         break;
@@ -56,19 +58,16 @@ switch(LOG_LEVEL) {
         $log_level = Logger::DEBUG;
 }
 
-$stream = new StreamHandler("php://output", Logger::INFO);
+if (isset($cmd['debug'])) {
+    $log_level = Logger::DEBUG;
+}
+
+$stream = new StreamHandler("php://output", $log_level);
 $stream->setFormatter(new LineFormatter("%datetime% %level_name% %message%" . PHP_EOL, "H:i:s.u"));
 
 $log = new Logger("stig_parser");
 $log->pushHandler(new StreamHandler(LOG_PATH . "/stig_parser.log", $log_level));
 $log->pushHandler($stream);
-
-$path = realpath(TMP . "/stigs");
-if(isset($cmd['d']) && $cmd['d']) {
-    $path = $cmd['d'];
-}
-
-chdir($path);
 
 check_path(TMP . "/stigs");
 check_path(TMP . "/stigs/zip");
@@ -76,9 +75,15 @@ check_path(TMP . "/stigs/checklist");
 check_path(TMP . "/stigs/xml");
 check_path(DOC_ROOT . "/reference/stigs");
 
-$db    = new db();
-$stack = [];
+$path = realpath(TMP . "/stigs");
+if (isset($cmd['d']) && $cmd['d']) {
+    $path = $cmd['d'];
+}
 
+chdir($path);
+
+$db        = new db();
+$stack     = [];
 $zip_files = glob("*.zip");
 $zip       = new ZipArchive();
 
@@ -125,11 +130,15 @@ $count = 0;
 $db->help->update("settings", ['meta_value' => 0], [
     [
         'field' => 'meta_key',
-        'op'    => '=',
         'value' => 'stig-progress'
     ]
 ]);
 $db->help->execute();
+
+$regex   = null;
+if (isset($cmd['exclude'])) {
+    $regex = $cmd['exclude'];
+}
 
 foreach ($xml_files as $key => $file) {
     // if the file has a space in the file name we need to replace it because it will cause parsing errors
@@ -138,6 +147,17 @@ foreach ($xml_files as $key => $file) {
         rename(realpath(TMP . "/stigs/xml/$file"), TMP . "/stigs/xml/$new_file");
         $xml_files[$key] = $file            = $new_file;
         copy(realpath(TMP . "/stigs/xml/$file"), realpath(DOC_ROOT . "/reference/stigs") . "/$file");
+    }
+
+    if (!is_null($regex) && preg_match("/$regex/i", $file)) {
+        unlink($file);
+        $log->debug("Skipping $file due to matching regex");
+        continue;
+    }
+    elseif(!empty(STIG_EXCLUSIONS) && preg_match("/" . STIG_EXCLUSIONS . "/i", $file)) {
+        unlink($file);
+        $log->debug("Skipping $file due to matching STIG exclusion");
+        continue;
     }
 
     // determine the file type
@@ -278,10 +298,12 @@ function usage()
     print <<<EOO
 Purpose: This program was written to look at all files in the {doc_root}/tmp directory, determine what parser is needed, then call that parser with the appropriate flags.
 
-Usage: background_stigs.php [-x|--extract] [-d="directory"] [--debug] [--delete] [--ia] [-h|--help]
+Usage: background_stigs.php [-x|--extract] [-d="directory"] [--debug] [--regex="ex1|ex2"] [--delete] [--ia] [-h|--help]
 
  -x|--extract       Simply extract the contents of a .zip file (STIG library) to it's proper places, do not parse the contents
  -d="directory"     Directory to search for the zip and xml files in (optional, defaults to {doc_root}/tmp)
+
+ --regex="ex1|ex2"  Insert a valid regex expression (properly escaped) to exclude specific STIGs from parsing
 
  --ia               Override any IA controls in the DB to use only the ones that are in the STIG file
  --delete           Delete any files once complete

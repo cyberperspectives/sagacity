@@ -5,7 +5,7 @@
  * Purpose: Display target data
  * Created: Sep 17, 2013
  *
- * Portions Copyright 2016-2017: Cyber Perspectives, LLC, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -28,6 +28,7 @@
  *  - Oct 26, 2017 - Added check_path for /tmp/data_collection directory to make sure the parent directory is there before it attempts to create any target subdirectories
  *  - Oct 27, 2017 - Fix bug for deleting interfaces
  *  - Jan 10, 2018 - Update STE object to use System and Site class member variables instead of ID's
+ *  - Apr 19, 2018 - Updated 3rd party libraries
  */
 set_time_limit(0);
 include_once 'config.inc';
@@ -423,7 +424,7 @@ include_once 'header.inc';
     width: 505px;
   }
 </style>
-<script src='ste_script.js' type='text/javascript'></script>
+<script src='ste_script.min.js' type='text/javascript'></script>
 <script type="text/javascript" src="/script/dropzone/dropzone.min.js"></script>
 <link type="text/css" href="/script/dropzone/dropzone.min.css" rel="stylesheet" />
 <link type="text/css" href="/script/dropzone/basic.min.css" rel="stylesheet" />
@@ -811,7 +812,7 @@ include_once 'header.inc';
                             <input type='text' name='chk_filter' id='chk_filter'
                                    onkeyup="javascript:filter_checklists($('#hide_old').is(':checked'));"
                                    style='width: 132px;' /><br />
-                            <select class="Control" name="availableChecklists" id="availableChecklists" multiple size="9" style="width: 250px;">
+                            <select class="Control" name="availableChecklists" id="availableChecklists" multiple size="9" style="width: 250px; overflow: scroll;">
                               <?php
                               $chklst = $db->get_Checklist();
                               if ($tgt_id && count($tgt->checklists)) {

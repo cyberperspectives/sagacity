@@ -5,7 +5,7 @@
  * Purpose: This file will contain all the standardized header information
  * Created: Sep 11, 2013
  *
- * Portions Copyright 2016: Cyber Perspectives, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -25,6 +25,10 @@
  *  - Jan 10, 2018 - Added fontawesome CSS library
  *  - Jan 15, 2018 - Added jQuery UI CSS
  *  - Jan 16, 2018 - Added ajax to auto update the cpe, cve, stig, and nasl loading progress.
+ *  - Apr 29, 2018 - Updated jQuery and jQuery UI libraries
+ *  - May 10, 2018 - Fixed a couple bugs with display
+ *  - May 24, 2018 - Fixed order of operation
+ *  - Jun 2, 2018 - More bugs
  */
 include_once 'config.inc';
 include_once 'helper.inc';
@@ -39,38 +43,44 @@ $db->help->select_count("software");
 $cpe_count = $db->help->execute();
 $cpe       = $db->get_Settings(['cpe-progress', 'cpe-dl-progress']);
 
-if (!$cpe_count) {
-    $msg[] = "<div id='cpe-progress'>No CPE's present in DB</div>";
-}
-elseif (isset($cpe['cpe-dl-progress']) && between($cpe['cpe-dl-progress'], 0.01, 99.99)) {
+if (isset($cpe['cpe-dl-progress']) && between($cpe['cpe-dl-progress'], 0.01, 99.99)) {
     $msg[] = "<div id='cpe-progress'>CPE Download Progress: " . number_format($cpe['cpe-dl-progress'], 0) . "%</div>";
 }
 elseif (isset($cpe['cpe-progress']) && between($cpe['cpe-progress'], 0.01, 99.99)) {
     $msg[] = "<div id='cpe-progress'>CPE Progress: " . number_format($cpe['cpe-progress'], 0) . "%</div>";
 }
+elseif (!$cpe_count) {
+    $msg[] = "<div id='cpe-progress'>No CPE's present in DB</div>";
+}
 
 $db->help->select_count("cve_db");
 $cve_count = $db->help->execute();
-$cve       = $db->get_Settings(['cve-progress', 'cve-dl-progress']);
+$cve       = $db->get_Settings([
+    'cve-progress', 'cve-dl-progress',
+    'nvd-progress', 'nvd-cve-dl-progress', 'nvd-year'
+    ]);
 
-if (!$cve_count) {
-    $msg[] = "<div id='cve-progress'>No CVE's present in DB</div>";
-}
-elseif (isset($cve['cve-dl-progress']) && between($cve['cve-dl-progress'], 0.01, 99.99)) {
+if (isset($cve['cve-dl-progress']) && between($cve['cve-dl-progress'], 0.01, 99.99)) {
     $msg[] = "<div id='cve-progress'>CVE Download Progress: " . number_format($cve['cve-dl-progress'], 0) . "%</div>";
+}
+elseif (isset($cve['nvd-cve-dl-progress']) && between($cve['nvd-cve-dl-progress'], 0.01, 99.99)) {
+    $msg[] = "<div id='cve-progress'>NVD CVE Download {$cve['nvd-year']} Progress: " . number_format($cve['nvd-cve-dl-progress'], 0) . "%</div>";
 }
 elseif (isset($cve['cve-progress']) && between($cve['cve-progress'], 0.01, 99.99)) {
     $msg[] = "<div id='cve-progress'>CVE Progress: " . number_format($cve['cve-progress'], 0) . "%</div>";
+}
+elseif (isset($cve['nvd-cve-progress']) && between($cve['nvd-cve-progress'], 0.01, 99.99)) {
+    $msg[] = "<div id='cve-progress'>NVD CVE {$cve['nvd-year']} Progress: " . number_format($cve['cve-progress'], 0) . "%</div>";
+}
+elseif (!$cve_count) {
+    $msg[] = "<div id='cve-progress'>No CVE's present in DB</div>";
 }
 
 $db->help->select_count("stigs");
 $stig_count = $db->help->execute();
 $stig       = $db->get_Settings(['stig-progress', 'stig-dl-progress']);
 
-if (!$stig_count) {
-    $msg[] = "<div id='stig-progress'>No STIG's present in DB</div>";
-}
-elseif (isset($stig['stig-dl-progress']) && between($stig['stig-dl-progress'], 0.01, 99.99)) {
+if (isset($stig['stig-dl-progress']) && between($stig['stig-dl-progress'], 0.01, 99.99)) {
     $msg[] = "<div id='stig-progress'>STIG Download Progress: " . number_format($stig['stig-dl-progress'], 0) . "%</div>";
 }
 elseif (isset($stig['stig-progress']) && between($stig['stig-progress'], 0.01, 99.99)) {
@@ -78,12 +88,13 @@ elseif (isset($stig['stig-progress']) && between($stig['stig-progress'], 0.01, 9
         "<span id='stig-overall-progress'>" . number_format($stig['stig-progress'], 0) . "%</span>" .
         "</div>";
 }
+elseif (!$stig_count) {
+    $msg[] = "<div id='stig-progress'>No STIG's present in DB</div>";
+}
 
-$db->help->select_count("nessus_plugins");
-$nessus_count  = $db->help->execute();
-$nasl_progress = $db->get_Settings(['nasl-progress', 'nasl-dl-progress']);
+$nasl = $db->get_Settings(['nasl-progress', 'nasl-dl-progress', 'nasl-count']);
 
-if (!$nessus_count) {
+if (!$nasl['nasl-count']) {
     if (isset($nasl['nasl-dl-progress']) && between($nasl['nasl-dl-progress'], 0.01, 99.99)) {
         $msg[] = "<div id='nasl-progress'>NASL Download Progress: {$nasl['nasl-dl-progress']}%</div>";
     }
@@ -104,12 +115,11 @@ if (!$nessus_count) {
         <link href='/style/fonts/fonts.css' rel='stylesheet' type='text/css' />
         <!--[if IE 9]><link rel="stylesheet" href="style/style-ie9.css" /><![endif]-->
 
-        <script src="/style/5grid/jquery-1.11.3.min.js"></script>
+        <script src="/script/jquery-3.2.1.min.js"></script>
         <script src="/style/5grid/jquery.browser.min.js"></script>
-        <script type="text/javascript" src="/script/jquery-ui-1.11.4/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="/script/jquery-ui/jquery-ui.min.js"></script>
         <script src="/style/5grid/init.js?use=mobile,desktop,1000px&amp;mobileUI=1&amp;mobileUI.theme=none"></script>
         <script type="text/javascript" src="/script/default.js"></script>
-        <script type="text/javascript" src="/script/highcharts-custom.js"></script>
         <script type="text/javascript" src="/script/spin/spin.min.js"></script>
 
         <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
@@ -128,8 +138,8 @@ if (!$nessus_count) {
         <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
         <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
         <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
-        <link rel='stylesheet' href='/script/fontawesome-free-5.0.3/web-fonts-with-css/css/fontawesome-all.min.css' />
-        <link rel='stylesheet' href='/script/jquery-ui-1.11.4/jquery-ui.theme.min.css' />
+        <link rel='stylesheet' href='/script/fontawesome/web-fonts-with-css/css/fontawesome-all.min.css' />
+        <link rel='stylesheet' href='/script/jquery-ui/jquery-ui.min.css' />
 
         <meta name="msapplication-TileColor" content="#da532c">
         <meta name="msapplication-TileImage" content="/mstile-144x144.png">
@@ -140,7 +150,6 @@ if (!$nessus_count) {
                 getLoadStatus();
               }
             });
-
             function getLoadStatus() {
               $.ajax("/ajax.php", {
                 data: {
@@ -148,32 +157,43 @@ if (!$nessus_count) {
                 },
                 success: function (data) {
                   var reload = false;
-
-                  if($('#cpe-progress').length) {
-                      $('#cpe-progress').html(loadValue('cpe-progress', data['cpe-dl-progress'], data['cpe-progress'], 'CPE'));
+                  if ($('#cpe-progress').length) {
+                    var cpe = loadValue('cpe-progress', data['cpe-dl-progress'], data['cpe-progress'], data['cpe-count'], 'CPE');
+                    if (cpe) {
+                      $('#cpe-progress').html(cpe);
                       reload = true;
+                    }
                   }
 
-                  if($('#cve-progress').length) {
-                      $('#cve-progress').html(loadValue('cve-progress', data['cve-dl-progress'], data['cve-progress'], 'CVE'));
+                  if ($('#cve-progress').length) {
+                    var cve = loadValue('cve-progress', data['nvd-cve-dl-progress'], data['nvd-cve-progress'], data['nvd-cve-count'], 'NVD CVE', data['nvd-year']);
+                    if (cve) {
+                      $('#cve-progress').html(cve);
                       reload = true;
+                    }
                   }
 
-                  if($('#stig-progress').length) {
-                      $('#stig-progress').html(loadValue('stig-progress', data['stig-dl-progress'], data['stig-progress'], 'STIG'));
+                  if ($('#stig-progress').length) {
+                    var stig = loadValue('stig-progress', data['stig-dl-progress'], data['stig-progress'], data['stig-count'], 'STIG');
+                    if (stig) {
+                      $('#stig-progress').html(stig);
                       reload = true;
+                    }
                   }
 
-                  if($('#nasl-progress').length) {
-                      $('#nasl-progress').html(loadValue('nasl-progress', data['nasl-dl-progress'], data['nasl-progress'], 'NASL'));
+                  if ($('#nasl-progress').length) {
+                    var nasl = loadValue('nasl-progress', data['nasl-dl-progress'], data['nasl-progress'], data['nasl-count'], 'NASL');
+                    if (nasl) {
+                      $('#nasl-progress').html(nasl);
                       reload = true;
+                    }
                   }
 
                   if (reload) {
                     setTimeout(getLoadStatus, 1000);
                   }
                   else {
-                      $('#db-err').remove();
+                    $('#db-err').remove();
                   }
                 },
                 error: function (xhr, status, error) {
@@ -184,16 +204,20 @@ if (!$nessus_count) {
               });
             }
 
-            function loadValue(id, dl, prog, msg) {
-                if(dl < 100 && prog == 0) {
-                    return msg + ' Download Progress ' + parseInt(dl) + "%";
-                }
-                else if(prog < 100) {
-                    return msg + ' Progress ' + parseInt(prog) + "%";
-                }
-                else {
-                    $('#' + id).remove();
-                }
+            function loadValue(id, dl, prog, count, msg, nvd_year) {
+              if (parseFloat(dl) < 100 && parseFloat(dl) > 0 && parseFloat(prog) === 0) {
+                return msg + (typeof nvd_year !== 'undefined' && parseInt(nvd_year) ? ' ' + nvd_year : '') + ' Download Progress ' + parseInt(dl) + "%";
+              }
+              else if (parseFloat(prog) < 100 && parseFloat(prog) > 0) {
+                return msg + (typeof nvd_year !== 'undefined' && parseInt(nvd_year) ? ' ' + nvd_year : '') + ' Progress ' + parseInt(prog) + "%";
+              }
+              else if (!parseInt(count)) {
+                return "No " + msg + "'s present in DB";
+              }
+              else {
+                $('#' + id).remove();
+              }
+              return false;
             }
         </script>
 
@@ -213,7 +237,7 @@ if (!$nessus_count) {
                 <div class="row">
                     <div class="12u">
                         <!-- Nav -->
-<?php include_once 'menu.inc'; ?>
+                        <?php include_once 'menu.inc'; ?>
                         <!-- Logo -->
                         <span class="mobileUI-site-name">
                             <img src='/img/Sagacity-Logo.png' style='width:210px;float:right;' />

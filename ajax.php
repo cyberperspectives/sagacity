@@ -5,7 +5,7 @@
  * Purpose: For AJAX queries from the UI
  * Created: Mar 9, 2015
  *
- * Portions Copyright 2016-2017: Cyber Perspectives, LLC, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -41,6 +41,10 @@
  *  - Jan 15, 2018 - Updated to get formatted target notes
  *  - Jan 16, 2018 - Added ajax to auto update the cpe, cve, stig, and nasl loading progress.
   Moved scan deletion here
+ *  - May 2, 2018 - Added save_checklist else block to support save functionality on Catalog Mgmt page
+ *  - May 10, 2018 - Added more fields when getting system updates
+ *  - May 31, 2018 - Added data point for "isScanError" when getting target scan data
+ *  - Jun 2, 2018 - Added nvd_year for status update AJAX
  */
 set_time_limit(0);
 
@@ -185,7 +189,8 @@ elseif ($action == 'add_scans') {
 elseif ($action == 'auto-categorize') {
     $db->auto_Catorgize_Targets($ste);
 
-    print header(JSON) . json_encode(['success' => 'Categorized Targets'
+    print header(JSON) . json_encode([
+        'success' => 'Categorized Targets'
     ]);
 }
 elseif ($action == 'delete-cat') {
@@ -267,6 +272,29 @@ elseif ($action == 'checklist-add-software') {
     }
     else {
         print header(JSON) . json_encode(array('status' => 'Successfully added the software'));
+    }
+}
+elseif ($action == 'save-checklist') {
+    $rel_date = new DateTime(filter_input(INPUT_POST, 'rel-date', FILTER_SANITIZE_STRING));
+
+    $db->help->update("sagacity.checklist", [
+        'name' => filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING),
+        'description' => filter_input(INPUT_POST, 'desc', FILTER_SANITIZE_STRING),
+        'icon' => filter_input(INPUT_POST, 'icon', FILTER_SANITIZE_STRING),
+        'date' => (is_a($rel_date, 'DateTime') ? $rel_date->format(MYSQL_D_FORMAT) : (new DateTime())->format(MYSQL_D_FORMAT))
+    ], [
+        [
+            'field' => 'id',
+            'op' => '=',
+            'value' => filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT)
+        ]
+    ]);
+
+    if($db->help->execute()) {
+        print json_encode(['success' => 'Successfully updated checklist']);
+    }
+    else {
+        print json_encode(['error' => 'Error updating checklist']);
     }
 }
 elseif ($action == 'export-ckl') {
@@ -361,10 +389,11 @@ elseif ($action == 'save-target-notes') {
 }
 elseif ($action == 'get-load-status') {
     $set = $db->get_Settings([
-        'cpe-dl-progress', 'cpe-progress',
-        'cve-dl-progress', 'cve-progress',
-        'stig-dl-progress', 'stig-progress',
-        'nasl-dl-progress', 'nasl-progress'
+        'cpe-count', 'cpe-dl-progress', 'cpe-progress',
+        'cve-count', 'cve-dl-progress', 'cve-progress',
+        'nvd-cve-count', 'nvd-cve-dl-progress', 'nvd-cve-progress', 'nvd-year',
+        'stig-count', 'stig-dl-progress', 'stig-progress',
+        'nasl-count', 'nasl-dl-progress', 'nasl-progress'
     ]);
     print json_encode($set);
 }
@@ -849,6 +878,7 @@ function update_script_status()
             "start_time" => $scan->get_Start_Time()->format("Y-m-d H:i:s"),
             "update"     => $scan->get_Last_Update()->format("Y-m-d H:i:s"),
             "host_count" => $scan->get_Total_Host_Count(),
+            "error"      => $scan->isScanError(),
             "run_time"   => $diff->format("%H:%I:%S")
         ];
     }
@@ -1486,7 +1516,12 @@ function get_hosts($cat_id = null)
         }
 
         foreach ($scan_srcs as $key => $src) {
-            $src_str .= "<img src='/img/scan_types/{$src['src']->get_Icon()}' title='{$src['src']->get_Name()}";
+            $icon = $src['src']->get_Icon();
+            if($src['scan_error']) {
+                $icon = strtolower($src['src']->get_Name()) . "-failed.png";
+            }
+
+            $src_str .= "<img src='/img/scan_types/{$icon}' title='{$src['src']->get_Name()}";
             if (isset($src['count']) && $src['count']) {
                 $src_str .= " ({$src['count']})";
             }
@@ -1503,79 +1538,6 @@ function get_hosts($cat_id = null)
             'man'      => $tgt->get_Task_Status($tgt->get_Man_Status_ID()),
             'data'     => $tgt->get_Task_Status($tgt->get_Data_Status_ID()),
             'fp'       => $tgt->get_Task_Status($tgt->get_FP_Cat1_Status_ID()),
-            'ip'       => (count($tgt->interfaces) ? array_keys($tgt->interfaces)[0] : ''),
-            'notes'    => nl2br($tgt->get_Notes()),
-            'scans'    => $src_str,
-            'chk'      => $icon_str
-        ]);
-    }
-
-    return json_encode($ret);
-}
-
-/**
- *
- * @global db $db
- * @param type $cat_id
- * @return type
- */
-function new_get_hosts($cat_id)
-{
-    global $db;
-    $ret    = ['cat_id' => $cat_id];
-    $ste_id = filter_input(INPUT_COOKIE, 'ste', FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
-    $tgts   = [];
-
-    if ($cat_id) {
-        $ste_cat = $db->get_Category($cat_id)[0];
-        $tgts    = $db->get_Target_By_Category($cat_id);
-    }
-    elseif (is_numeric($ste_id)) {
-        $tgts = $db->get_Unassigned_Targets($ste_id);
-    }
-    else {
-        return json_encode(['error' => "Invalid info"]);
-    }
-
-    foreach ($tgts as $key => $tgt) {
-        $chks = $db->get_Target_Checklists($tgt->get_ID());
-        if ($cat_id) {
-            $exp_scan_srcs = $db->get_Expected_Category_Sources($ste_cat);
-        }
-        else {
-            $exp_scan_srcs = null;
-        }
-        $scan_srcs = $db->get_Target_Scan_Sources($tgt, $exp_scan_srcs);
-        $icons     = [];
-        $icon_str  = '';
-        $src_str   = '';
-
-        foreach ($chks as $chk) {
-            if (!in_array($chk->get_Icon(), array_keys($icons))) {
-                $icons[$chk->get_Icon()]['icon'] = $chk->get_Icon();
-                $icons[$chk->get_Icon()]['name'] = '';
-            }
-            $icons[$chk->get_Icon()]['name'] .= "{$chk->get_Name()} V{$chk->get_Version()}R{$chk->get_Release()} ({$chk->get_type()})" . PHP_EOL;
-        }
-
-        foreach ($icons as $icon => $data) {
-            $icon_str .= "<img src='/img/checklist_icons/$icon' title='{$data['name']}' class='checklist_image' />";
-        }
-
-        foreach ($scan_srcs as $key => $src) {
-            $src_str .= "<img src='/img/scan_types/{$src['src']->get_Icon()}' title='{$src['src']->get_Name()}";
-            if (isset($src['count']) && $src['count']) {
-                $src_str .= " ({$src['count']})";
-            }
-            $src_str .= "' class='checklist_image' />";
-        }
-
-        $ret['targets'][] = array_merge([
-            'id'       => $tgt->get_ID(),
-            'ste_id'   => $tgt->get_STE_ID(),
-            'name'     => $tgt->get_Name(),
-            'os'       => $tgt->get_OS_String(),
-            'location' => $tgt->get_Location(),
             'ip'       => (count($tgt->interfaces) ? array_keys($tgt->interfaces)[0] : ''),
             'notes'    => $tgt->getDisplayNotes(),
             'scans'    => $src_str,
@@ -2142,10 +2104,10 @@ function get_category_details($cat_id)
         return 'no category found';
     }
 
-    return json_encode(array(
+    return json_encode([
         'id'      => $cat->get_ID(),
         'name'    => $cat->get_Name(),
         'analyst' => $cat->get_Analyst(),
         'sources' => $cat->get_Sources()
-    ));
+    ]);
 }

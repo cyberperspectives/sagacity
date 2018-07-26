@@ -41,6 +41,7 @@
  *  - Oct 27, 2017 - Fix to convert '*' to '0.0.0.0' or '::' and validate IP's before making interface
  *  - Nov 25, 2017 - Fixed bug #345
  *  - Jan 16, 2018 - Updated to use host_list class
+ *  - Jun 4, 2018 - Fixed bug #424 (IP address not pulled when name used for host)
  */
 error_reporting(E_ALL);
 
@@ -491,6 +492,16 @@ class nessus_parser extends scan_xml_parser
             }
         }
 
+        if (!empty($this->tag['host-ip']) && validation::valid_ip($this->tag['host-ip'])) {
+            if (!isset($this->tgt->interfaces[$this->tag['host-ip']])) {
+                $this->log->script_log("Adding new interface to target with IP: {$this->tag['host-ip']}");
+                $this->tgt->interfaces[$this->tag['host-ip']] = new interfaces(null, $this->tgt->get_ID(), null, $this->tag['host-ip'], null, $this->host->hostname, $this->host->fqdn, null);
+            }
+            else {
+                $this->log->script_log("Interface already exists for target: {$this->tag['host-ip']}");
+            }
+        }
+
         $netstat_keys = preg_grep("/netstat\-established\-tcp/", array_keys($this->tag));
         $this->log->script_log("Start established tcp conns...found " . count($netstat_keys) . " connections", E_DEBUG);
         foreach (array_values($netstat_keys) as $key) {
@@ -503,6 +514,7 @@ class nessus_parser extends scan_xml_parser
         $this->log->script_log("Start listening tcp4 conns...found " . count($netstat_keys) . " connections", E_DEBUG);
         if (between(count($netstat_keys), 1, PORT_LIMIT)) {
             foreach (array_values($netstat_keys) as $key) {
+                // split into "ip:port" array
                 $ip_port = explode(":", $this->tag[$key]);
 
                 // skip this entry if it is not a valid IP

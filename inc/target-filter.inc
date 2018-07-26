@@ -38,7 +38,7 @@ if (isset($target_filter_width)) {
 
 $stes = $db->get_STE_List();
 
-if (!$ste_id) {
+if (!isset($ste_id) || !$ste_id) {
     $ste_id = filter_input(INPUT_POST, 'ste', FILTER_VALIDATE_INT);
     if (!$ste_id) {
         $ste_id = filter_input(INPUT_COOKIE, 'ste', FILTER_VALIDATE_INT);

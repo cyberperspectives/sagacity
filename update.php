@@ -29,6 +29,7 @@
  *                  Deleted commented out pthreads copy code, check for Windows system before attempting to copy config files
  *                  Removed processing old content, search for *routines.sql files, remove, and process after all other sql files
  *  - Jan 10, 2018 - Fixed bug with tables not being updated if they already exist
+ *  - May 24, 2018 - Modified to pull CVE data from NVD instead of Mitre
  */
 include_once 'config.inc';
 include_once 'database.inc';
@@ -181,25 +182,6 @@ if ($uname && $pwd) {
         }
     }
 
-    $db->extended_insert("sagacity.settings", ['meta_key', 'meta_value'], [
-        ['cpe-load-date', new DateTime('1970-01-01')],
-        ['cpe-progress', 0],
-        ['cpe-dl-progress', 0],
-        ['cve-load-date', new DateTime('1970-01-01')],
-        ['cve-progress', 0],
-        ['cve-dl-progress', 0],
-        ['nvd-cve-load-date', new DateTime('1970-01-01')],
-        ['nvd-cve-progress', 0],
-        ['nvd-cve-dl-progress', 0],
-        ['stig-load-date', new DateTime('1970-01-01')],
-        ['stig-progress', 0],
-        ['stig-dl-progress', 0],
-        ['nasl-load-date', new DateTime('1970-01-01')],
-        ['nasl-progress', 0],
-        ['nasl-dl-progress', 0]
-    ]);
-    $db->execute();
-
     /*
      * **********************************************************
      * Reload table data
@@ -268,7 +250,7 @@ EOO;
                 $script = realpath(PHP_BIN) .
                     " -c " . realpath(PHP_CONF) .
                     " -f update_db.php" .
-                    " -- --cpe --cve --stig";
+                    " -- --cpe --nvd --stig";
                 $process = new Cocur\BackgroundProcess\BackgroundProcess($script);
                 $process->run();
             } catch (Exception $e) {

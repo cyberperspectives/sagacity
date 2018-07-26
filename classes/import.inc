@@ -6,7 +6,7 @@
  * Purpose: Class to allow the parsing and traversing of the tmp directory to find result files to import
  * Created: Sep 27, 2013
  *
- * Portions Copyright 2016-2017: Cyber Perspectives, LLC, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -26,6 +26,7 @@
  *  - Feb 21, 2017 - Fixed path issues with scripts not running
  *  - Jun 27, 2017 - Removed include for PHPExcel.php library
  *  - Oct 23, 2017 - Fixes for pdi class
+ *  - May 24, 2018 - Added throwing error if not able to create /exec/parse_config.ini
  */
 include_once 'config.inc';
 include_once 'database.inc';
@@ -125,7 +126,9 @@ ignore = $ignore
 
 EOF;
 
-    file_put_contents(DOC_ROOT . "/exec/parse_config.ini", $conf);
+    if(!file_put_contents(DOC_ROOT . "/exec/parse_config.ini", $conf)) {
+        throw new Exception("Error creating the parse_config.ini");
+    }
 
     $script = realpath(defined('PHP_BIN') ? PHP_BIN : PHP) .
         " -c " . realpath(PHP_CONF) .

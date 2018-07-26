@@ -6,7 +6,7 @@
  * Purpose: Represents a finding
  * Created: Sep 12, 2013
  *
- * Portions Copyright 2016-2017: Cyber Perspectives, LLC, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -21,6 +21,7 @@
  *  - Nov 7, 2016 - Added finding::inc_Finding_Count function to increment counter
  *  - May 25, 2017 - Fixed bug of get_Category method returning empty severity (defaults to II if empty)
  *  - Jan 10, 2018 - Formatting
+ *  - May 24, 2018 - Simplified get_Finding_Status_ID method
  */
 
 /**
@@ -260,11 +261,13 @@ class finding {
    * @return integer
    */
   public function get_Finding_Status_ID($status) {
-    foreach ($this->STATUS as $key => $val) {
-      if ($val == $status) {
-        return $key;
+      $arr_flip = array_flip($this->STATUS);
+      if(isset($arr_flip[$status])) {
+          return $arr_flip[$status];
       }
-    }
+      else {
+          return $arr_flip['Not Reviewed'];
+      }
   }
 
   /**
@@ -527,6 +530,28 @@ class deconflict_status {
    * Stores the matrix of current -> new statuses
    *
    * @var array:string
+   *
+   * / Finding Definitions
+   * Open: The finding is valid for this host - the host does not meet the requirements
+   * Not a Finding: The finding is not valid for this host - the host meets the requirements
+   * Not Applicable: The requirement does not apply to this host - prerequisites do not exist.
+   * Not Reviewed: The finding has not yet been reviewed.
+   * Exception: (A type of Open) - The finding is valid, but the system cannot comply for a valid reason
+   * False Positive: (A type of Not a Finding) - The scanning tool incorrectly reported Open.
+   * No Data: Because dissimilar checklists were merged, there is no data available for this item (Uncommon)
+   *
+   * General Precedence Order:  E, FP, O, NF, NA, NR, ND
+   * Exception - the newest E or FP always take precedence (security engineer input)
+   *
+   * Decision Table:
+   * orig\new |  E | FP |  O | NF | NA | NR | ND
+   *        E |  E | FP |  E |  E |  E |  E |  E
+   *       FP |  E | FP | FP | FP | FP | FP | FP
+   *        O |  E | FP |  O |  O |  O |  O |  O
+   *       NF |  E | FP |  O | NF | NF | NF | NF
+   *       NA |  E | FP |  O | NF | NA | NA | NA
+   *       NR |  E | FP |  O | NF | NA | NR | NR
+   *       ND |  E | FP |  O | NF | NA | NR | ND
    */
   static $DECONFLICTED_STATUS = [
     'Exception'      => [
@@ -572,7 +597,7 @@ class deconflict_status {
       'Not a Finding'  => 'Not a Finding',
       'Not Applicable' => 'Not Applicable',
       'Not Reviewed'   => 'Not Applicable',
-      'No Data'        => 'Not Reviewed'
+      'No Data'        => 'Not Applicable'
     ],
     'Not Reviewed'   => [
       'Exception'      => 'Exception',

@@ -1,4 +1,21 @@
 <?php
+
+/**
+ * File: config.inc
+ * Author: Ryan Prather <ryan.prather@cyberperspectives.com>
+ * Purpose: File to store config information for Sagacity
+ * Created: Nov 14, 2017
+ *
+ * Copyright 2017-2018: Cyber Perspective, LLC, All rights reserved
+ * Released under the Apache v2.0 License
+ *
+ * See license.txt for details
+ *
+ * Change Log:
+ *  - Nov 14, 2017 - File created
+ *  - May 24, 2018 - Updated constants for 1.3.2 release
+ *  - Jun 2, 2018 - Added new STIG_EXCLUSIONS constant to permanently exclude STIGs
+ */
 // @new
 /**
  * Constant defining a debug log level
@@ -12,8 +29,8 @@ define('E_DEBUG', 65535);
 define('DOC_ROOT', '{DOC_ROOT}');
 define('PWD_FILE', '{PWD_FILE}');
 define('TMP', '{TMP_PATH}');
-define('VER', '1.3.1');
-define('REL_DATE', '2018-02-28');
+define('VER', '1.3.2');
+define('REL_DATE', '2018-05-31');
 define('LOG_LEVEL', '{E_ERROR}');
 define('LOG_PATH', '{LOG_PATH}');
 define('SALT', '{SALT}');
@@ -55,6 +72,11 @@ define('CLASSIFIED_BY', '{CLASSIFIED_BY}');
 define('SCG', '{SCG}');
 define('DERIVED_ON', '{DERIVED_ON}');
 define('DECLASSIFY_ON', '{DECLASSIFY_ON}');
+
+/**
+ * Constant to be used to permanently exclude STIGs
+ */
+define('STIG_EXCLUSIONS', '');
 
 /**
  * Constant to define MySQL's DateTime format

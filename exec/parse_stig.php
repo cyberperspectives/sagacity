@@ -29,6 +29,7 @@
  *  - Jul 23, 2017 - MAS Added comments
  *  - Aug 28, 2017 - Added die for draft stigs
  *  - Dec 27, 2017 - Added up date for load date
+ *  - May 10, 2018 - Starting to migrate logging and fixed install status bar issues (#403)
  */
 $cmd = getopt("f:", ['debug::', 'ia_reset::', 'draft::', 'help::']);
 
@@ -669,6 +670,10 @@ foreach ($groups as $group) {
   unset($references);
   $db->update_Catalog_Script($base_name, ['name' => 'perc_comp', 'value' => ($perc_comp / $groups->length) * 100]);
 }
+
+$db->help->select_count("sagacity.stigs");
+$stig_count = $db->help->execute();
+$db->set_Setting('stig-count', $stig_count);
 
 $end = new DateTime();
 $diff = $end->diff($start);

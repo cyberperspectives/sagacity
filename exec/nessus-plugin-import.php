@@ -1,12 +1,11 @@
 <?php
-
 /**
  * File: nessus-plugin-import.php
  * Author: Ryan Prather
  * Purpose: Script to import all Nessus plugins from *.nasl files
  * Created: Jan 5, 2015
  *
- * Portions Copyright 2016: Cyber Perspectives, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -22,99 +21,125 @@
  *  - Jan 31, 2017 - Completed testing, ready for prime time
  *  - Feb 15, 2017 - Store existing plugin IDs in memory for evaluation to check if we should actually run the script,
  *                   Fixed error with PHP_BIN not being defined for some weird reason
+ *  - May 24, 2018 - Added parsing for plugins installed on the local machine
+ *                   Added DateTimeDiff helper class
  */
 include_once 'config.inc';
 include_once "database.inc";
 include_once "helper.inc";
 
-$cmd = getopt("h::", array("help::"));
+$cmd = getopt("h::", ["help::"]);
 
 if (isset($cmd['h']) || isset($cmd['help'])) {
-  die(usage());
+    die(usage());
 }
 
 $db = new db();
+$time = new DateTimeDiff();
 
 if (!file_exists(TMP . "/nessus_plugins")) {
-  mkdir(TMP . "/nessus_plugins");
+    mkdir(TMP . "/nessus_plugins");
 }
 
-$nasl_ids = array();
-$db->help->select("sagacity.nessus_plugins", array('plugin_id', 'file_date'));
-if ($rows = $db->help->execute()) {
-  foreach ($rows as $row) {
-    $nasl_ids[$row['plugin_id']] = DateTime::createFromFormat("U", $row['file_date']);
-  }
+$nasl_ids = [];
+$db->help->select("sagacity.nessus_plugins", ['plugin_id', 'file_date']);
+if ($rows     = $db->help->execute()) {
+    foreach ($rows as $row) {
+        $nasl_ids[$row['plugin_id']] = DateTime::createFromFormat("U", $row['file_date']);
+    }
 }
 
 chdir(TMP . '/nessus_plugins');
 $files = glob("*.nasl");
 
-$start_time = new DateTime();
-
-print "Found " . count($files) . " NASL files\nStarted at {$start_time->format("Y-m-d H:i:s")}\n";
-
-chdir(DOC_ROOT . '/exec');
-$x = 0;
-foreach ($files as $file) {
-  $db->help->select("nessus_plugins", array('plugin_id', 'file_date'), [
-    [
-      'field' => 'file_name',
-      'op'    => '=',
-      'value' => basename($file)
-    ]
-  ]);
-  $row = $db->help->execute();
-
-  if (!isset($row['file_name']) || is_null($row['file_date']) || filemtime(TMP . "/nessus_plugins/$file") > $row['file_date']) {
-    $comp = number_format(($x / count($files)) * 100, 2) . "%";
-    print "\r$comp";
-
-    $script = realpath(defined('PHP_BIN') ? PHP_BIN : PHP) .
-        " -c " . realpath(PHP_CONF) .
-        " -f " . realpath(DOC_ROOT . "/exec/nessus-plugin-to-database.php") . " --" .
-        " -f=\"" . realpath(TMP . "/nessus_plugins/$file") . "\"";
-
-    if (substr(strtolower(PHP_OS), 0, 3) == "win") {
-      $shell = new COM("WScript.Shell");
-      $shell->CurrentDirectory = DOC_ROOT . "/exec";
-      $shell->run($script, 0, false);
+if (strtolower(substr(PHP_OS, 0, 3)) == 'win') {
+    if (file_exists(getenv("%ProgramData%") . "/Tenable/Nessus/nessus/plugins")) {
+        chdir(getenv("%ProgramData%") . "/Tenable/Nessus/nessus/plugins");
+        $files = array_merge($files, glob("*.nasl"));
     }
-    elseif (substr(strtolower(PHP_OS), 0, 3) == 'lin') {
-      exec("$script > /dev/null &");
-
-      $output = array();
-      exec("netstat -an | grep TIME_WAIT | wc -l", $output);
-      if ($output[0] > 1200) {
-        do {
-          sleep(1);
-          exec("netstat -an | grep TIME_WAIT | wc -l", $output);
-        }
-        while ($output[0] > 100);
-      }
+}
+elseif (strtolower(substr(PHP_OS, 0, 3)) == 'lin') {
+    if (file_exists("/opt/nessus/lib/nessus/plugins") && is_readable("/opt/nessus/lib/nessus/plugins")) {
+        chdir("/opt/nessus/lib/nessus/plugins");
+        $files = array_merge($files, glob("*.nasl"));
     }
 
-    $x++;
-  }
+    if (file_exists("/opt/sc/data/nasl") && is_readable("/opt/sc/data/nasl")) {
+        chdir("/opt/sc/data/nasl");
+        $files = array_merge($files, glob("*.nasl"));
+    }
 }
 
-$db->help->update("settings", ['meta_value' => 100], [
-    [
-        'field' => 'meta_key',
-        'op' => IN,
-        'value' => ['nasl-dl-progress', 'nasl-progress']
-    ]
-]);
-$db->help->execute();
+$files = array_unique($files);
 
-$end_time = new DateTime();
+print "Found " . count($files) . " NASL files\nStarted at {$time->getStartClockTime()}\n";
 
-$diff = $end_time->diff($start_time);
+chdir(DOC_ROOT . "/exec");
 
-print "\nFinished at {$end_time->format("Y-m-d H:i:s")}\nTotal Time: {$diff->format("%H:%I:%S")}\n";
+// Query database to build an array of existing plugins to compare against on import
+$existing_plugins = [];
+$db->help->select("nessus_plugins", ['plugin_id', 'file_date']);
+$rows             = $db->help->execute();
+if (is_array($rows) && count($rows)) {
+    foreach ($rows as $row) {
+        $existing_plugins[$row['plugin_id']] = DateTime::createFromFormat("U", $row['file_date']);
+    }
+}
 
-function usage() {
-  print <<<EOF
+// Sort the files and loop over them
+natsort($files);
+$threads        = [];
+$count          = 0;
+$total_complete = 0;
+foreach ($files as $file) {
+    $db->help->select("nessus_plugins", ['plugin_id', 'file_date'], [
+        [
+            'field' => 'file_name',
+            'value' => basename($file)
+        ]
+    ]);
+    $row = $db->help->execute();
+
+    if (!isset($row['file_name']) || is_null($row['file_date']) || filemtime(TMP . "/nessus_plugins/$file") > $row['file_date']) {
+        $comp = number_format(($x / count($files)) * 100, 2);
+        print "\r$comp%";
+
+        $script = realpath(defined('PHP_BIN') ? PHP_BIN : PHP) .
+            " -c " . realpath(PHP_CONF) .
+            " -f " . realpath(DOC_ROOT . "/exec/nessus-plugin-to-database.php") . " --" .
+            " -f=\"" . realpath(TMP . "/nessus_plugins/$file") . "\"";
+
+        $threads[] = new Cocur\BackgroundProcess\BackgroundProcess($script);
+        end($threads)->run();
+
+        //sleep(1);
+        $count++;
+        $total_complete++;
+
+        if ($count > 1000) {
+            $db->set_Setting("nasl-progress", $comp);
+
+            foreach ($threads as $k => $t) {
+                if (!$t->isRunning()) {
+                    unset($threads[$k]);
+                    $count--;
+                }
+            }
+        }
+    }
+}
+
+$db->set_Setting("nasl-dl-progress", 100);
+$db->set_Setting("nasl-progress", 100);
+$db->set_Setting("nasl-count", $total_complete);
+
+$time->stopClock();
+
+print "\nFinished at {$time->getEndClockTime()}\nTotal Time: {$time->getTotalDiffString()}\n";
+
+function usage()
+{
+    print <<<EOF
 Purpose: The purpose of this script is to update the CVE, CPE, and CCE databases.  Script will sleep for 3 seconds between actions to allow you review the results.
 
 Usage: php nessus-plugin-import.php [-h|--help]

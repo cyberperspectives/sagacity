@@ -3,37 +3,35 @@
  * File: stats.php
  * Author: Ryan
  * Purpose: Testing page for the new target details page
- * Created: Sep 1, 2016
+ * Created: Jan 3, 2018
  *
- * Copyright 2016: Cyber Perspectives, All rights reserved
+ * Copyright 2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * See license.txt for details
  *
  * Change Log:
- *  - Sep 1, 2016 - File created
- *  - Jan 30, 2017 - Formatting and added popup for note updates (not complete)
- *  - Jan 10, 2018 - Renamed from new-ops.php to stats.php and finalized functionality
- *  - Jan 15, 2018 - Added notes back in (first note line) and follow-up lines in popup,
-		Moved Scans and Checklists column after Assessed percentage column,
-		Fixed error with footer not displaying
+ * - Jan 3, 2018 - File created
  */
 $title_prefix = "Stats";
 
-set_time_limit(0);
 include_once 'config.inc';
-include_once 'database.inc';
 include_once 'helper.inc';
+include_once 'database.inc';
 
-$db     = new db();
-$ste_id = filter_input(INPUT_POST, 'ste', FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
+set_time_limit(0);
+
+$db          = new db();
+$cats        = [];
+$action      = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING, FILTER_NULL_ON_FAILURE);
+$ste_id      = filter_input(INPUT_POST, 'ste', FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
+$task_status = $db->get_Task_Statuses();
+$stes        = $db->get_STE();
+$scan_srcs   = $db->get_Sources();
+
 if (!$ste_id) {
     $ste_id = filter_input(INPUT_COOKIE, 'ste', FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
 }
-$task_status = $db->get_Task_Statuses();
-
-$cats   = [];
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
 
 if ($action) {
     if ($action == 'move_to') {
@@ -176,12 +174,11 @@ if ($ste_id) {
     $cats     = array_merge($cats, $ste_cats);
 }
 
-$scan_srcs = $db->get_Sources();
 include_once "header.inc";
 
 ?>
 
-<script type='text/javascript' src='/ste/ste_script.js'></script>
+<script type='text/javascript' src='/ste/ste_script.min.js'></script>
 <script type="text/javascript">
     var sel_tgts = [];
     function open_echecklist(id) {
@@ -381,7 +378,7 @@ include_once "header.inc";
                 <?php
                 if (count($cats)) {
                     foreach ($cats as $cat) {
-                        print $cat->getSTECatRow();
+                        print $cat->getStatsCategoryRow();
                     }
                 }
                 else {
@@ -394,6 +391,7 @@ include_once "header.inc";
     </div>
 </div>
 
+<input type="hidden" id="ops-page" value="stats" />
 <div class="backdrop"></div>
 <div id='tgt-notes' class="box">
     <input type='hidden' id='tgt-id' />

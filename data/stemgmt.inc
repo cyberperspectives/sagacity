@@ -5,7 +5,7 @@
  * Purpose: For adding or editing ST&Es
  * Created: Oct 21, 2014
  *
- * Portions Copyright 2016-2017: Cyber Perspectives, LLC, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -21,6 +21,8 @@
  *  - May 19, 2017 - Migrated to filtering and changed save button to match buttons throughout
  *  - Jun 3, 2017 - Fixed bug #230 and changed table stripping to be consistent across the system
  *  - Jan 20, 2018 - Removed CKEditor fields
+ *  - Apr 29, 2018 - Updated jQuery and jQuery UI library and remove minimum date restriction
+ *  - May 31, 2018 - Added filtering to only show unique IP's and hostname excluding loopback and 0.0.0.0
  */
 $page   = filter_input(INPUT_GET, 'p', FILTER_SANITIZE_STRING);
 $ste_id = filter_input(INPUT_POST, 'ste', FILTER_SANITIZE_STRING, FILTER_NULL_ON_FAILURE);
@@ -34,7 +36,7 @@ $stes = $db->get_STE();
 
 <script type="text/javascript" src="/script/datatables/DataTables-1.10.9/js/jquery.dataTables.min.js"></script>
 
-<link rel="stylesheet" type="text/css" href="/script/jQueryUI/css/ui-lightness/jquery-ui-1.10.3.custom.min.css" />
+<link rel="stylesheet" type="text/css" href="/script/jquery-ui/jquery-ui.min.css" />
 <link type='text/css' rel='stylesheet' href="/script/datatables/DataTables-1.10.9/css/jquery.dataTables.min.css" />
 
 <?php
@@ -78,20 +80,19 @@ elseif ($page == 'EditSTE' && is_numeric($ste_id) && $ste_id > 0) {
         #cke_scope, #cke_assumptions, #cke_constraints {
             display:none;
         }
+        .ui-datepicker {
+            width: 17em;
+        }
     </style>
 
     <script type='text/javascript'>
         $(function () {
           $('#start_date').datepicker({
             dateFormat: "yy-mm-dd",
-            minDate: 0,
             onSelect: function (date) {
               var dt2 = $('#end_date');
-              var startDate = $(this).datepicker('getDate');
               var minDate = $(this).datepicker('getDate');
-              startDate.setDate(startDate.getDate() + 30);
               //sets dt2 maxDate to the last day of 30 days window
-              dt2.datepicker('option', 'maxDate', startDate);
               dt2.datepicker('option', 'minDate', minDate);
               //$(this).datepicker('option', 'minDate', minDate);
             }
@@ -122,61 +123,6 @@ elseif ($page == 'EditSTE' && is_numeric($ste_id) && $ste_id > 0) {
       ]});
      */ ?>
         });
-
-        function validate_Edit_STE() {
-          if ($('#action') == 'Delete STE') {
-            return confirm("Are you sure you want to delete this ST&E");
-          }
-
-          var ret = true;
-
-          if ($('#start_date').val() > $('#end_date').val()) {
-            alert("Your start date can't after the end date");
-            ret = false;
-          }
-
-          if (!$('#start_date').val()) {
-            alert("You must select a start date for this ST&E");
-            ret = false;
-          }
-
-          if (!$('#end_date').val()) {
-            alert("You must select an end date for this ST&E");
-            ret = false;
-          }
-
-          if ($('#system').val() == "0") {
-            alert("You must select a system for this ST&E");
-            ret = false;
-          }
-
-          if ($('#site').val() == "0") {
-            alert("You must select a site where this ST&E will be performed");
-            ret = false;
-          }
-
-          return ret;
-        }
-
-        function show_subsystems() {
-          if ($('#system').val() == '0') {
-            alert('Select a primary system');
-            $('#system').focus();
-            return;
-          }
-
-          if ($('#add_subsystems').is(':checked'))
-            $('#subsystem_container').show();
-          else
-            $('#subsystem_container').hide();
-
-          $('#subsystems option').each(function () {
-            if ($(this).val() == $('#system').val()) {
-              $(this).remove();
-              return;
-            }
-          });
-        }
     </script>
 
     <form method='post' action='?p=EditSTE'>
@@ -205,7 +151,6 @@ elseif ($page == 'EditSTE' && is_numeric($ste_id) && $ste_id > 0) {
             <input type='text' name='start_date' id='start_date' value='<?php print $ste->get_Eval_Start_Date()->format('Y-m-d'); ?>' /><br />
             Eval End Date:
             <input type='text' name='end_date' id='end_date' value='<?php print $ste->get_Eval_End_Date()->format('Y-m-d'); ?>' /><br />
-            <?php print "<script>console.log('" . json_encode($ste->get_System()) . "');</script>"; ?>
             System: <select name='system' id='system'>
                 <?php
                 foreach ($all_systems as $key => $sys) :
@@ -313,28 +258,28 @@ elseif ($page == 'EditSTE' && is_numeric($ste_id) && $ste_id > 0) {
         </thead>
         <tbody>
             <?php
-            $odd = true;
             if (is_array($tgts) && count($tgts) && isset($tgts['id'])) {
                 $tgts = array(0 => $tgts);
             }
             if (is_array($tgts) && count($tgts) && isset($tgts[0]) && is_a($tgts[0], 'target')) {
                 foreach ($tgts as $key => $tgt) {
-                    $interfaces = '';
-                    $fqdn       = '';
-                    $odd        = !$odd;
+                    $ips    = [];
+                    $fqdn   = [];
 
                     $os = $db->get_Software($tgt->get_OS_ID())[0];
 
                     foreach ($tgt->interfaces as $key2 => $int) {
-                        $interfaces .= $int->get_IPv4() . ", ";
-                        $fqdn       .= $int->get_FQDN() . ", ";
+                        if(!in_array($int->get_IPv4(), ['0.0.0.0', '127.0.0.1'])) {
+                            $ips[] = $int->get_IPv4();
+                        }
+                        $fqdn[]  = $int->get_FQDN();
                     }
 
-                    print "<tr>" . // class='".($odd ? 'odd' : 'even')."'>".
+                    print "<tr>" .
                         "<td>{$tgt->get_ID()}</td>" .
                         "<td>{$tgt->get_Name()}</td>" .
-                        "<td>" . substr($interfaces, 0, -2) . "</td>" .
-                        "<td>" . substr($fqdn, 0, -2) . "</td>" .
+                        "<td>" . implode(", ", array_unique($ips)) . "</td>" .
+                        "<td>" . implode(", ", array_unique($fqdn)) . "</td>" .
                         "<td>{$tgt->get_OS_String()}</td>" .
                         "</tr>";
                 }
@@ -360,14 +305,10 @@ elseif ($page == 'EditSTE' && $ste_id == 'new') {
         $(function () {
           $('#start_date').datepicker({
             dateFormat: "yy-mm-dd",
-            minDate: -30,
             onSelect: function (date) {
               var dt2 = $('#end_date');
-              var startDate = $(this).datepicker('getDate');
               var minDate = $(this).datepicker('getDate');
-              startDate.setDate(startDate.getDate() + 30);
               //sets dt2 maxDate to the last day of 30 days window
-              dt2.datepicker('option', 'maxDate', startDate);
               dt2.datepicker('option', 'minDate', minDate);
               //$(this).datepicker('option', 'minDate', minDate);
             }

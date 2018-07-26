@@ -27,8 +27,9 @@
  *  - May 19, 2017 - Simplified target selection code
  *  - May 26, 2017 - Added supporting code to delete target from category after clicking "Delete Host", also specified location where CKL files are placed upon export.
  *  - Jan 10, 2018 - Added new methods for /ste/stats.php and cleaned up
- *  - Jan 15, 2018 - Moved colums around, added target notes, 
-		Added getColorForPercentage method for sliding color scale
+ *  - Jan 15, 2018 - Moved colums around, added target notes,
+ Added getColorForPercentage method for sliding color scale
+ *  - Apr 29, 2018 - Simplified get_hosts method and displays, formatting
  */
 
 /**
@@ -130,6 +131,7 @@ function edit_cat(cat_id) {
   var cat_name = $('#cat_name_' + cat_id).text();
   var matches = cat_name.match(/\s+\(([\d]+)\)\s+\(([^\d][ \w]+)\)|\s+\(([\d]+)\)/i);
   cat_name = cat_name.replace(/\s+\(([\d]+)\)\s+\(([^\d][ \w]+)\)|\s+\(([\d]+)\)/i, '');
+  cat_name = cat_name.replace(/\s{2,}/g, '');
   $('#new_cat_name').val(cat_name);
   $('#selected_cat').val(cat_id);
   if (matches && typeof matches[2] !== 'undefined')
@@ -185,7 +187,6 @@ function delete_cat(id) {
         alert(data.error);
       }
       else {
-        alert(data.success);
         location.reload();
       }
     },
@@ -286,14 +287,8 @@ function update_Status(chk) {
  */
 function collapse_expand() {
   var id = $(this).data('id');
-
-  if ($('#cat_' + id + '_dl').val() == '0') {
-    if (location.href.match(/\/ste\/$|index\.php/)) {
-      get_hosts(id);
-    }
-    else {
-      get_new_hosts(id);
-    }
+  if(!$('.cat_' + id).length) {
+    get_hosts(id);
   }
 
   $(this).toggleClass('fa-minus-square fa-plus-square');
@@ -356,7 +351,17 @@ function get_hosts(cat_id) {
       $('#loading,#waiting').show();
       $('#waiting').animate({'opacity': '0.5'}, 300, 'linear');
     },
-    success: display_hosts,
+    success: function (data) {
+      if ($('#ops-page').val() == 'main') {
+        display_ops_hosts(data);
+      }
+      else if ($('#ops-page').val() == 'stats') {
+        display_stats_hosts(data);
+      }
+      else if ($('#ops-page').val() == 'task') {
+        display_task_hosts(data);
+      }
+    },
     error: function (xhr, status, error) {
       console.error(error);
     },
@@ -369,83 +374,111 @@ function get_hosts(cat_id) {
   });
 }
 
-/**
- *
- * @param {type} id
- * @returns {undefined}
- */
-function get_new_hosts(id) {
-  $.ajax('/ajax.php', {
-    data: {
-      action: 'new-get-hosts',
-      'cat-id': id
-    },
-    beforeSend: function () {
-      $('#loading,#waiting').show();
-      $('#waiting').animate({'opacity': '0.5'}, 300, 'linear');
-    },
-    success: function (data) {
-      if (data.error) {
-        console.error(data.error);
+function display_ops_hosts(hosts) {
+  if (hosts.error) {
+    console.error(hosts.error);
+  }
+  else {
+    var cat_id = hosts.cat_id;
+    var cat = $('#cat_' + cat_id);
+    var odd = true;
+
+    for (var x in hosts.targets) {
+      $(cat).after(
+              "<div class='" + (odd ? "odd_row" : "even_row") + " cat_" + cat_id + "'>" +
+              "<span class='cat-cell' style='width:102px;text-align:left'>" +
+              "<input type='checkbox' class='tgt-sel' value='" + hosts.targets[x].id + "' onclick='javascript:update_tgt_chk(this);' />" +
+              "<a href='target.php?ste=" + hosts.targets[x].ste_id + "&tgt=" + hosts.targets[x].id + "' class='host' target='_blank'>" + hosts.targets[x].name + "</a>" +
+              "<a href='target.php?ste=" + hosts.targets[x].ste_id + "&tgt=" + hosts.targets[x].id + "' class='ip' target='_blank'>" + hosts.targets[x].ip + "</a>" +
+              "</span>" +
+              "<span class='cat-cell' style='width:104px;line-height:1.25em;'>" + hosts.targets[x].os + "</span>" +
+              "<span class='cat-cell' style='width:102px;'>" +
+              (hosts.targets[x].location ? hosts.targets[x].location : "&nbsp;") +
+              "</span>" +
+              "<span class='cat-cell task-" + hosts.targets[x].auto.toLowerCase() + "' style='width:63px;text-align:center;'>" + hosts.targets[x].auto + "</span>" +
+              "<span class='cat-cell task-" + hosts.targets[x].man.toLowerCase() + "' style='width:63px;text-align:center;'>" + hosts.targets[x].man + "</span>" +
+              "<span class='cat-cell task-" + hosts.targets[x].data.toLowerCase() + "' style='width:63px;text-align:center;'>" + hosts.targets[x].data + "</span>" +
+              "<span class='cat-cell task-" + hosts.targets[x].fp.toLowerCase() + "' style='width:63px;text-align:center;'>" + hosts.targets[x].fp + "</span>" +
+              "<span class='cat-cell' style='width:147px;'>" +
+              (hosts.targets[x].scans ? hosts.targets[x].scans : "&nbsp;") +
+              "</span>" +
+              "<span class='cat-cell' style='width:147px;'>" +
+              (hosts.targets[x].chk ? hosts.targets[x].chk : "&nbsp;") +
+              "</span>" +
+              "<span class='cat-cell note' id='note_" + hosts.targets[x].id + "' style='width:346px;'>" + (hosts.targets[x].notes ? hosts.targets[x].notes : "&nbsp;") +
+              "<i class='fas target-notes fa-pen-square' data-id='" + hosts.targets[x].id + "'> </i>" +
+              "</span>" +
+              "</div>"
+              );
+
+      odd = !odd;
+    }
+
+    $('#cat_' + cat_id + '_dl').val(1);
+    $('.target-notes').click(get_target_notes);
+    $('.fa-ellipsis-h').tooltip({
+      classes: {
+        'ui-tooltip': 'highlight'
       }
-      else {
-        var cat_id = data.cat_id;
-        var cat = $('#cat_' + cat_id);
-        var odd = true;
+    });
+  }
+}
 
-        for (var x in data.targets) {
-          $(cat).after(
-                  "<div class='" + (odd ? "odd_row" : "even_row") + " cat_" + cat_id + "'>" +
-                  "<span class='cat-cell name' style='text-align:left'>" +
-                  "<input type='checkbox' class='tgt-sel' value='" + data.targets[x].id + "' onclick='javascript:update_tgt_chk(this);' />" +
-                  "<a href='target.php?ste=" + data.targets[x].ste_id + "&tgt=" + data.targets[x].id + "' class='host' target='_blank'>" + data.targets[x].name + "</a>" +
-                  "<a href='target.php?ste=" + data.targets[x].ste_id + "&tgt=" + data.targets[x].id + "' class='ip' target='_blank'>" + data.targets[x].ip + "</a>" +
-                  "</span>" +
-                  "<span class='cat-cell os' style='line-height:1.25em;'>" + data.targets[x].os + "</span>" +
-                  "<span class='cat-cell cat1 cat_I' title='Cat I Findings' style='text-align:center;'>" + data.targets[x].cat_1 + "</span>" +
-                  "<span class='cat-cell cat2 cat_II' title='Cat II Findings' style='text-align:center;'>" + data.targets[x].cat_2 + "</span>" +
-                  "<span class='cat-cell cat3 cat_III' title='Cat III Findings' style='text-align:center;'>" + data.targets[x].cat_3 + "</span>" +
-                  "<span class='cat-cell nf' title='Not a Finding' style='text-align:center;'>" + data.targets[x].nf + "</span>" +
-                  "<span class='cat-cell na' title='Not Applicable' style='text-align:center;'>" + data.targets[x].na + "</span>" +
-                  "<span class='cat-cell nr' title='Not Reviewed' style='text-align:center;'>" + data.targets[x].nr + "</span>" +
-                  "<span class='cat-cell comp' title='Percentage Compliant' style='text-align:center;background-color: " +
-                  getColorForPercentage(data.targets[x].comp)+ ";'>" + (data.targets[x].comp.toFixed(2) * 100) + "%</span>" +
-                  "<span class='cat-cell assessed' title='Percentage Assessed' style='text-align:center;background-color: " +
-                  getColorForPercentage(data.targets[x].assessed) + ";'>" + (data.targets[x].assessed.toFixed(2) * 100) + "%</span>" +
-                  "<span class='cat-cell scans'>" +
-                  (data.targets[x].scans ? data.targets[x].scans : "&nbsp;") +
-                  "</span>" +
-                  "<span class='cat-cell checklists'>" +
-                  (data.targets[x].chk ? data.targets[x].chk : "&nbsp;") +
-                  "</span>" +
-                  "<span class='cat-cell note'>" + data.targets[x].notes +
-                  "<i class='fas target-notes fa-pen-square' data-id='" + data.targets[x].id + "'> </i>" +
-                  "</span>" +
-                  "</div>"
-                  );
+function display_stats_hosts(hosts) {
+  if (hosts.error) {
+    console.error(hosts.error);
+  }
+  else {
+    var cat_id = hosts.cat_id;
+    var cat = $('#cat_' + cat_id);
+    var odd = true;
 
-          odd = !odd;
-        }
+    for (var x in hosts.targets) {
+      $(cat).after(
+              "<div class='" + (odd ? "odd_row" : "even_row") + " cat_" + cat_id + "'>" +
+              "<span class='cat-cell name' style='text-align:left'>" +
+              "<input type='checkbox' class='tgt-sel' value='" + hosts.targets[x].id + "' onclick='javascript:update_tgt_chk(this);' />" +
+              "<a href='target.php?ste=" + hosts.targets[x].ste_id + "&tgt=" + hosts.targets[x].id + "' class='host' target='_blank'>" + hosts.targets[x].name + "</a>" +
+              "<a href='target.php?ste=" + hosts.targets[x].ste_id + "&tgt=" + hosts.targets[x].id + "' class='ip' target='_blank'>" + hosts.targets[x].ip + "</a>" +
+              "</span>" +
+              "<span class='cat-cell os' style='line-height:1.25em;'>" + hosts.targets[x].os + "</span>" +
+              "<span class='cat-cell cat1 cat_I' title='Cat I Findings' style='text-align:center;'>" + hosts.targets[x].cat_1 + "</span>" +
+              "<span class='cat-cell cat2 cat_II' title='Cat II Findings' style='text-align:center;'>" + hosts.targets[x].cat_2 + "</span>" +
+              "<span class='cat-cell cat3 cat_III' title='Cat III Findings' style='text-align:center;'>" + hosts.targets[x].cat_3 + "</span>" +
+              "<span class='cat-cell nf' title='Not a Finding' style='text-align:center;'>" + hosts.targets[x].nf + "</span>" +
+              "<span class='cat-cell na' title='Not Applicable' style='text-align:center;'>" + hosts.targets[x].na + "</span>" +
+              "<span class='cat-cell nr' title='Not Reviewed' style='text-align:center;'>" + hosts.targets[x].nr + "</span>" +
+              "<span class='cat-cell comp' title='Percentage Compliant' style='text-align:center;background-color: " +
+              getColorForPercentage(hosts.targets[x].comp) + ";'>" + (hosts.targets[x].comp.toFixed(2) * 100) + "%</span>" +
+              "<span class='cat-cell assessed' title='Percentage Assessed' style='text-align:center;background-color: " +
+              getColorForPercentage(hosts.targets[x].assessed) + ";'>" + (hosts.targets[x].assessed.toFixed(2) * 100) + "%</span>" +
+              "<span class='cat-cell scans'>" +
+              (hosts.targets[x].scans ? hosts.targets[x].scans : "&nbsp;") +
+              "</span>" +
+              "<span class='cat-cell checklists'>" +
+              (hosts.targets[x].chk ? hosts.targets[x].chk : "&nbsp;") +
+              "</span>" +
+              "<span class='cat-cell note' id='note_" + hosts.targets[x].id + "'>" + hosts.targets[x].notes +
+              "<i class='fas target-notes fa-pen-square' data-id='" + hosts.targets[x].id + "'> </i>" +
+              "</span>" +
+              "</div>"
+              );
 
-        $('#cat_' + cat_id + '_dl').val(1);
-        $('.target-notes').click(get_target_notes);
-        $('.fa-ellipsis-h').tooltip({
-          classes: {
-            'ui-tooltip': 'highlight'
-          }
-        });
+      odd = !odd;
+    }
+
+    $('#cat_' + cat_id + '_dl').val(1);
+    $('.target-notes').click(get_target_notes);
+    $('.fa-ellipsis-h').tooltip({
+      classes: {
+        'ui-tooltip': 'highlight'
       }
-    },
-    error: function (xhr, status, error) {
-      console.error(error);
-    },
-    complete: function () {
-      $('#loading,#waiting').hide();
-      $('#waiting').animate({'opacity': '0'}, 300, 'linear');
-    },
-    dataType: 'json',
-    method: 'post'
-  });
+    });
+  }
+}
+
+function display_task_hosts(hosts) {
+
 }
 
 function get_target_notes() {
@@ -489,7 +522,13 @@ function save_target_notes() {
         alert(data.error);
       }
       else {
-        alert(data.success);
+        $('#note_' + $('#tgt-id').val()).html($('#notes').val() + "<i class='fas target-notes fa-pen-square' data-id='" + $("#tgt-id").val() + "'> </i>");
+        $('.target-notes').click(get_target_notes);
+        $('.fa-ellipsis-h').tooltip({
+          classes: {
+            'ui-tooltip': 'highlight'
+          }
+        });
         close_box();
       }
     },
@@ -499,50 +538,6 @@ function save_target_notes() {
     dataType: 'json',
     method: 'post'
   });
-}
-
-/**
- * Function to display retrieved hosts from AJAX call
- *
- * @param data
- */
-function display_hosts(data) {
-  var cat_id = data.cat_id;
-  var cat = $('#cat_' + cat_id);
-  var odd = true;
-
-  for (var x in data.targets) {
-    $(cat).after(
-            "<div class='" + (odd ? "odd_row" : "even_row") + " cat_" + cat_id + "'>" +
-            "<span class='cat-cell' style='width:102px;text-align:left'>" +
-            "<input type='checkbox' class='tgt-sel' value='" + data.targets[x].id + "' onclick='javascript:update_tgt_chk(this);' />" +
-            "<a href='target.php?ste=" + data.targets[x].ste_id + "&tgt=" + data.targets[x].id + "' class='host' target='_blank'>" + data.targets[x].name + "</a>" +
-            "<a href='target.php?ste=" + data.targets[x].ste_id + "&tgt=" + data.targets[x].id + "' class='ip' target='_blank'>" + data.targets[x].ip + "</a>" +
-            "</span>" +
-            "<span class='cat-cell' style='width:104px;line-height:1.25em;'>" + data.targets[x].os + "</span>" +
-            "<span class='cat-cell' style='width:102px;'>" +
-            (data.targets[x].location ? data.targets[x].location : "&nbsp;") +
-            "</span>" +
-            "<span class='cat-cell task-" + data.targets[x].auto.toLowerCase() + "' style='width:63px;text-align:center;'>" + data.targets[x].auto + "</span>" +
-            "<span class='cat-cell task-" + data.targets[x].man.toLowerCase() + "' style='width:63px;text-align:center;'>" + data.targets[x].man + "</span>" +
-            "<span class='cat-cell task-" + data.targets[x].data.toLowerCase() + "' style='width:63px;text-align:center;'>" + data.targets[x].data + "</span>" +
-            "<span class='cat-cell task-" + data.targets[x].fp.toLowerCase() + "' style='width:63px;text-align:center;'>" + data.targets[x].fp + "</span>" +
-            "<span class='cat-cell' style='width:147px;'>" +
-            (data.targets[x].scans ? data.targets[x].scans : "&nbsp;") +
-            "</span>" +
-            "<span class='cat-cell' style='width:147px;'>" +
-            (data.targets[x].chk ? data.targets[x].chk : "&nbsp;") +
-            "</span>" +
-            "<span class='cat-cell' style='width:346px;'>" +
-            (data.targets[x].notes ? data.targets[x].notes : "&nbsp;") +
-            "</span>" +
-            "</div>"
-            );
-
-    odd = !odd;
-  }
-
-  $('#cat_' + cat_id + '_dl').val(1);
 }
 
 /**
@@ -605,27 +600,27 @@ function export_ckl(cat_id, tgt_id) {
 
 // Mister @Jacob's Anwser
 var percentColors = [
-    { pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
-    { pct: 0.5, color: { r: 0xff, g: 0xff, b: 0 } },
-    { pct: 1.0, color: { r: 0x00, g: 0xff, b: 0 } } ];
+  {pct: 0.0, color: {r: 0xff, g: 0x00, b: 0}},
+  {pct: 0.5, color: {r: 0xff, g: 0xff, b: 0}},
+  {pct: 1.0, color: {r: 0x00, g: 0xff, b: 0}}];
 
-var getColorForPercentage = function(pct) {
-    for (var i = 1; i < percentColors.length - 1; i++) {
-        if (pct < percentColors[i].pct) {
-            break;
-        }
+var getColorForPercentage = function (pct) {
+  for (var i = 1; i < percentColors.length - 1; i++) {
+    if (pct < percentColors[i].pct) {
+      break;
     }
-    var lower = percentColors[i - 1];
-    var upper = percentColors[i];
-    var range = upper.pct - lower.pct;
-    var rangePct = (pct - lower.pct) / range;
-    var pctLower = 1 - rangePct;
-    var pctUpper = rangePct;
-    var color = {
-        r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
-        g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
-        b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
-    };
-    return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
-    // or output as hex if preferred
+  }
+  var lower = percentColors[i - 1];
+  var upper = percentColors[i];
+  var range = upper.pct - lower.pct;
+  var rangePct = (pct - lower.pct) / range;
+  var pctLower = 1 - rangePct;
+  var pctUpper = rangePct;
+  var color = {
+    r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
+    g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
+    b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
+  };
+  return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
+  // or output as hex if preferred
 }

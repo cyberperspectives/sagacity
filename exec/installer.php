@@ -5,7 +5,7 @@
  * Purpose: This script runs the installer processes
  * Created: Nov 28, 2017
  *
- * Copyright 2017: Cyber Perspective, LLC, All rights reserved
+ * Copyright 2017-2018: Cyber Perspective, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * See license.txt for details
@@ -15,12 +15,9 @@
  *  - Dec 27, 2017 - Fixed bug with SCG showing empty, and added download progress meta keys
  *  - Jan 2, 2018 - Add sleep to fix bug #357 race condition
  *  - Jan 10, 2018 - Formatting
+ *  - Apr 29, 2018 - Removed settings to move to .sql file. Also, changed to pull CVEs from NVD instead of Mitre repo
  */
 include_once 'helper.inc';
-include_once 'vendor/autoload.php';
-
-use Cocur\BackgroundProcess\BackgroundProcess;
-
 set_time_limit(0);
 
 $params       = [
@@ -263,10 +260,10 @@ function save_Database($params)
         }
     }
 
-    if (!$db->real_query("GRANT CREATE TEMPORARY TABLES, INSERT, DELETE, UPDATE, SELECT, TRIGGER ON `rmf`.* TO 'web'@'$host'")) {
+    if (!$db->real_query("GRANT ALL ON `rmf`.* TO 'web'@'$host'")) {
         $errors[] = $db->error;
     }
-    if (!$db->real_query("GRANT CREATE TEMPORARY TABLES, INSERT, DELETE, UPDATE, SELECT, TRIGGER ON `sagacity`.* TO 'web'@'$host'")) {
+    if (!$db->real_query("GRANT ALL ON `sagacity`.* TO 'web'@'$host'")) {
         $errors[] = $db->error;
     }
 
@@ -305,22 +302,6 @@ function save_Database($params)
             $help->debug(E_WARNING, "JSON for {$table->schema}.{$table->name} table was not pushed to database");
         }
     }
-
-    $help->extended_insert("settings", ["meta_key", "meta_value"], [
-        ['cpe-load-date', new DateTime('1970-01-01')],
-        ['cpe-progress', 0],
-        ['cpe-dl-progress', 0],
-        ['cve-load-date', new DateTime('1970-01-01')],
-        ['cve-progress', 0],
-        ['cve-dl-progress', 0],
-        ['stig-load-date', new DateTime('1970-01-01')],
-        ['stig-progress', 0],
-        ['stig-dl-progress', 0],
-        ['nasl-load-date', new DateTime('1970-01-01')],
-        ['nasl-progress', 0],
-        ['nasl-dl-progress', 0]
-        ], true);
-    $help->execute();
 
     /*
      * ***********************************************************
@@ -408,7 +389,7 @@ EOO;
     }
 
     if ($params['cve']) {
-        $cve = " --cve";
+        $cve = " --nvd";
     }
 
     if ($params['stig']) {
@@ -424,11 +405,12 @@ EOO;
     print json_encode(['success' => true, 'msg' => $msg]);
 
     if (!is_null($cpe) || !is_null($cve) || !is_null($stig)) {
+        include_once 'vendor/autoload.php';
         $script  = realpath(PHP_BIN) .
             " -c " . realpath(PHP_CONF) .
             " -f " . realpath(DOC_ROOT . "/exec/update_db.php") .
             " --{$cpe}{$cve}{$stig}{$action}";
-        $process = new BackgroundProcess($script);
+        $process = new Cocur\BackgroundProcess\BackgroundProcess($script);
         $process->run();
     }
 }

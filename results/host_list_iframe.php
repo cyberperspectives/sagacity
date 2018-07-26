@@ -20,6 +20,7 @@
  *  - May 13, 2017 - Converted to use DataTables instead of tablesorter library
  *  - May 22, 2017 - Set page length to 25 records
  *  - Jan 16, 2018 - Added scanner error column to host list
+ *  - Apr 19, 2018 - Updated 3rd party libraries
  */
 include_once 'config.inc';
 include_once 'database.inc';
@@ -44,10 +45,10 @@ $host_data = $scan->get_Host_List_Table();
 // @TODO Add scanner error notes to tooltip popup for error
 ?>
 
-<script src='/style/5grid/jquery-1.10.2.min.js'></script>
+<script src='/script/jquery-3.2.1.min.js'></script>
 <script src='/script/datatables/DataTables-1.10.9/js/jquery.dataTables.min.js'></script>
 <link rel="stylesheet" href="/script/datatables/DataTables-1.10.9/css/jquery.dataTables.min.css" />
-<link rel='stylesheet' href='/script/jquery-ui-1.11.4/jquery-ui.min.css' />
+<link rel='stylesheet' href='/script/jquery-ui/jquery-ui.min.css' />
 
 <link rel="stylesheet" href="/style/5grid/core.css" />
 <link rel="stylesheet" href="/style/5grid/core-desktop.css" />

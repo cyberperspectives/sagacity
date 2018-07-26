@@ -6,7 +6,7 @@
  * Purpose: Export findings to an Excel spreadsheet eChecklist
  * Created: Oct 15, 2013
  *
- * Portions Copyright 2016-2017: Cyber Perspectives, LLC, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -43,15 +43,15 @@ use PhpOffice\PhpSpreadsheet\Writer\Ods;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use PhpOffice\PhpSpreadsheet\Writer\Html;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
 set_time_limit(0);
 $db = new db();
 $checklists = [];
 $x = 0;
-$fh = fopen(LOG_PATH . "/eChecklist-export-timelog.csv", "a");
-$last_time = microtime(true);
 $emass_ccis = null;
-
+$log_level = convert_log_level();
 $chk_hosts = filter_input_array(INPUT_POST, 'chk_host');
 $cat_id = filter_input(INPUT_GET, 'cat', FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
 if (!$cat_id) {
@@ -63,66 +63,62 @@ if (!$ste_id) {
 }
 
 if (!$ste_id || !$cat_id) {
-  die("Could not find the STE and Category ID");
+	die("Could not find the STE or Category ID");
 }
 
-if (LOG_LEVEL == E_DEBUG) {
-  time_log_diff($fh, "calling get_category_findings");
+$cat = $db->get_Category($cat_id)[0];
+if (!is_a($cat, 'ste_cat')) {
+	die("Error finding category $cat_id");
 }
+
+$ste = $db->get_STE($ste_id)[0];
+if (!is_a($ste, 'ste')) {
+	die("Error finding ST&E");
+}
+
+$log = new Logger("eChecklist-export");
+$log->pushHandler(new StreamHandler(LOG_PATH . "/{$cat->get_Name()}-echecklist-export.log", $log_level));
+
 if ($chk_hosts) {
   $findings = $db->get_Category_Findings($cat_id, $chk_hosts);
 }
 else {
   $findings = $db->get_Category_Findings($cat_id);
 }
-if (LOG_LEVEL == E_DEBUG) {
-  time_log_diff($fh, "Got findings");
-}
-
-$cat = $db->get_Category($cat_id)[0];
-if (!is_a($cat, 'ste_cat')) {
-  Sagacity_Error::err_handler("Error finding category $cat_id", E_ERROR);
-}
-$ste = $db->get_STE($ste_id)[0];
+$log->debug("Got findings");
 
 // Get mapping of eMASS controls to CCIs from DB
 if ($ste->get_System()->get_Accreditation_Type() == accrediation_types::RMF) {
   $emass_ccis = $db->get_EMASS_CCIs();
 }
 
-$log = new Sagacity_Error("{$cat->get_Name()}-echecklist-export.log");
-
 $Reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile("eChecklist-Template.xlsx");
 $ss = $Reader->load("eChecklist-Template.xlsx");
 
-if (LOG_LEVEL == E_DEBUG) {
-  time_log_diff($fh, "Loaded template");
-}
+$log->debug("Loaded template");
 
 $ss->setActiveSheetIndexByName('Cover Sheet')
-    ->setCellValue("B5", "{$ste->get_System()->get_Name()} eChecklist")
-    ->setCellValue("B9", "{$ste->get_Eval_Start_Date()->format("m/d/Y")}-{$ste->get_Eval_End_Date()->format("m/d/Y")}")
-    ->setCellValue("B2", ($ste->get_System()->get_Classification() == 'Classified' ? "SECRET" : "UNCLASSIFIED"))
-    ->setCellValue("B12", "by:\r" . COMPANY . "\r" . COMP_ADD)
-    ->setCellValue("B15", "Derived from: " . SCG . "\rReasons: <reasons>\rDeclassify on: " . DECLASSIFY_ON);
+   ->setCellValue("B5", "{$ste->get_System()->get_Name()} eChecklist")
+   ->setCellValue("B9", "{$ste->get_Eval_Start_Date()->format("m/d/Y")}-{$ste->get_Eval_End_Date()->format("m/d/Y")}")
+   ->setCellValue("B2", ($ste->get_System()->get_Classification() == 'Classified' ? "SECRET" : "UNCLASSIFIED"))
+   ->setCellValue("B12", "by:\r" . COMPANY . "\r" . COMP_ADD)
+   ->setCellValue("B15", "Derived from: " . SCG . "\rReasons: <reasons>\rDeclassify on: " . DECLASSIFY_ON);
 
 // set properties
 $ss->getProperties()
-    ->setCreator(CREATOR);
+   ->setCreator(CREATOR);
 $ss->getProperties()
-    ->setLastModifiedBy(LAST_MODIFIED_BY);
+   ->setLastModifiedBy(LAST_MODIFIED_BY);
 $ss->getProperties()
-    ->setCompany(COMPANY);
+   ->setCompany(COMPANY);
 $ss->getProperties()
-    ->setTitle("{$cat->get_Name()} eChecklist");
+   ->setTitle("{$cat->get_Name()} eChecklist");
 $ss->getProperties()
-    ->setSubject("{$cat->get_Name()} eChecklist");
+   ->setSubject("{$cat->get_Name()} eChecklist");
 $ss->getProperties()
-    ->setDescription("{$cat->get_Name()} eChecklist");
+   ->setDescription("{$cat->get_Name()} eChecklist");
 
-if (LOG_LEVEL == E_DEBUG) {
-  time_log_diff($fh, "File properties set");
-}
+$log->debug("File properties set");
 
 // set active sheet
 $ss->setActiveSheetIndex(2);
@@ -141,9 +137,7 @@ $host_status = array(
 
 // Iterate over worksheets in the category; populating each with the checklists and finding data
 foreach ($findings as $worksheet_name => $data) {
-  if (LOG_LEVEL == E_DEBUG) {
-    time_log_diff($fh, "Looping through worksheet $worksheet_name");
-  }
+  $log->debug("Looping through worksheet $worksheet_name");
   $chk_arr = [];
   $named_range = '';
 
@@ -192,9 +186,7 @@ foreach ($findings as $worksheet_name => $data) {
     }
   }
 
-  if (LOG_LEVEL == E_DEBUG) {
-    time_log_diff($fh, "Setting classification");
-  }
+  $log->debug("Setting classification: $class");
   $sheet->setCellValue("A1", $class)
       ->setCellValue('E2', $ste->get_System()->get_Name());
 
@@ -210,9 +202,7 @@ foreach ($findings as $worksheet_name => $data) {
 
   // Iterate over checklist items ($stig_id) and populate spreadsheet with status of each
   foreach ($data['stigs'] as $stig_id => $tgt_status) {
-    if (LOG_LEVEL == E_DEBUG) {
-      time_log_diff($fh, "Running through STIG $stig_id");
-    }
+	$log->debug("Running through STIG $stig_id", $tgt_status);
     $ia_controls_string = null;
     $notes = '';
 
@@ -241,23 +231,19 @@ foreach ($findings as $worksheet_name => $data) {
         ->setCellValue("B{$row}", $tgt_status['echecklist']->get_VMS_ID())
         ->setCellValue("C{$row}", $tgt_status['echecklist']->get_Cat_Level_String())
         ->setCellValue("D{$row}", $ia_controls_string)
-        ->setCellValue("E{$row}", html_entity_decode($tgt_status['echecklist']->get_Short_Title()));
-    if (LOG_LEVEL == E_DEBUG) {
-      time_log_diff($fh, "Added STIG info ($stig_id), now to targets");
-    }
+        ->setCellValue("E{$row}", str_replace("\\n", "\n", html_entity_decode($tgt_status['echecklist']->get_Short_Title())));
+	$log->debug("Added STIG info ($stig_id), not to targets");
 
     foreach ($data['target_list'] as $host_name => $col_id) {
       $status = 'Not Applicable';
-      if (isset($tgt_status[$host_name])) {
-        $status = $tgt_status[$host_name];
+      if (isset($tgt_status["{$host_name}"])) {
+        $status = $tgt_status["{$host_name}"];
       }
 
       $col = Coordinate::stringFromColumnIndex($col_id);
       $sheet->setCellValue("{$col}{$row}", $status);
       $sheet->getCell("{$col}{$row}")->setDataValidation(clone $validation['host_status']);
-      if (LOG_LEVEL == E_DEBUG) {
-        time_log_diff($fh, "Set data validation for target $host_name");
-      }
+	  $log->debug("Set data validation for target $host_name");
     }
 
     $overall_str = "=IF(" .
@@ -277,17 +263,13 @@ foreach ($findings as $worksheet_name => $data) {
     //->setDataValidation($validation['true_false']);
 
     $sheet->setCellValue($notes_col . $row, html_entity_decode($tgt_status['echecklist']->get_Notes()))
-        ->setCellValue($check_contents_col . $row, str_replace("\\n", "\r", html_entity_decode($tgt_status['echecklist']->get_Check_Contents())));
-    if (LOG_LEVEL == E_DEBUG) {
-      time_log_diff($fh, "Added remaining cells");
-    }
+        ->setCellValue($check_contents_col . $row, str_replace("\\n", "\n", html_entity_decode($tgt_status['echecklist']->get_Check_Contents())));
+	$log->debug("Added remaining cells");
 
     $row++;
   }
 
-  if (LOG_LEVEL == E_DEBUG) {
-    time_log_diff($fh, "Completed STIG parsing");
-  }
+  $log->debug("Completed STIG parsing");
   $sheet->getStyle("F11:" . Coordinate::stringFromColumnIndex(count($data['target_list']) + 6) . $row)
       ->setConditionalStyles($host_status);
   $sheet->getStyle("C11:C{$sheet->getHighestDataRow()}")
@@ -320,16 +302,12 @@ foreach ($findings as $worksheet_name => $data) {
 
   updateHostHeader($sheet, $data['target_list'], $db);
 
-  if (LOG_LEVEL == E_DEBUG) {
-    time_log_diff($fh, "Completed worksheet $worksheet_name");
-  }
+  $log->debug("Completed worksheet $worksheet");
 }
 
 $ss->removeSheetByIndex(2);
 
-if (LOG_LEVEL == E_DEBUG) {
-  time_log_diff($fh, "Writing to file");
-}
+$log->debug("Writing to file");
 
 $ct = '';
 $writer = null;
@@ -374,11 +352,7 @@ $cat_name = str_replace(" ", "_", $cat->get_Name());
 header("Content-type: $ct");
 header("Content-disposition: attachment; filename='{$cat_name}-eChecklist-{$ste_id}." . ECHECKLIST_FORMAT . "'");
 $writer->save("php://output");
-if (LOG_LEVEL == E_DEBUG) {
-  time_log_diff($fh, "Writing complete");
-}
-
-fclose($fh);
+$log->debug("Writing complete");
 
 /**
  * Update the header on the worksheet
@@ -402,7 +376,7 @@ function updateHostHeader($sheet, $tgts, &$db) {
   $not_reviewed = null;
 
   foreach ($tgts as $tgt_name => $col_id) {
-    $log->script_log("tgt_name: $tgt_name\tcol_id: $col_id");
+    $log->notice("tgt_name: $tgt_name\tcol_id: $col_id");
     $tgt = $db->get_Target_Details($ste_id, $tgt_name)[0];
     $os = $db->get_Software($tgt->get_OS_ID())[0];
 

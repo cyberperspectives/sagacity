@@ -5,13 +5,14 @@
  * Author: Ryan Prather
  * Created: Feb 23, 2018
  *
- * Copyright 2018: Cyber Perspectives, All rights reserved
+ * Copyright 2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * See license.txt for details
  *
  * Change Log:
  * - Feb 23, 2018 - File Created
+ * - Apr 29, 2018 - Added return for formatted date/time string for start and stop
  */
 
 /**
@@ -60,7 +61,7 @@ class DateTimeDiff
 
     /**
      * Getter function for _dtStart
-     * 
+     *
      * @return DateTime
      */
     public function getStartClock()
@@ -76,6 +77,16 @@ class DateTimeDiff
     public function getStartClockTime()
     {
         return $this->_dtStart->format("H:i:s");
+    }
+
+    /**
+     * Getter function for _dtStart as formatted date/time
+     *
+     * @return string
+     */
+    public function getStartClockDateTime()
+    {
+        return $this->_dtStart->format(MYSQL_DT_FORMAT);
     }
 
     /**
@@ -96,6 +107,16 @@ class DateTimeDiff
     public function getEndClockTime()
     {
         return $this->_dtEnd->format("H:i:s");
+    }
+
+    /**
+     * Getter function for _dtEnd as formatted date/time
+     * 
+     * @return string
+     */
+    public function getEndClockDateTime()
+    {
+        return $this->_dtEnd->format(MYSQL_DT_FORMAT);
     }
 
     /**

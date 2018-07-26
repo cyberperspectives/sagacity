@@ -60,7 +60,6 @@ else {
 print "Destination: $dest" . PHP_EOL;
 
 $xml = new Array2XML();
-Array2XML::$all_caps = true;
 $xml->standalone = true;
 $xml->formatOutput = true;
 

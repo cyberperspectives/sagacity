@@ -5,7 +5,7 @@
  * Purpose: Main index page for the ST&E Operations
  * Created: Sep 16, 2013
  *
- * Portions Copyright 2016-2017: Cyber Perspectives, LLC, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -32,25 +32,27 @@
  *  - May 26, 2017 - Added JS to delete hosts from category after deleting host using "Delete Host" button
  *  - May 30, 2017 - Fixed bug #209 error when saving category after editing
  *  - Jun 3, 2017 - Fixed bug #236
+ *  - Apr 19, 2018 - Updated 3rd party libraries
  */
 $title_prefix = "Operations";
 
 include_once 'config.inc';
-include_once 'header.inc';
+include_once 'helper.inc';
 include_once 'database.inc';
 
 set_time_limit(0);
 
-$db = new db();
+$db          = new db();
+$cats        = [];
+$action      = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING, FILTER_NULL_ON_FAILURE);
+$ste_id      = filter_input(INPUT_POST, 'ste', FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
+$task_status = $db->get_Task_Statuses();
+$stes        = $db->get_STE();
+$scan_srcs   = $db->get_Sources();
 
-$cats   = [];
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
-$ste_id = filter_input(INPUT_POST, 'ste', FILTER_VALIDATE_INT);
 if (!$ste_id) {
-    $ste_id = filter_input(INPUT_COOKIE, 'ste', FILTER_VALIDATE_INT);
+    $ste_id = filter_input(INPUT_COOKIE, 'ste', FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
 }
-
-$stes = $db->get_STE();
 
 if ($action) {
     if ($action == 'move_to') {
@@ -187,13 +189,10 @@ if ($ste_id) {
     $cats = $db->get_STE_Cat_List($ste_id);
 }
 
-$task_status = $db->get_Task_Statuses();
-
-$scan_srcs = $db->get_Sources();
-
+include_once 'header.inc';
 ?>
 
-<script src="ste_script.js" type="text/javascript"></script>
+<script src="ste_script.min.js" type="text/javascript"></script>
 <link href='/style/style.css' rel='stylesheet' type='text/css' />
 
 <script type="text/javascript">
@@ -342,19 +341,19 @@ $scan_srcs = $db->get_Sources();
                                 <select name='ste' style='width: 400px;' id="ste"
                                         onchange="setCookie('ste', this.value);
                                               this.form.submit();">
-                                        <option value='0'> -- Please Select an ST&amp;E -- </option>
-                                            <?php
-                                            if (is_array($stes) && count($stes)) {
-                                                foreach ($stes as $ste) {
-                                                    print "<option value='{$ste->get_ID()}'" .
-                                                        ($ste_id && $ste_id == $ste->get_ID() ? " selected" : "") .
-                                                        ">" .
-                                                        "{$ste->get_System()->get_Name()}, {$ste->get_Site()->get_Name()}, {$ste->get_Eval_Start_Date()->format("d M Y")}" .
-                                                        "</option>";
-                                                }
-                                            }
+                                    <option value='0'> -- Please Select an ST&amp;E -- </option>
+                                    <?php
+                                    if (is_array($stes) && count($stes)) {
+                                        foreach ($stes as $ste) {
+                                            print "<option value='{$ste->get_ID()}'" .
+                                                ($ste_id && $ste_id == $ste->get_ID() ? " selected" : "") .
+                                                ">" .
+                                                "{$ste->get_System()->get_Name()}, {$ste->get_Site()->get_Name()}, {$ste->get_Eval_Start_Date()->format("d M Y")}" .
+                                                "</option>";
+                                        }
+                                    }
 
-                                            ?>
+                                    ?>
                                 </select>
                             </form>
                         </div>
@@ -494,6 +493,13 @@ $scan_srcs = $db->get_Sources();
             </div>
         </div>
     </div>
+</div>
+<input type="hidden" id="ops-page" value="main" />
+
+<div id='tgt-notes' class="box">
+    <input type='hidden' id='tgt-id' />
+    <textarea id='notes' style='width:100%;height:75%;'></textarea>
+    <input type='button' id='save-tgt-notes' value='Save' />
 </div>
 
 <div class="backdrop"></div>

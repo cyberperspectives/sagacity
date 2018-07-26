@@ -6,7 +6,7 @@
  *  and for the ST&E Manager to interact with
  * Created: Sep 11, 2013
  *
- * Portions Copyright 2016-2017: Cyber Perspectives, LLC, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -68,6 +68,11 @@
  *  - Jan 16, 2018 - Added include for host_list.inc, updated to use host_list class, fixed bug in delete_Scan method
   Moved scan deletion here
  *  - Jan 20, 2018 - Fixed typo in save_STE method
+ *  - May 24, 2018 - Added defaulting where clause operator to '='
+ *  - May 26, 2018 - Updated autocategorization to removed any extranious spaces before or after the string
+ *  - May 31, 2018 - Changes to support renaming sagacity.pdi_catalog.check_content field and scan error detection
+ *  - Jun 2, 2018 - Formatting and added set_Setting_Array method
+ *  - Jun 5, 2018 - Changed set_Setting_Array method to use SQL update instead of replace
  */
 include_once 'base.inc';
 include_once 'software.inc';
@@ -262,7 +267,7 @@ class db_helper
             if (in_array($this->query_type, [self::SELECT, self::SELECT_COUNT])) {
                 $this->result = $this->c->query($this->sql);
                 if ($this->c->error) {
-                    $this->debug(E_ERROR, $this->c->error);
+                    $this->debug(E_ERROR);
                 }
             }
             elseif ($this->query_type == self::DELETE) {
@@ -1085,7 +1090,6 @@ class db_helper
      */
     public function field_check($field_data, $check, $pks, $index)
     {
-        $match   = [];
         $default = null;
         $ret     = null;
 
@@ -1261,6 +1265,11 @@ class db_helper
             $errmsg = $this->sql;
         }
 
+        file_put_contents(realpath(LOG_PATH . '/db.log'), "{$dt->format(DATE_ISO8601)}\t" .
+            "$err_lvl\t" .
+            "Executing: $this->query_type\t" .
+            "SQL: {$errmsg}" . PHP_EOL, FILE_APPEND);
+
         if ($errno == E_DEBUG && $this->result && LOG_LEVEL == E_DEBUG) {
             file_put_contents(realpath(LOG_PATH . '/db.debug'), print_r($this->result, true), FILE_APPEND);
         }
@@ -1270,11 +1279,6 @@ class db_helper
             error_log($this->c->error);
             die($this->c->error);
         }
-
-        file_put_contents(realpath(LOG_PATH . '/db.log'), "{$dt->format(DATE_ISO8601)}\t" .
-            "$err_lvl\t" .
-            "Executing: $this->query_type\t" .
-            "SQL: {$errmsg}" . PHP_EOL, FILE_APPEND);
     }
 
     /**
@@ -1370,37 +1374,41 @@ class db_helper
             }
 
             $not = null;
-            if (in_array($w['op'], array(IS_NOT, NOT_LIKE, NOT_IN))) {
+            if (isset($w['op']) && in_array($w['op'], array(IS_NOT, NOT_LIKE, NOT_IN))) {
                 $not = ' NOT';
             }
 
-            if ($w['op'] == LIKE || $w['op'] == NOT_LIKE) {
+            if (isset($w['op']) && ($w['op'] == LIKE || $w['op'] == NOT_LIKE)) {
                 $ret .= " {$field}{$not} LIKE {$w['value']}";
             }
-            elseif (($w['op'] == IN || $w['op'] == NOT_IN) && is_string($w['value'])) {
+            elseif (isset($w['op']) && ($w['op'] == IN || $w['op'] == NOT_IN) && is_string($w['value'])) {
                 $ret .= " {$field}{$not} IN " . (strpos($w['value'], '(') !== false ? $w['value'] : "({$w['value']})");
             }
-            elseif (($w['op'] == IN || $w['op'] == NOT_IN) && is_array($w['value'])) {
+            elseif (isset($w['op']) && ($w['op'] == IN || $w['op'] == NOT_IN) && is_array($w['value'])) {
                 $ret .= " {$field}{$not} IN (" . implode(",", array_map(array($this, '_escape'), $w['value'])) . ")";
             }
-            elseif ($w['op'] == BETWEEN) {
+            elseif (isset($w['op']) && $w['op'] == BETWEEN) {
                 if (!isset($w['low']) && !isset($w['high'])) {
                     continue;
                 }
                 $ret .= " {$field} BETWEEN {$this->_escape($w['low'])} AND {$this->_escape($w['high'])}";
             }
-            elseif ($w['op'] == IS || $w['op'] == IS_NOT) {
+            elseif (isset($w['op']) && ($w['op'] == IS || $w['op'] == IS_NOT)) {
                 $ret .= " {$field} IS{$not} {$this->_escape($w['value'])}";
             }
             else {
+                $op = "=";
+                if (isset($w['op'])) {
+                    $op = $w['op'];
+                }
                 if (isset($w['case_insensitive']) && $w['case_insensitive']) {
-                    $ret .= " LOWER({$field}) {$w['op']} LOWER({$this->_escape($w['value'])})";
+                    $ret .= " LOWER({$field}) {$op} LOWER({$this->_escape($w['value'])})";
                 }
                 elseif (preg_match("/\(SELECT/", $w['value'])) {
-                    $ret .= " {$field} {$w['op']} {$w['value']}";
+                    $ret .= " {$field} {$op} {$w['value']}";
                 }
                 else {
-                    $ret .= " {$field} {$w['op']} {$this->_escape($w['value'])}";
+                    $ret .= " {$field} {$op} {$this->_escape($w['value'])}";
                 }
             }
 
@@ -1804,22 +1812,18 @@ class db
         $host = ($persistent ? "p:" : "") . DB_SERVER;
         if (class_exists('mysqli')) {
             $pwd        = self::decrypt_pwd();
-            $this->conn = new mysqli($host, 'web', $pwd);
+            $this->conn = new mysqli($host, 'web', $pwd, 'sagacity');
         }
         else {
             die("Could not find the mysqli class");
         }
-        //$this->conn = new mysqli($host, 'web', self::decrypt_pwd(), 'sagacity');
         // if there is a problem output that
-        if($this->conn->connect_errno && $this->conn->connect_errno == 1045) {
+        if ($this->conn->connect_errno && $this->conn->connect_errno == 1045) {
             die("Invalid database username and/or password");
         }
         elseif ($this->conn->connect_errno) {
             error_log("Error connecting to " . DB_SERVER . " " . $this->conn->connect_error);
             die("Error connecting to " . DB_SERVER);
-        }
-        else {
-            $this->conn->select_db('sagacity');
         }
 
         // set the character set and default database
@@ -2012,72 +2016,68 @@ class db
      */
     public function auto_Catorgize_Targets($ste_id)
     {
-        $this->help->select("sagacity.target t", array('t.id', 't.os_string'), array(
-            array(
+        $this->help->select("sagacity.target t", ['t.id', 't.os_string'], [
+            [
                 'field' => 't.ste_id',
-                'op'    => '=',
                 'value' => $ste_id
-            ),
-            array(
+            ],
+            [
                 'field'  => 't.cat_id',
                 'op'     => IS,
                 'value'  => null,
                 'sql_op' => 'AND'
-            ),
-            array(
+            ],
+            [
                 'field'  => 's.cpe',
                 'op'     => '!=',
                 'value'  => 'cpe:/o:generic:generic:-',
                 'sql_op' => 'AND'
-            )
-            ), array(
-            'table_joins' => array(
+            ]
+            ], [
+            'table_joins' => [
                 'JOIN sagacity.software s ON t.os_id=s.id'
-            )
-        ));
+            ]
+        ]);
 
         $rows = $this->help->execute();
         if (is_array($rows) && count($rows) && isset($rows['id'])) {
-            $rows = array(0 => $rows);
+            $rows = [0 => $rows];
         }
 
         if (is_array($rows) && count($rows) && isset($rows[0])) {
             foreach ($rows as $row) {
                 $id = 0;
-                $this->help->select("sagacity.ste_cat", array('id'), array(
-                    array(
+                $this->help->select("sagacity.ste_cat", ['id'], [
+                    [
                         'field' => 'ste_id',
-                        'op'    => '=',
                         'value' => $ste_id
-                    ),
-                    array(
+                    ],
+                    [
                         'field'  => 'name',
-                        'op'     => '=',
-                        'value'  => $row['os_string'],
+                        'value'  => trim($row['os_string']),
                         'sql_op' => 'AND'
-                    )
-                ));
+                    ]
+                ]);
 
                 $tmp = $this->help->execute();
                 if (is_array($tmp) && count($tmp) && isset($tmp['id'])) {
                     $id = $tmp['id'];
                 }
                 else {
-                    $this->help->insert("sagacity.ste_cat", array(
+                    $this->help->insert("sagacity.ste_cat", [
                         'ste_id' => $ste_id,
-                        'name'   => $row['os_string']
-                        ), true);
+                        'name'   => trim($row['os_string'])
+                        ], true);
                     $id = $this->help->execute();
                 }
 
                 if ($id) {
-                    $this->help->update("sagacity.target", array('cat_id' => $id), array(
-                        array(
+                    $this->help->update("sagacity.target", ['cat_id' => $id], [
+                        [
                             'field' => 'id',
-                            'op'    => '=',
                             'value' => $row['id']
-                        )
-                    ));
+                        ]
+                    ]);
                     $this->help->execute();
                 }
             }
@@ -2448,7 +2448,6 @@ class db
      */
     public function get_EMASS_CCIs()
     {
-        $ret = [];
         $this->help->select("rmf.emass_cci");
         $ret = $this->help->execute();
         return $ret;
@@ -2689,13 +2688,12 @@ class db
     public function get_Checklist_By_File($fname)
     {
         $ret = [];
-        $this->help->select("sagacity.checklist", null, array(
-            array(
+        $this->help->select("sagacity.checklist", null, [
+            [
                 'field' => 'file_name',
-                'op'    => '=',
                 'value' => $fname
-            )
-        ));
+            ]
+        ]);
 
         $rows = $this->help->execute();
         if (isset($rows['id'])) {
@@ -2704,26 +2702,25 @@ class db
 
         if (is_array($rows) && count($rows) && isset($rows[0])) {
             foreach ($rows as $row) {
-                $chk   = new checklist($row['id'], $row['checklist_id'], $row['name'], $row['description'], $row['date'], $row['file_name'], $row['ver'], $row['release'], $row['type'], $row['icon']);
-                /*
-                  $this->help->select("sagacity.checklist_software_lookup", array('sw_id'), array(
-                  array(
-                  'field' => 'chk_id',
-                  'op'    => '=',
-                  'value' => $row['id']
-                  )
-                  ));
-                  $sw_rows = $this->help->execute();
-                  if (count($sw_rows)) {
-                  if (isset($sw_rows['sw_id'])) {
-                  $sw_rows = array(0 => $sw_rows);
-                  }
+                $chk     = new checklist($row['id'], $row['checklist_id'], $row['name'], $row['description'], $row['date'], $row['file_name'], $row['ver'], $row['release'], $row['type'], $row['icon']);
+                /**/
+                $this->help->select("sagacity.checklist_software_lookup", ['sw_id'], [
+                    [
+                        'field' => 'chk_id',
+                        'value' => $row['id']
+                    ]
+                ]);
+                $sw_rows = $this->help->execute();
+                if (count($sw_rows)) {
+                    if (isset($sw_rows['sw_id'])) {
+                        $sw_rows = [0 => $sw_rows];
+                    }
 
-                  foreach ($sw_rows as $row2) {
-                  $chk->add_SW($this->get_Software($row2['sw_id']));
-                  }
-                  }
-                 */
+                    foreach ($sw_rows as $row2) {
+                        $chk->add_SW($this->get_Software($row2['sw_id']));
+                    }
+                }
+
                 $ret[] = $chk;
             }
         }
@@ -2874,46 +2871,46 @@ class db
         foreach ($chklsts as $chk_key => $chk) {
             foreach ($tgts as $host_key => $host) {
                 if ($chk != 'Orphan') {
-                    $this->help->select_count("sagacity.target_checklist tc", array(
-                        array(
+                    $this->help->select_count("sagacity.target_checklist tc", [
+                        [
                             'field' => 'tc.tgt_id',
                             'op'    => '=',
                             'value' => $host_key
-                        ),
-                        array(
+                        ],
+                        [
                             'field'  => 'tc.chk_id',
                             'op'     => '=',
                             'value'  => $chk_key,
                             'sql_op' => 'AND'
-                        )
-                    ));
+                        ]
+                    ]);
                 }
                 else {
-                    $this->help->select("sagacity.findings f", array("IF(COUNT(1) > 0, '1', '0')"), array(
-                        array(
+                    $this->help->select("sagacity.findings f", ["IF(COUNT(1) > 0, '1', '0')"], [
+                        [
                             'field' => 'f.tgt_id',
                             'op'    => '=',
                             'value' => $host_key
-                        ),
-                        array(
+                        ],
+                        [
                             'field'  => 'c.name',
                             'op'     => '=',
                             'value'  => 'Orphan',
                             'sql_op' => 'AND'
-                        )
-                        ), array(
-                        'table_joins' => array(
+                        ]
+                        ], [
+                        'table_joins' => [
                             "LEFT JOIN sagacity.pdi_checklist_lookup pcl ON pcl.pdi_id=f.pdi_id",
                             "LEFT JOIN sagacity.checklist c ON c.id=pcl.checklist_id"
-                        )
-                    ));
+                        ]
+                    ]);
                 }
 
                 $summary[$chk_key][$host_key] = $this->help->execute();
             }
         }
 
-        return array('tgts' => $tgts, 'checklists' => $chklsts, 'summary' => $summary);
+        return ['tgts' => $tgts, 'checklists' => $chklsts, 'summary' => $summary];
     }
 
     /**
@@ -3225,7 +3222,7 @@ class db
                 }
 
                 if (!isset($ret[$worksheet_name]['target_list'][$row['tgt_name']])) {
-                    $ret[$worksheet_name]['target_list'][$row['tgt_name']] = count($ret[$worksheet_name]['target_list']) + 6;
+                    $ret[$worksheet_name]['target_list']["{$row['tgt_name']}"] = count($ret[$worksheet_name]['target_list']) + 6;
                 }
 
                 if (!isset($ret[$worksheet_name]['stigs'][$row['stig_id']])) {
@@ -3237,11 +3234,11 @@ class db
                     }
                     $echk                                           = new echecklist($row['stig_id'], $row['vms_id'], (empty($row['finding_cat']) ? $row['cat'] : $row['finding_cat']), $ia, $row['short_title'], null, $row['notes'], $row['check_contents'], null);
                     $echk->set_PDI_ID($row['pdi_id']);
-                    $ret[$worksheet_name]['stigs'][$row['stig_id']] = array(
+                    $ret[$worksheet_name]['stigs'][$row['stig_id']] = [
                         'echecklist'     => $echk,
-                        $row['tgt_name'] => $row['finding_status'],
+                        "{$row['tgt_name']}" => $row['finding_status'],
                         'chk_id'         => $row['chk_id']
-                    );
+                    ];
                     if (!in_array($row['stig_id'], $stigs)) {
                         $stigs[] = $row['stig_id'];
                     }
@@ -4205,8 +4202,14 @@ class db
     public function get_Findings_Not_in_System($ste)
     {
         $ret = [];
-        $sql = "CREATE TEMPORARY TABLE `unaccounted_for_findings` (`pdi_id` int(11) UNIQUE NOT NULL)";
-        $this->conn->real_query($sql);
+        $this->help->create_table("unaccounted_for_findings", [
+            [
+                'field'    => 'pdi_id',
+                'datatype' => 'int(11)',
+                'option'   => 'UNIQUE NOT NULL'
+            ]
+        ]);
+        $this->help->execute();
 
         $sql = "INSERT IGNORE INTO `unaccounted_for_findings` (`pdi_id`) SELECT DISTINCT(f.`pdi_id`) " .
             "FROM `findings` f JOIN `target` t ON t.`id` = f.`tgt_id` " .
@@ -4263,133 +4266,124 @@ class db
      */
     public function get_Finding_Count_By_Status($cat_id, $status, $cat = null, $ctrl = null)
     {
-        $joins = array(
+        $joins = [
             "LEFT JOIN sagacity.target_checklist tc ON t.id=tc.tgt_id",
             "LEFT JOIN sagacity.pdi_checklist_lookup pcl ON pcl.checklist_id=tc.chk_id",
             "LEFT JOIN sagacity.findings f ON f.pdi_id=pcl.pdi_id AND t.id=f.tgt_id",
             "LEFT JOIN sagacity.findings_status fs ON fs.id=f.findings_status_id"
-        );
+        ];
         if (!is_null($ctrl)) {
             $joins[] = "JOIN `sagacity`.`finding_controls` fc ON fc.`finding_id`=f.`id`";
         }
 
-        $where = array(
-            array(
+        $where = [
+            [
                 'field' => 't.cat_id',
-                'op'    => '=',
                 'value' => $cat_id
-            ),
-            array(
+            ],
+            [
                 'field'      => 'fs.status',
-                'op'         => '=',
                 'value'      => $status,
                 'sql_op'     => 'AND',
                 'open-paren' => true
-            )
-        );
+            ]
+        ];
 
         if ($status == 'Not Reviewed') {
-            $where[] = array(
+            $where[] = [
                 'field'       => 'fs.status',
                 'op'          => IS,
                 'value'       => null,
                 'sql_op'      => 'OR',
                 'close-paren' => true
-            );
+            ];
         }
         else {
-            $where[] = array(
+            $where[] = [
                 'close-paren' => true
-            );
+            ];
         }
 
         if (!is_null($cat) && is_numeric($cat)) {
-            $where[] = array(
+            $where[] = [
                 'field'  => 'f.cat',
-                'op'     => '=',
                 'value'  => $cat,
                 'sql_op' => 'AND'
-            );
+            ];
         }
 
         if (!is_null($ctrl) && is_a($ctrl, 'proc_ia_control')) {
-            $where[] = array(
+            $where[] = [
                 'field'  => 'fc.ia_control',
-                'op'     => '=',
                 'value'  => $ctrl->get_Control_ID(),
                 'sql_op' => 'AND'
-            );
+            ];
         }
 
         $field           = ($status == 'Not Reviewed' ? "COUNT(DISTINCT(pcl.pdi_id)) AS 'count'" : "COUNT(DISTINCT(f.id)) AS 'count'");
-        $this->help->select_count("sagacity.target t", $where, array('table_joins' => $joins));
+        $this->help->select_count("sagacity.target t", $where, ['table_joins' => $joins]);
         $this->help->sql = str_replace("COUNT(1) AS 'count'", $field, $this->help->sql);
 
         $cnt = $this->help->execute();
 
-        $joins = array(
+        $joins = [
             "LEFT JOIN sagacity.pdi_checklist_lookup pcl ON pcl.checklist_id=c.id",
             "LEFT JOIN sagacity.findings f ON f.pdi_id=pcl.pdi_id",
             "LEFT JOIN sagacity.findings_status fs ON f.findings_status_id=fs.id",
             "JOIN sagacity.target t ON t.id=f.tgt_id"
-        );
+        ];
 
         if (!is_null($ctrl) && is_a($ctrl, 'proc_ia_control')) {
             $joins[] = "JOIN sagacity.finding_controls fc ON fc.finding_id=f.id";
         }
 
-        $where = array(
-            array(
+        $where = [
+            [
                 'field' => 't.cat_id',
-                'op'    => '=',
                 'value' => $cat_id
-            ),
-            array(
+            ],
+            [
                 'field'  => 'c.name',
-                'op'     => '=',
                 'value'  => 'Orphan',
                 'sql_op' => 'AND'
-            ),
-            array(
+            ],
+            [
                 'field'      => 'fs.status',
-                'op'         => '=',
                 'value'      => $status,
                 'sql_op'     => 'AND',
                 'open-paren' => true
-            )
-        );
+            ]
+        ];
 
         if ($status == 'Not Reviewed') {
-            $where[] = array(
+            $where[] = [
                 'field'       => 'fs.status',
                 'op'          => IS,
                 'value'       => null,
                 'sql_op'      => 'OR',
                 'close-paren' => true
-            );
+            ];
         }
         else {
-            $where[] = array(
+            $where[] =[
                 'close-paren' => true
-            );
+            ];
         }
 
         if (!is_null($cat) && is_numeric($cat)) {
-            $where[] = array(
+            $where[] = [
                 'field'  => 'f.cat',
-                'op'     => '=',
                 'value'  => $cat,
                 'sql_op' => 'AND'
-            );
+            ];
         }
 
         if (!is_null($ctrl) && is_a($ctrl, 'proc_ia_control')) {
-            $where[] = array(
+            $where[] = [
                 'field'  => 'fc.ia_control',
-                'op'     => '=',
                 'value'  => $ctrl->get_Control_ID(),
                 'sql_op' => 'AND'
-            );
+            ];
         }
 
         $this->help->select_count("sagacity.checklist c", $where, array('table_joins' => $joins));
@@ -4810,13 +4804,12 @@ class db
         if (preg_match('/\d\.\d+/', $finding_data[0])) {
             $finding_data[0] = str_pad($finding_data[0], 5, "0");
         }
-        $stig_id       = $finding_data[0];
-        $vms_id        = preg_replace("/V0+/i", "V-", $finding_data[1]);
-        $cat_lvl       = substr_count($finding_data[2], 'I');
-        $ia_controls   = $finding_data[3];
-        $short_title   = $finding_data[4];
-        $notes         = $finding_data[self::FIRST_ECHECKLIST_HOST_COL + $host_count];
-        $check_content = $finding_data[self::FIRST_ECHECKLIST_HOST_COL + $host_count + 1];
+        $stig_id     = $finding_data[0];
+        $vms_id      = preg_replace("/V0+/i", "V-", $finding_data[1]);
+        $cat_lvl     = substr_count($finding_data[2], 'I');
+        $ia_controls = $finding_data[3];
+        $short_title = $finding_data[4];
+        $notes       = $finding_data[self::FIRST_ECHECKLIST_HOST_COL + $host_count];
 
         if (preg_match('/SV\-.*_rule/', $stig_id)) {
             $ref = $this->get_SV_Rule(null, $stig_id);
@@ -7028,7 +7021,7 @@ class db
         // ------------------------------ Start <registry_test> -----------------------------
         // create temporary db table to combine all OVAL checks marked 'M' and not 'M'
         $tmp_sql = "CREATE TEMPORARY TABLE `tmp_oval` SELECT " .
-            "pdi.`id`, o.`oval_id`, s.`stig_id`, vms.`vms_id`, pdi.`check_content`, pdi.`short_title` " .
+            "pdi.`id`, o.`oval_id`, s.`stig_id`, vms.`vms_id`, pdi.`check_contents`, pdi.`short_title` " .
             "FROM `pdi_catalog` AS pdi " .
             "LEFT JOIN `oval` AS o ON pdi.`id` = o.`pdi_id` " .
             "LEFT JOIN `stigs` AS s ON pdi.`id` = s.`pdi_id` " .
@@ -7038,7 +7031,7 @@ class db
             "LEFT JOIN `software` AS sft ON sft.`id` = c.`sw_id` " .
             "WHERE " .
             "o.`oval_id` = 'M' AND " .
-            "pdi.`check_content` LIKE '%Registry Hive%' AND " .
+            "pdi.`check_contents` LIKE '%Registry Hive%' AND " .
             "sft.`man` = 'MS' AND " .
             "sft.`name` = 'Windows' AND " .
             "sft.`ver` = '$os' " .
@@ -7059,7 +7052,7 @@ class db
             "LEFT JOIN `software` AS sft ON sft.`id` = c.`sw_id` " .
             "WHERE " .
             "o.`oval_id` != 'M' AND " .
-            "pdi.`check_content` REGEXP 'Registry Hive' AND " .
+            "pdi.`check_contents` REGEXP 'Registry Hive' AND " .
             "sft.`man` = 'MS' AND " .
             "sft.`name` = 'Windows' AND " .
             "sft.`ver` = '$os' " .
@@ -7068,7 +7061,7 @@ class db
         $this->conn->real_query($del_sql);
 
         $sql = "SELECT " .
-            "`id`, `oval_id`, `stig_id`, `vms_id`, `check_content`, `short_title` " .
+            "`id`, `oval_id`, `stig_id`, `vms_id`, `check_contents`, `short_title` " .
             "FROM `tmp_oval`";
 
         if ($sth = $this->conn->prepare($sql)) {
@@ -7170,7 +7163,7 @@ class db
 // ------------------------------ End <registry_test> -----------------------------
 // ------------------------------ Start <auditeventpolicysubcategories_test> -----------------------------
         $tmp_sql = "CREATE TEMPORARY TABLE `tmp_oval` SELECT " .
-            "pdi.`id`,o.`oval_id`,s.`stig_id`,vms.`vms_id`,pdi.`check_content`,pdi.`short_title` " .
+            "pdi.`id`,o.`oval_id`,s.`stig_id`,vms.`vms_id`,pdi.`check_contents`,pdi.`short_title` " .
             "FROM `sagacity`.`pdi_catalog` AS pdi " .
             "LEFT JOIN `sagacity`.`oval` AS o ON pdi.`id`=o.`pdi_id` " .
             "LEFT JOIN `sagacity`.`stigs` AS s ON pdi.`id`=s.`pdi_id` " .
@@ -7180,7 +7173,7 @@ class db
             "LEFT JOIN `sagacity`.`software` AS sft ON sft.`id`=c.`sw_id` " .
             "WHERE " .
             "o.`oval_id`='M' AND " .
-            "pdi.`check_content` LIKE '%AuditPol%' AND " .
+            "pdi.`check_contents` LIKE '%AuditPol%' AND " .
             "sft.`man`='MS' AND " .
             "sft.`name`='Windows' AND " .
             "sft.`ver`='$os' " .
@@ -7199,7 +7192,7 @@ class db
             "LEFT JOIN `sagacity`.`software` AS sft ON sft.`id`=c.`sw_id` " .
             "WHERE " .
             "o.`oval_id`!='M' AND " .
-            "pdi.`check_content` REGEXP 'AuditPol' AND " .
+            "pdi.`check_contents` REGEXP 'AuditPol' AND " .
             "sft.`man`='MS' AND " .
             "sft.`name`='Windows' AND " .
             "sft.`ver`='$os' " .
@@ -7207,7 +7200,7 @@ class db
         $this->conn->real_query($del_sql);
 
         $sql = "SELECT " .
-            "`id`,`oval_id`,`stig_id`,`vms_id`,`check_content`,`short_title` " .
+            "`id`,`oval_id`,`stig_id`,`vms_id`,`check_contents`,`short_title` " .
             "FROM `tmp_oval`";
 
         if ($sth = $this->conn->prepare($sql)) {
@@ -7385,7 +7378,7 @@ class db
         if (is_array($row) && count($row) && isset($row['id'])) {
             $pdi = new pdi($row['id'], $row['cat'], $row['update']);
             $pdi->set_Short_Title($row['short_title']);
-            $pdi->set_Check_Contents($row['check_content']);
+            $pdi->set_Check_Contents($row['check_contents']);
 
             if (!is_null($chk_id)) {
                 $this->help->select("sagacity.pdi_checklist_lookup", null, [
@@ -7588,10 +7581,10 @@ class db
 
         if ($pdi_in->get_ID()) {
             $this->help->update('sagacity.pdi_catalog', [
-                'cat'           => $pdi_in->get_Category_Level(),
-                'update'        => $pdi_in->get_Last_Update(),
-                'short_title'   => $pdi_in->get_Short_Title(),
-                'check_content' => $pdi_in->get_Check_Contents()
+                'cat'            => $pdi_in->get_Category_Level(),
+                'update'         => $pdi_in->get_Last_Update(),
+                'short_title'    => $pdi_in->get_Short_Title(),
+                'check_contents' => $pdi_in->get_Check_Contents()
                 ], [
                 [
                     'field' => 'id',
@@ -7609,10 +7602,10 @@ class db
         }
         else {
             $this->help->insert("sagacity.pdi_catalog", [
-                "cat"           => $pdi_in->get_Category_Level(),
-                'update'        => $pdi_in->get_Last_Update(),
-                'short_title'   => $pdi_in->get_Short_Title(),
-                'check_content' => $pdi_in->get_Check_Contents()
+                "cat"            => $pdi_in->get_Category_Level(),
+                'update'         => $pdi_in->get_Last_Update(),
+                'short_title'    => $pdi_in->get_Short_Title(),
+                'check_contents' => $pdi_in->get_Check_Contents()
             ]);
 
             if (!($pdi_id = $this->help->execute())) {
@@ -8135,7 +8128,6 @@ class db
         $where = [
             [
                 'field' => 's.ste_id',
-                'op'    => '=',
                 'value' => $intSTE
             ]
         ];
@@ -8144,7 +8136,6 @@ class db
             if (is_numeric($Scan_ID)) {
                 $where[] = [
                     'field'  => 's.id',
-                    'op'     => '=',
                     'value'  => $Scan_ID,
                     'sql_op' => 'AND'
                 ];
@@ -8152,7 +8143,6 @@ class db
             else {
                 $where[] = [
                     'field'  => 's.file_name',
-                    'op'     => '=',
                     'value'  => $Scan_ID,
                     'sql_op' => 'AND'
                 ];
@@ -8162,7 +8152,6 @@ class db
         if (!is_null($status_in)) {
             $where[] = [
                 'field'  => 's.status',
-                'op'     => '=',
                 'value'  => $status_in,
                 'sql_op' => 'AND'
             ];
@@ -8171,7 +8160,6 @@ class db
         if (!is_null($type_in)) {
             $where[] = [
                 'field'  => 'src.name',
-                'op'     => '=',
                 'value'  => $type_in,
                 'sql_op' => 'AND'
             ];
@@ -8216,12 +8204,9 @@ class db
                 $scan->set_Last_Host($row['last_host']);
                 $scan->set_Total_Host_Count($row['host_count']);
 
-
-
-                $this->help->select("host_list hl", ['hl.tgt_id', 't.name', 'hl.finding_count', 'hl.scanner_error'], [
+                $this->help->select("host_list hl", ['hl.tgt_id', 't.name', 'hl.finding_count', 'hl.scanner_error', 'hl.notes'], [
                     [
                         'field' => 'hl.scan_id',
-                        'op'    => '=',
                         'value' => $row['id']
                     ]
                     ], [
@@ -8229,26 +8214,27 @@ class db
                         "LEFT JOIN target t ON t.id=hl.tgt_id"
                     ]
                 ]);
-                $find_rows = $this->help->execute();
-                if (is_array($find_rows) && count($find_rows) && isset($find_rows['tgt_id'])) {
-                    $find_rows = [0 => $find_rows];
+                $hl_rows = $this->help->execute();
+                if (is_array($hl_rows) && count($hl_rows) && isset($hl_rows['tgt_id'])) {
+                    $hl_rows = [0 => $hl_rows];
                 }
-                if (is_array($find_rows) && count($find_rows) && isset($find_rows[0])) {
-                    foreach ($find_rows as $find) {
-                        $tgt             = new target($find['name']);
-                        $tgt->set_ID($find['tgt_id']);
+                if (is_array($hl_rows) && count($hl_rows) && isset($hl_rows[0])) {
+                    foreach ($hl_rows as $row) {
+                        $tgt             = new target($row['name']);
+                        $tgt->set_ID($row['tgt_id']);
                         $tgt->set_STE_ID($intSTE);
                         $tgt->interfaces = $this->get_Interfaces($tgt->get_ID());
-                        if ((bool) $find['scanner_error']) {
-                            $scan->setScanError((bool) $find['scanner_error']);
+                        if ((bool) $row['scanner_error']) {
+                            $scan->setScanError((bool) $row['scanner_error']);
                         }
 
-                        $hl               = new host_list();
+                        $hl = new host_list();
                         $hl->setTargetId($tgt->get_ID());
                         $hl->setTargetName($tgt->get_Name());
                         $hl->setTargetIp($tgt->getIP());
-                        $hl->setFindingCount($find['finding_count']);
-                        $hl->setScanError((bool) $find['scanner_error']);
+                        $hl->setFindingCount($row['finding_count']);
+                        $hl->setScanError((bool) $row['scanner_error']);
+                        $hl->setScanNotes($row['notes']);
 
                         $scan->add_Target_to_Host_List($hl);
                     }
@@ -8294,7 +8280,6 @@ class db
                 ], [
                 [
                     'field' => 'id',
-                    'op'    => '=',
                     'value' => $new_Scan->get_ID()
                 ]
             ]);
@@ -8438,7 +8423,6 @@ class db
         $this->help->delete("host_list", null, [
             [
                 'field' => 'scan_id',
-                'op'    => '=',
                 'value' => $scan->get_ID()
             ]
         ]);
@@ -8454,26 +8438,28 @@ class db
                     $scan->get_ID(),
                     $host->getTargetId(),
                     $host->getFindingCount(),
-                    $host->getScanError()
+                    $host->getScanError(),
+                    $host->getScanNotes()
                 ];
             }
         }
         else {
             foreach ($host_list as $host) {
-                if(!is_a($host, 'host_list')) {
+                if (!is_a($host, 'host_list')) {
                     break;
                 }
                 $params[] = [
                     $scan->get_ID(),
                     $host->getTargetId(),
                     $host->getFindingCount(),
-                    $host->getScanError()
+                    $host->getScanError(),
+                    $host->getScanNotes()
                 ];
             }
         }
 
         if (count($params)) {
-            $this->help->extended_insert("host_list", ['scan_id', 'tgt_id', 'finding_count', 'scanner_error'], $params);
+            $this->help->extended_insert("host_list", ['scan_id', 'tgt_id', 'finding_count', 'scanner_error', 'notes'], $params);
             if (!$this->help->execute()) {
                 $this->help->debug(E_WARNING);
             }
@@ -8586,16 +8572,16 @@ class db
      * Find the sources that have contained this target
      *
      * @param target $tgt
+     * @param array $exp_scan_srcs
      *
      * @return array:sources
      */
     public function get_Target_Scan_Sources($tgt, &$exp_scan_srcs = null)
     {
         $ret = [];
-        $this->help->select("sources src", ["src.id", "src.name", "src.icon", "SUM(hl.finding_count) AS 'finding_count'"], [
+        $this->help->select("sources src", ["src.id", "src.name", "src.icon", "SUM(hl.finding_count) AS 'finding_count'", "hl.scanner_error", "hl.notes"], [
             [
                 'field' => 'hl.tgt_id',
-                'op'    => '=',
                 'value' => $tgt->get_ID()
             ]
             ], [
@@ -8615,21 +8601,27 @@ class db
         if (is_array($rows) && count($rows) && isset($rows[0])) {
             if (is_null($exp_scan_srcs)) {
                 foreach ($rows as $row) {
-                    $ret[$row['id']]['src']   = new source($row['id'], $row['name']);
+                    $ret[$row['id']]['src']        = new source($row['id'], $row['name']);
                     $ret[$row['id']]['src']->set_Icon($row['icon']);
-                    $ret[$row['id']]['count'] = $row['finding_count'];
+                    $ret[$row['id']]['count']      = $row['finding_count'];
+                    $ret[$row['id']]['scan_error'] = (boolean) $row['scanner_error'];
+                    $ret[$row['id']]['notes']      = $row['notes'];
                 }
             }
             else {
                 foreach ($rows as $row) {
                     if (isset($exp_scan_srcs[$row['id']])) {
                         $exp_scan_srcs[$row['id']]['src']->set_Icon($row['icon']);
-                        $exp_scan_srcs[$row['id']]['count'] = $row['finding_count'];
+                        $exp_scan_srcs[$row['id']]['count']      = $row['finding_count'];
+                        $exp_scan_srcs[$row['id']]['scan_error'] = (boolean) $row['scanner_error'];
+                        $exp_scan_srcs[$row['id']]['notes']      = $row['notes'];
                     }
                     else {
-                        $exp_scan_srcs[$row['id']]['src']   = new source($row['id'], $row['name']);
+                        $exp_scan_srcs[$row['id']]['src']        = new source($row['id'], $row['name']);
                         $exp_scan_srcs[$row['id']]['src']->set_Icon($row['icon']);
-                        $exp_scan_srcs[$row['id']]['count'] = $row['finding_count'];
+                        $exp_scan_srcs[$row['id']]['count']      = $row['finding_count'];
+                        $exp_scan_srcs[$row['id']]['scan_error'] = (boolean) $row['scanner_error'];
+                        $exp_scan_srcs[$row['id']]['notes']      = $row['notes'];
                     }
                 }
 
@@ -11158,6 +11150,13 @@ class db
                         ]
                     ]);
                     $this->help->execute();
+
+                    $this->help->sql = "INSERT IGNORE INTO `findings` (`tgt_id`,`pdi_id`,`findings_status_id`) " .
+                        "SELECT {$tgt['id']},pcl.pdi_id,'1' " .
+                        "FROM target_checklist tc " .
+                        "JOIN pdi_checklist_lookup pcl ON pcl.checklist_id = tc.chk_id " .
+                        "WHERE tc.tgt_id = {$tgt['id']}";
+                    $this->help->execute();
                 }
             }
         }
@@ -11295,6 +11294,13 @@ class db
                     'value' => $id
                 ]
             ]);
+            $this->help->execute();
+
+            $this->help->sql = "INSERT IGNORE INTO findings (tgt_id,pdi_id,findings_status_id) " .
+                "SELECT {$id},pcl.pdi_id,1 " .
+                "FROM target_checklist tc " .
+                "JOIN pdi_checklist_lookup pcl ON pcl.checklist_id = tc.chk_id " .
+                "WHERE tc.tgt_id = {$id}";
             $this->help->execute();
         }
 
@@ -12428,6 +12434,36 @@ class db
         }
 
         return $ret;
+    }
+
+    /**
+     * Method to update settings values using name => value pairs
+     *
+     * @param array $settings
+     *
+     * @return boolean
+     */
+    public function set_Setting_Array($settings = [])
+    {
+        if (is_array($settings) && count($settings)) {
+            foreach ($settings as $key => $val) {
+                $this->help->update('settings', ['meta_value' => $val], [
+                    [
+                        'field' => 'meta_key',
+                        'value' => $key
+                    ]
+                ]);
+
+                if (!$this->help->execute()) {
+                    return false;
+                }
+            }
+        }
+        else {
+            return false;
+        }
+
+        return true;
     }
 
     // }}} END META

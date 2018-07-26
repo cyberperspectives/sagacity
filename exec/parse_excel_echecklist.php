@@ -5,7 +5,7 @@
  * Purpose: Parse the Excel version (.xlsx or .xls) of an eChecklist
  * Created: May 9, 2014
  *
- * Portions Copyright 2016-2017: Cyber Perspectives, LLC, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -24,6 +24,7 @@
  *  - May 26, 2017 - Migrated to PHPSpreadsheet library
  *  - Aug 28, 2017 - Fixed couple minor bugs
  *  - Jan 15, 2018 - Formatting, reorganized use statements, and cleaned up
+ *  - May 24, 2018 - Attempt to fix bug #413
  */
 $cmd = getopt("f:", ['debug::', 'help::']);
 set_time_limit(0);
@@ -48,17 +49,21 @@ include_once 'excelConditionalStyles.inc';
 
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
 check_path(TMP . "/echecklist");
 chdir(TMP);
+$log_level = convert_log_level();
 
 $db        = new db();
 $base_name = basename($cmd['f']);
-$log       = new Sagacity_Error($cmd['f']);
+$log	   = new Logger("excel-echecklist");
+$log->pushHandler(new StreamHandler(logify($cmd['f']), $log_level));
 
 if (!file_exists($cmd['f'])) {
     $db->update_Running_Scan($base_name, ['name' => 'status', 'value' => 'ERROR']);
-    $log->script_log("File not found", E_ERROR);
+	die($log->emergency("File not found"));
 }
 
 $db->update_Running_Scan($base_name, ['name' => 'pid', 'value' => getmypid()]);
@@ -68,7 +73,7 @@ if (is_array($src) && count($src) && isset($src[0]) && is_a($src[0], 'source')) 
     $src = $src[0];
 }
 else {
-    $log->script_log("Could not find the source", E_ERROR);
+	die($log->emergency("Could not find the source"));
 }
 
 /*
@@ -94,13 +99,13 @@ else {
         $ste = $ste[0];
     }
     else {
-        $log->script_log("Could not retrieve the ST&E", E_ERROR);
+		die($log->emergency("Could not retrieve ST&E"));
     }
 
     $scan = new scan(null, $src, $ste, 1, $base_name, $dt->format('Y-m-d'));
 
     if (!$scan_id = $db->save_Scan($scan)) {
-        $log->script_log("Failed to add scan for file: {$cmd['f']}", E_ERROR);
+		die($log->error("Failed to add scan for file: {$cmd['f']}"));
     }
 
     $scan->set_ID($scan_id);
@@ -113,11 +118,11 @@ if (is_array($gen_os) && count($gen_os) && isset($gen_os[0]) && is_a($gen_os[0],
 
 foreach ($objSS->getWorksheetIterator() as $wksht) {
     if (preg_match('/Instruction|Cover Sheet/i', $wksht->getTitle())) {
-        $log->script_log("Skipping instruction and cover sheet", E_DEBUG);
+		$log->debug("Skipping instruction and cover worksheet");
         continue;
     }
     elseif (isset($conf['ignore']) && $wksht->getSheetState() == Worksheet::SHEETSTATE_HIDDEN) {
-        $log->script_log("Skipping hidden worksheet {$wksht->getTitle()}");
+		$log->info("Skipping hidden worksheet {$wksht->getTitle()}");
         continue;
     }
 
@@ -132,17 +137,17 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
     if ($thread_status['status'] == 'TERMINATED') {
         unset($objSS);
         rename(realpath(TMP . "/{$scan->get_File_Name()}"), TMP . "/terminated/{$scan->get_File_Name()}");
-        $log->script_log("File parsing terminated by user");
+		$log->notice("File parsing terminated by user");
     }
 
-    $log->script_log("Reading from {$wksht->getTitle()} worksheet");
+	$log->notice("Reading from {$wksht->getTitle()}");
 
     if (!preg_match('/STIG ID/i', $wksht->getCell("A10")->getValue()) &&
         !preg_match('/VMS ID/i', $wksht->getCell("B10")->getValue()) &&
         !preg_match('/CAT/i', $wksht->getCell("C10")->getValue()) &&
         !preg_match('/IA Controls/i', $wksht->getCell("D10")->getValue()) &&
         !preg_match('/Short Title/i', $wksht->getCell("E10")->getValue())) {
-        $log->script_log("Invalid headers in {$wksht->getTitle()}", E_WARNING);
+			$log->warning("Invalid headers in {$wksht->getTitle()}");
         continue;
     }
 
@@ -177,13 +182,12 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
             if ($thread_status['status'] == 'TERMINATED') {
                 unset($objSS);
                 rename(realpath(TMP . "/{$scan->get_File_Name()}"), TMP . "/terminated/{$scan->get_File_Name()}");
-                $log->script_log("File parsing terminated by user");
-                die;
+				die($log->notice("File parsing terminated by user"));
             }
 
             if ($cell->getColumn() > $short_title_col && !preg_match('/Overall/i', $cell->getValue())) {
                 if (preg_match('/status/i', $cell->getValue())) {
-                    $log->script_log("Error: Invalid host name ('status') in {$wksht->getTitle()}", E_WARNING);
+					$log->error("Invalid host name ('status') in {$wksht->getTitle()}");
                     break;
                 }
 
@@ -193,7 +197,7 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
                         $tgt = $tgt[0];
                     }
                     else {
-                        $log->script_log("Could not find host {$cell->getValue()}", E_ERROR);
+						$log->error("Could not find host {$cell->getValue()}");
                     }
                 }
                 else {
@@ -251,7 +255,7 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
         $idx['check_contents'] += count($tgts);
     }
     elseif (empty($tgts)) {
-        $log->script_log("Failed to identify targets in worksheet {$wksht->getTitle()}", E_WARNING);
+		$log->warning("Failed to identify targets in worksheet {$wksht->getTitle()}");
         continue;
     }
 
@@ -281,7 +285,7 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
             $pdi->set_Short_Title($short_title);
             $pdi->set_Group_Title($short_title);
             if (!($pdi_id = $db->save_PDI($pdi))) {
-                $log->script_log("Failed to add a new PDI for STIG ID $stig_id", E_ERROR);
+				die($log->error("Failed to add new PDI for STIG ID {$stig_id}"));
             }
 
             $stig = new stig($pdi_id, $stig_id, $short_title);
@@ -293,14 +297,21 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
             $status = $wksht->getCell(Coordinate::stringFromColumnIndex($idx['target'] + $x) . $row->getRowIndex())
                 ->getValue();
 
-            $log->script_log("{$tgt->get_Name()} {$stig->get_ID()} ($status)\n", E_DEBUG);
+			$log->debug("{$tgt->get_Name()} {$stig->get_ID()} ($status)");
 
             $finding = $db->get_Finding($tgt, $stig);
 
             if (is_array($finding) && count($finding) && isset($finding[0]) && is_a($finding[0], 'finding')) {
                 $tmp = $finding[0];
 
-                $tmp->set_Finding_Status_By_String($status);
+                if(preg_match("/Not a Finding|Not Applicable/i", $status)) {
+                    $ds = $tmp->get_Deconflicted_Status($status);
+                    $tmp->set_Finding_Status_By_String($ds);
+                }
+                else {
+                    $tmp->set_Finding_Status_By_String($status);
+                }
+
                 $tmp->set_Notes($notes);
                 $tmp->set_Category($cat_lvl);
 

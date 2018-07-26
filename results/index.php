@@ -5,7 +5,7 @@
  * Purpose: index page of the results
  * Created: Sep 16, 2013
  *
- * Portions Copyright 2016-2017: Cyber Perspectives, LLC, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -42,6 +42,8 @@
  *  - Jan 16, 2018 - Formatting, updated to use host_list class, fixed bug with delete_Scan,
 		Added /img/error.png to action column if there is any target with an error
 		Changed scan deletion to an AJAX call, and changed confirmation boxes to use jQuery UI
+ *  - Apr 19, 2018 - Updated 3rd party libraries
+ *  - Jun 2, 2018 - Fixed bug with kill image not displaying correctly
  */
 $title_prefix = "Result Management";
 include_once 'config.inc';
@@ -144,6 +146,11 @@ $stes = $db->get_STE();
     td span {
         display: none;
     }
+
+    .checklist_image {
+        width: 32px;
+        vertical-align: middle;
+    }
 </style>
 
 <script type='text/javascript'>
@@ -160,7 +167,7 @@ $stes = $db->get_STE();
         'pageLength': 25
       });
       table.columns().flatten().each(function (colIdx) {
-        if (colIdx == 2) {
+        if (colIdx === 2) {
           $('#type').change(function () {
             table
                     .column(2)
@@ -168,7 +175,7 @@ $stes = $db->get_STE();
                     .draw();
           });
         }
-        else if (colIdx == 5) {
+        else if (colIdx === 5) {
           $('#status').change(function () {
             table
                     .column(5)
@@ -210,32 +217,32 @@ $stes = $db->get_STE();
               table.cell(table.rows('#id-' + scan_id), 5).data(data.results[x].status);
               table.cell(table.rows('#id-' + scan_id), 6).data("<progress min='0' max='100' value='" + data.results[x].perc_comp + "' title='" + data.results[x].perc_comp + "%'></progress><span>" + data.results[x].perc_comp + "</span>");
               kill = $('#action-' + scan_id + ' .kill');
-              if (data.results[x].status == 'RUNNING' && !kill.length) {
+              if (data.results[x].status === 'RUNNING' && !kill.length) {
                 $('#action-' + scan_id).append("<a class='kill-link' href='kill.php?ste=<?php print $ste_id; ?>&id=" + scan_id + "&pid=" + data.results[x].pid + "' target='_blank'>" +
-                        "<img class='kill' src='/img/X.png' style='width: 24px;vertical-align:middle;' title='Kill' />" +
+                        "<img class='kill checklist_image' src='/img/X.png' style='vertical-align:middle;' title='Kill' />" +
                         "</a>");
               }
+              else if (cur_status === 'RUNNING' && data.results[x].status === 'COMPLETE') {
+                $('#action-' + scan_id + '.kill-link').remove();
 <?php if (NOTIFICATIONS && file_exists("complete.mp3")) { ?>
-                  else if (cur_status == 'RUNNING' && data.results[x].status == 'COMPLETE') {
-                    $('#action-' + scan_id + '.kill-link').remove();
-                    audio.play();
-                  }
+                audio.play();
 <?php } ?>
+              }
             }
             else {
               if ($('#status').val() && $('#type').val()) {
-                if ($('#status').val() != data.results[x].status ||
-                        $('#type').val() != data.results[x].source) {
+                if ($('#status').val() !== data.results[x].status ||
+                        $('#type').val() !== data.results[x].source) {
                   continue;
                 }
               }
               else if ($('#status').val()) {
-                if ($('#status').val() != data.results[x].status) {
+                if ($('#status').val() !== data.results[x].status) {
                   continue;
                 }
               }
               else if ($('#type').val()) {
-                if ($('#type').val() != data.results[x].source) {
+                if ($('#type').val() !== data.results[x].source) {
                   continue;
                 }
               }
@@ -251,18 +258,19 @@ $stes = $db->get_STE();
               row.append("<td>" + data.results[x].run_time + "</td>");
               row.append("<td>" + data.results[x].status + "</td>");
               row.append("<td><progress min='0' max='100' value='" + data.results[x].perc_comp + "'></progress><span>" + data.results[x].perc_comp + "</span></td>");
-              if (data.results[x].status == 'RUNNING') {
+              if (data.results[x].status === 'RUNNING') {
                 kill = "<a href='kill.php?ste=<?php print $ste_id; ?>&id=" + scan_id + "&pid=" + data.results[x].pid + "' target='_blank'>" +
-                        "<img class='kill' src='/img/X.png' style='width: 24px;vertical-align:middle;' title='Kill' />" +
+                        "<img class='kill checklist_image' src='/img/X.png' style='vertical-align:middle;' title='Kill' />" +
                         "</a>";
               }
               row.append("<td class='dt-body-center' id='action-" + scan_id + "'>" +
-                      "<a href='javascript:void(0);' onclick='javascript:List_host(" + scan_id + ");'><img src='/img/options.png' style='width:24px;' /></a>&nbsp;" +
+                      (data.results[x].error ? "<img src='/img/error.png' class='checklist_image' onclick='javascript:List_host(" + scan_id + ");' />" : "") +
+                      "<a href='javascript:void(0);' title='Host Listing' onclick='javascript:List_host(" + scan_id + ");'><img src='/img/options.png' class='checklist_image' /></a>&nbsp;" +
                       "<form method='post' action='index.php' onsubmit='return del_scan(this);' style='display:inline;'>" +
                       "<input type='hidden' name='ste' value='<?php print $ste_id ?>' />" +
                       "<input type='hidden' name='delete_scan' value='" + scan_id + "' />" +
                       "<input type='hidden' name='delete_targets' value='0' />" +
-                      "<input type='image' style='width:24px;' src='/img/delete.png' border='0' alt='Delete' />" +
+                      "<input type='image' class='checklist_image' src='/img/delete.png' border='0' alt='Delete' />" +
                       "</form>" + kill
                       );
               table.row.add(row[0]);
@@ -276,12 +284,12 @@ $stes = $db->get_STE();
           $('.button-delete,.button-list').mouseout(function () {
             $(this).removeClass('mouseover-scan');
           });
-          if ($('#toggle_refresh').val() == 'Stop Refresh') {
+          if ($('#toggle_refresh').val() === 'Stop Refresh') {
             to = setTimeout(update_script_status, 3000);
           }
         },
         error: function (xhr, status, error) {
-          if ($('#toggle_refresh').val() == 'Stop Refresh') {
+          if ($('#toggle_refresh').val() === 'Stop Refresh') {
             to = setTimeout(update_script_status, 3000);
           }
         },
@@ -295,7 +303,7 @@ $stes = $db->get_STE();
      *
      */
     function toggle_refresh() {
-      if ($('#toggle_refresh').val() == 'Stop Refresh') {
+      if ($('#toggle_refresh').val() === 'Stop Refresh') {
         clearTimeout(to);
         $('#toggle_refresh').val('Start Refresh');
         to = null;
@@ -306,10 +314,10 @@ $stes = $db->get_STE();
       }
     }
 </script>
-<script src="results_script.js" type="text/javascript"></script>
+<script src="results_script.min.js" type="text/javascript"></script>
 <script src='/script/datatables/DataTables-1.10.9/js/jquery.dataTables.min.js'></script>
 <link rel="stylesheet" href="/script/datatables/DataTables-1.10.9/css/jquery.dataTables.min.css" />
-<link rel='stylesheet' href='/script/jquery-ui-1.11.4/jquery-ui.min.css' />
+<link rel='stylesheet' href='/script/jquery-ui/jquery-ui.min.css' />
 
 <div id='wrapper'>
     <div id='main-wrapper'>
@@ -386,7 +394,7 @@ $stes = $db->get_STE();
                             <th>% Comp</th>
                             <th>Action&nbsp;&nbsp;
                                 <a href="kill.php?pid=*&ste=<?php print (isset($ste_id) ? $ste_id : '0'); ?>" target='_new'>
-                                    <img src='/img/X.png' style='width: 24px;vertical-align:middle;' title='Kill and Remove All' />
+                                    <img src='/img/X.png' class='checklist_image' style='vertical-align:middle;' title='Kill and Remove All' />
                                 </a>
                             </th>
                         </tr>
@@ -414,17 +422,16 @@ $stes = $db->get_STE();
                                     </td>
                                     <td class='dt-body-center' id="action-<?php print $scan->get_ID(); ?>">
                                         <?php if ($scan->isScanError()) { ?>
-                                            <img src='/img/error.png' style='width:24px;' />&nbsp;
+                                            <img src='/img/error.png' class='checklist_image' onclick='javascript:List_host(<?php print $scan->get_ID(); ?>);' />&nbsp;
                                         <?php } ?>
-                                        <a href='javascript:void(0);' onclick='javascript:List_host(<?php print $scan->get_ID(); ?>);'>
-                                            <img src='/img/options.png' style='width:24px;' />
+                                        <a href='javascript:void(0);' title='Host Listing' onclick='javascript:List_host(<?php print $scan->get_ID(); ?>);'>
+                                            <img src='/img/options.png' class='checklist_image' title='See what hosts are on this target' />
                                         </a>
                                         &nbsp;
-                                        <img src='/img/delete.png' style='width:24px;' onclick='scan_id =<?php print $scan->get_ID(); ?>;
-                                                        del_scan();' />
+                                        <img src='/img/delete.png' class='checklist_image' onclick='scan_id =<?php print $scan->get_ID(); ?>;del_scan();' title='Delete a scan file' />
                                         <?php if ($scan->get_Status() == 'RUNNING') { ?>
                                             <a class='kill-link' href='kill.php?<?php print "ste={$ste_id}&id={$scan->get_ID()}&pid={$scan->get_PID()}"; ?>' target='_blank'>
-                                                <img class='kill' src='/img/X.png'  style='width: 24px;vertical-align:middle;' title='Kill' />
+                                                <img src='/img/X.png' class='kill checklist_image' style='vertical-align:middle;' title='Kill' />
                                             </a>
                                         <?php } ?>
                                     </td>
@@ -492,7 +499,7 @@ $stes = $db->get_STE();
                   alert(data.error);
                 }
                 else if (data.success) {
-                  alert(data.success);
+                  //alert(data.success);
                   $('#id-' + scan_id).remove();
                 }
               },
@@ -502,14 +509,14 @@ $stes = $db->get_STE();
               dataType: 'json',
               method: 'post'
             });
-            if ($('#toggle_refresh').val() == 'Stop Refresh') {
+            if ($('#toggle_refresh').val() === 'Stop Refresh') {
               to = setTimeout(update_script_status, 3000);
             }
             $(this).dialog('close');
           },
           Cancel: function () {
             $(this).dialog('close');
-            if ($('#toggle_refresh').val() == 'Stop Refresh') {
+            if ($('#toggle_refresh').val() === 'Stop Refresh') {
               to = setTimeout(update_script_status, 3000);
             }
           }

@@ -271,7 +271,7 @@ class ste_cat
             }
         }
 
-        $cat_sources = array();
+        $cat_sources = [];
         if (is_array($this->sources) && count($this->sources)) {
             foreach ($this->sources as $src) {
                 $cat_sources[] = $src->get_ID();
@@ -334,7 +334,7 @@ EOC;
      *
      * @return string
      */
-    public function getSTECatRow($status_count = null)
+    public function getStatsCategoryRow($status_count = null)
     {
         $nf   = "0%";
         $nr   = "0%";
@@ -415,6 +415,14 @@ EOC;
     </span>
 </div>
 EOC;
+    }
+
+    public function getTaskStatusCategoryRow()
+    {
+        $auto = 'NR';
+        $man  = 'NR';
+        $data = 'NR';
+        $fp   = 'NR';
     }
 
     /**

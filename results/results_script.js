@@ -43,6 +43,8 @@ function close_box() {
   }, 300, 'linear', function () {
     $('.backdrop, .box').css('display', 'none');
   });
+  $('.dz-complete').remove();
+  $('.dz-message').show();
 }
 
 function view_box() {

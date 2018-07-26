@@ -5,7 +5,7 @@
  * Purpose: Represents an imported scan
  * Created: Sep 12, 2013
  *
- * Portions Copyright 2016-2017: Cyber Perspectives, LLC, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -386,7 +386,7 @@ class scan
                 "<td>{$host->getTargetName()}</td>" .
                 "<td>{$host->getFindingCount()}</td>" .
                 "<td>{$host->getTargetIp()}</td>" .
-                "<td>" . ($host->getScanError() ? "<img src='/img/error.png' class='checklist_image' title='{$host->getScanError()}' />" : "") . "</td>" .
+                "<td>" . ($host->getScanError() ? "<img src='/img/error.png' class='checklist_image' title='{$host->getScanNotes()}' />" : "") . "</td>" .
                 "</tr>";
         }
 

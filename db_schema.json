@@ -1025,7 +1025,7 @@
           "default" : null
         },
         {
-          "name" : "check_content",
+          "name" : "check_contents",
           "dataType" : "text",
           "type" : 252,
           "length" : null,

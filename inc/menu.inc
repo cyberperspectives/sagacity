@@ -5,7 +5,7 @@
  * Purpose: Display the top nav menu
  * Created: Sep 11, 2013
  *
- * Portions Copyright 2016: Cyber Perspectives, All rights reserved
+ * Portions Copyright 2016-2018: Cyber Perspectives, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions

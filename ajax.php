@@ -202,8 +202,10 @@ elseif ($action == 'delete-cat') {
     }
 }
 elseif ($action == 'delete-file') {
-    $file = TMP . "/" . filter_input(INPUT_POST, 'filename', FILTER_SANITIZE_STRING);
-    if (file_exists($file)) {
+    $file = filter_input(INPUT_POST, 'filename', FILTER_SANITIZE_STRING);
+    $file = realpath($file);
+
+    if ($file && preg_match("/^" . preg_quote(TMP, '/') . "/", $file)) {
         if (unlink($file)) {
             print header(JSON) . json_encode([
                     'success' => 'Deleted file'
@@ -216,6 +218,7 @@ elseif ($action == 'delete-file') {
         }
     }
     else {
+        $file = filter_input(INPUT_POST, 'filename', FILTER_SANITIZE_STRING);
         print header(JSON) . json_encode([
                 'error' => "$file does not exist"
         ]);
@@ -1470,7 +1473,7 @@ function update_stig_control()
  *
  * @param int $cat_id
  *
- * @return type
+ * @return mixed
  */
 function get_hosts($cat_id = null)
 {

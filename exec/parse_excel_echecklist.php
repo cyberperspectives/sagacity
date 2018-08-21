@@ -268,6 +268,7 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
 
     $new_findings     = [];
     $updated_findings = [];
+    $row_count = 0;
 
     foreach ($wksht->getRowIterator(11) as $row) {
         $stig_id     = $wksht->getCell("{$stig_col}{$row->getRowIndex()}")->getValue();
@@ -327,11 +328,20 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
             $x++;
         }
 
+        $row_count++;
+
+        if($row_count % 100 == 0) {
+            if(!$db->add_Findings_By_Target($updated_findings, $new_findings)) {
+                die(print_r(debug_backtrace(), true));
+            } else {
+                $updated_findings = [];
+                $new_findings = [];
+            }
+        }
+
+        $db->update_Running_Scan($base_name, ['name' => 'perc_comp', 'value' => (($row->getRowIndex() - 10) / $row_count) * 100]);
         if (PHP_SAPI == 'cli') {
             print "\r" . sprintf("%.2f%%", (($row->getRowIndex() - 10) / $row_count) * 100);
-        }
-        else {
-            $db->update_Running_Scan($base_name, ['name' => 'perc_comp', 'value' => (($row->getRowIndex() - 10) / $row_count) * 100]);
         }
     }
 

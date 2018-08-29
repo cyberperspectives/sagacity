@@ -186,7 +186,7 @@ class BackgroundProcess {
   /**
    * @param int $pid PID of process to resume
    *
-   * @return Cocur\BackgroundProcess\BackgroundProcess
+   * @return BackgroundProcess
    */
   static public function createFromPID($pid) {
     $process = new self();

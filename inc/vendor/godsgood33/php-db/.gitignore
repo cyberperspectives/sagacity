@@ -1,0 +1,4 @@
+.settings/
+.buildpath
+code-coverage/
+/vendor/

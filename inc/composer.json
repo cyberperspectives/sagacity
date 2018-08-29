@@ -1,12 +1,31 @@
 {
-  "require" : {
-    "phpoffice/phpspreadsheet" : "^1.0",
-    "cocur/background-process" : "^0.7.0",
-    "tecnickcom/tcpdf" : "^6.2",
-    "pacificsec/cpe" : "^1.0",
-    "monolog/monolog": "^1.23"
-  },
-  "require-dev" : {
-    "phpunit/phpunit" : "^6.2"
-  }
+	"require" : {
+		"phpoffice/phpspreadsheet" : "~1.4",
+		"cocur/background-process" : "~0.7",
+		"tecnickcom/tcpdf" : "~6.2",
+		"pacificsec/cpe" : "1.0.1",
+		"godsgood33/php-db" : "~1.3"
+	},
+	"require-dev" : {
+		"phpunit/phpunit" : "~7.3"
+	},
+	"type" : "project",
+	"homepage" : "https://cyberperspectives.com",
+	"license" : "Apache-2.0",
+	"authors" : [{
+			"name" : "Ryan Prather",
+			"email" : "ryan.prather@cyberperspectives.com",
+			"role" : "Braun"
+		}, {
+			"name" : "Jeff Odegard",
+			"email" : "jeff.odegard@cyberperspectives.com",
+			"role" : "Brains"
+		}
+	],
+	"keywords" : [
+		"security",
+		"disa",
+		"rmf"
+	],
+	"name" : "cyberperspectives\\sagacity"
 }

@@ -1,0 +1,32 @@
+<?php
+
+return [
+    [
+        'QWDFGYUIOP',
+        'QWERTYUIOP',
+        3,
+        3,
+        'DFG',
+    ],
+    [
+        'QWERDFGIOP',
+        'QWERTYUIOP',
+        5,
+        3,
+        'DFG',
+    ],
+    [
+        'QWDFGERTYUIOP',
+        'QWERTYUIOP',
+        3,
+        0,
+        'DFG',
+    ],
+    [
+        'QWERDFGTYUIOP',
+        'QWERTYUIOP',
+        5,
+        0,
+        'DFG',
+    ],
+];

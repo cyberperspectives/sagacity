@@ -155,7 +155,7 @@ foreach ($xml_files as $key => $file) {
         continue;
     }
     elseif(!empty(STIG_EXCLUSIONS) && preg_match("/" . STIG_EXCLUSIONS . "/i", $file)) {
-        unlink($file);
+        unlink(TMP . "/stigs/xml/$file");
         $log->debug("Skipping $file due to matching STIG exclusion");
         continue;
     }

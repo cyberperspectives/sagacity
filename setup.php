@@ -51,6 +51,14 @@ if (!is_writable(dirname(__FILE__) . "/config.inc")) {
     die("Sagacity needs write access to the config.inc file in the document root");
 }
 
+if(!is_writable(dirname(__FILE__) . "/inc")) {
+	die("Sagacity needs write access to the /inc directory to create the encrypted password file");
+}
+
+if(!file_exists(dirname(__FILE__) . "/logs")) {
+	mkdir(dirname(__FILE__) . "/logs");
+}
+
 if (!function_exists('openssl_encrypt')) {
     print <<<EOO
 The PHP OpenSSL module is not install or enabled.<br />
@@ -596,14 +604,14 @@ EOL;
 
                         <div class='right'>
                             <label class='label'>TMP Path:</label>
-                            <input type='text' id='tmp-path' value='<?php print realpath(getcwd() . "/tmp"); ?>' title='Absolute path to the temporary storage folder' /><br />
+                            <input type='text' id='tmp-path' value='<?php print realpath(getcwd()) . DIRECTORY_SEPARATOR . "tmp"; ?>' title='Absolute path to the temporary storage folder' /><br />
                             <?php
                             $log_path = null;
                             if (strtolower(substr(PHP_OS, 0, 3)) == 'lin') {
                                 $log_path = "/var/log/sagacity";
                             }
                             else {
-                                $log_path = realpath(getcwd()) . "\logs";
+                                $log_path = realpath(getcwd()) . DIRECTORY_SEPARATOR . "logs";
                             }
 
                             ?>

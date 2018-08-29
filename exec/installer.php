@@ -101,16 +101,26 @@ function save_Database($params)
     $php   = null;
     $mysql = null;
     if (strtolower(substr(PHP_OS, 0, 3)) == 'lin') {
+		$res = [];
+		exec("which php", $res);
         if (file_exists('/bin/php')) {
             $php = realpath("/bin/php");
         }
+		elseif (is_array($res) && isset($res[0]) && file_exists($res[0])) {
+			$php = realpath($res[0]);
+		}
         else {
             die(json_encode(['error' => 'Cannot find the PHP executable']));
         }
 
+		$res = [];
+		exec("which mysql", $res);
         if (file_exists('/bin/mysql')) {
             $mysql = realpath('/bin/mysql');
         }
+		elseif (is_array($res) && isset($res[0]) && file_exists($res[0])) {
+			$mysql = realpath($res[0]);
+		}
         else {
             die(json_encode(['error' => 'Cannot find the MySQL executable']));
         }

@@ -60,6 +60,7 @@ define('NOTIFICATIONS', '{NOTIFICATIONS}');
 define('PORT_LIMIT', '{PORT_LIMIT}');
 define('MAX_RESULTS', '{MAX_RESULTS}');
 define('ECHECKLIST_FORMAT', '{ECHECKLIST_FORMAT}');
+define('UPDATE_FREQ', '{UPDATE_FREQ}');
 
 /**
  * Company variables

@@ -73,6 +73,7 @@
  *  - May 31, 2018 - Changes to support renaming sagacity.pdi_catalog.check_content field and scan error detection
  *  - Jun 2, 2018 - Formatting and added set_Setting_Array method
  *  - Jun 5, 2018 - Changed set_Setting_Array method to use SQL update instead of replace
+ *  - Sep 5, 2018 - Fix for #8
  */
 include_once 'base.inc';
 include_once 'software.inc';
@@ -1695,7 +1696,7 @@ class db_helper
 
     /**
      *
-     * @return type
+     * @return string
      */
     public static function mysql_escape_string()
     {
@@ -2784,7 +2785,7 @@ class db
      * @param integer $cat_id
      * 	Integer category ID to get the summary on
      *
-     * @return NULL|array:targets,checklist,summary
+     * @return NULL|array:targets,checklist,string
      * 	Returns an associative array of target (id & name), checklists, and a summary that joins the two
      */
     public function get_Checklist_Summary($cat_id)
@@ -4102,7 +4103,7 @@ class db
      * Function to get the findings that are assigned to specific controls
      *
      * @param ste $ste
-     * @param proc_ia_control $ia_ctrl
+     * @param \proc_ia_control $ia_ctrl
      * @param string $status
      * @return array:finding |NULL
      */
@@ -6250,7 +6251,7 @@ class db
      * @param integer $tgt_id
      * @param string $ip
      *
-     * @return NULL|interface
+     * @return NULL|interfaces
      */
     public function get_Interface_By_IP($tgt_id, $ip)
     {
@@ -9259,7 +9260,7 @@ class db
     /**
      * Function to retrieve a software item by using the CPE or CPE v2.3
      *
-     * @param strinig $cpe_in
+     * @param string $cpe_in
      *    CPE to search for
      *
      * @return software|NULL
@@ -12218,7 +12219,7 @@ class db
             }
             $int_ids = $tmp;
         }
-        if (count($int_ids)) {
+        if (is_array($int_ids) && count($int_ids)) {
             $this->help->delete("pps_list", null, [
                 [
                     'field' => 'int_id',

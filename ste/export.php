@@ -302,7 +302,7 @@ foreach ($findings as $worksheet_name => $data) {
 
   updateHostHeader($sheet, $data['target_list'], $db);
 
-  $log->debug("Completed worksheet $worksheet");
+  $log->debug("Completed worksheet $worksheet_name");
 }
 
 $ss->removeSheetByIndex(2);

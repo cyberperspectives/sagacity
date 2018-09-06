@@ -361,9 +361,10 @@ if (isset($cmd['nvd'])) {
         $load_date = new DateTime($db->get_Settings("nvd-cve-load-date"));
         if ($load_date < $too_old) {
             // More than 7 days old so have to do a full load
-            foreach ($nvd_years as $yr) {
+            foreach ($nvd_years as $x => $yr) {
                 $db->set_Setting('nvd-year', $yr);
-                download_file("https://static.nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0-{$yr}.json.zip", TMP . "/nvd/nvdcve-{$yr}.json.zip", $db->help, 'nvd-cve-dl-progress');
+                $db->set_Setting('nvd-cve-dl-progress', (($x + 1) / count($nvd_years)) * 100);
+                download_file("https://static.nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0-{$yr}.json.zip", TMP . "/nvd/nvdcve-{$yr}.json.zip");
                 $zip = new ZipArchive();
                 $zip->open(TMP . "/nvd/nvdcve-{$yr}.json.zip");
                 $zip->extractTo(TMP . "/nvd");
@@ -392,7 +393,7 @@ if (isset($cmd['nvd'])) {
     chdir(DOC_ROOT . "/exec");
     if (isset($cmd['po']) || !isset($cmd['do'])) {
         $json_files = glob(TMP . "/nvd/*.json");
-        foreach ($json_files as $j) {
+        foreach ($json_files as $x => $j) {
             $match = [];
             if (preg_match("/(\d{4}|recent|modified)/", basename($j), $match)) {
                 $db->set_Setting('nvd-year', $match[1]);
@@ -407,6 +408,7 @@ if (isset($cmd['nvd'])) {
 
             $log->debug("Running NVD CVE parsing script on file: $j");
             passthru($script);
+            $db->set_Setting('nvd-cve-progress', (($x + 1) / count($json_files)) * 100);
         }
     }
 

@@ -65,7 +65,6 @@ print "Currently " . count($existing_cves) . " in DB" . PHP_EOL . "Parsing: " . 
 $db_cpes      = [];
 $new_cves     = [];
 $new_cve_refs = [];
-$new_cve_web  = [];
 $sw_rows      = [];
 $new          = 0;
 $existing     = 0;
@@ -81,9 +80,6 @@ $cve_fields = [
 ];
 $ref_fields = [
     'cve_seq', 'source', 'url', 'val'
-];
-$web_fields = [
-    'cve_id', 'xml'
 ];
 
 foreach ($json->CVE_Items as $cve) {
@@ -168,18 +164,9 @@ foreach ($json->CVE_Items as $cve) {
 
         $new_cves     = [];
         $new_cve_refs = [];
-        $new_cve_web  = [];
         $sw_rows      = [];
 
         print "\t" . ($existing + $new) . " completed" . PHP_EOL;
-
-        $db->help->update("settings", ['meta_value' => number_format((($existing + $new) / count($json->CVE_Items)) * 100, 2)], [
-            [
-                'field' => 'meta_key',
-                'value' => 'nvd-cve-progress'
-            ]
-        ]);
-        $db->help->execute();
     }
 }
 

@@ -42,6 +42,9 @@
  */
 include_once 'error.inc';
 include_once 'validation.inc';
+include_once 'vendor/autoload.php';
+
+use Monolog\Logger;
 
 /**
  * Function to get element or value from XML document using XPath
@@ -720,9 +723,9 @@ function url_exists($url)
 
 /**
  *
- * @param type $start
- * @param type $end
- * @return type
+ * @param float $start
+ * @param float $end
+ * @return float
  */
 function microtime_diff($start, $end = null)
 {
@@ -815,7 +818,7 @@ function add_intervals($i1, $i2)
 
 /**
  * Helper method to convert a file name to a .log file
- * 
+ *
  * @param string $fname
  *
  * @return string New filename with the prepended LOG_PATH

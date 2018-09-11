@@ -249,10 +249,11 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
 
     // increment the column indexes for notes, check contents, and missing PDI
     if (is_array($tgts) && count($tgts) > 1) {
-        $idx['overall']        += count($tgts);
-        $idx['consistent']     += count($tgts);
-        $idx['notes']          += count($tgts);
-        $idx['check_contents'] += count($tgts);
+        $increase = count($tgts) - 1;
+        $idx['overall']        += $increase;
+        $idx['consistent']     += $increase;
+        $idx['notes']          += $increase;
+        $idx['check_contents'] += $increase;
     }
     elseif (empty($tgts)) {
 		$log->warning("Failed to identify targets in worksheet {$wksht->getTitle()}");

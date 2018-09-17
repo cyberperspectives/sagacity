@@ -1,4 +1,5 @@
-# Sagacity
+# Sagacity   [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=XFR5WFPGTM2SS)
+
 Sagacity is a vulnerability assessment and compliance data management tool designed to make security testing more efficient, effective and complete.
 
 Security assessments, especially those done for DoD and Federal organizations, produce tremendous amounts of scan and compliance data that security engineers must sort through and deconflict, identify untested requirements, and somehow analyze to communicate risk to their employers. Sagacity, originally written to support a government customer, was designed to fill that need.

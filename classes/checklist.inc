@@ -399,7 +399,7 @@ class checklist
                 case (preg_match("/SharePoint/i", $this->name) ? true : false):
                     $this->icon = 'Microsoft Sharepoint.png';
                     break;
-                case (preg_match("/Dot Net/i", $this->name) ? true : false):
+                case (preg_match("/Dot Net|DotNet/i", $this->name) ? true : false):
                     $this->icon = 'Microsoft .NET.png';
                     break;
                 case (preg_match("/Internet Explorer/i", $this->name) ? true : false):
@@ -574,6 +574,27 @@ class checklist
                     break;
                 case (preg_match("/Mainframe /i", $this->name) ? true : false):
                     $this->icon = 'mainframe.png';
+                    break;
+				case (preg_match("/HBSS/i", $this->name) ? true : false):
+                    $this->icon = 'HBSS.jpg';
+                    break;
+				case (preg_match("/Akamai/i", $this->name) ? true : false):
+                    $this->icon = 'Akamai.png';
+                    break;
+				case (preg_match("/ArcGIS/i", $this->name) ? true : false):
+                    $this->icon = 'ArcGIS.png';
+                    break;
+				case (preg_match("/Bromium/i", $this->name) ? true : false):
+                    $this->icon = 'Bromium.png';
+                    break;
+				case (preg_match("/Forescout/i", $this->name) ? true : false):
+                    $this->icon = 'Forescout.jpg';
+                    break;
+				case (preg_match("/DB Networks|DBN\-6300/i", $this->name) ? true : false):
+                    $this->icon = 'DB Networks.png';
+                    break;
+				case (preg_match("/Windows PAW/i", $this->name) ? true : false):
+                    $this->icon = 'Windows PAW.jpg';
                     break;
                 default:
                     $this->icon = 'Orphan.png';

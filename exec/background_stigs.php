@@ -83,7 +83,6 @@ if (isset($cmd['d']) && $cmd['d']) {
 chdir($path);
 
 $db        = new db();
-$stack     = [];
 $zip_files = glob("*.zip");
 $zip       = new ZipArchive();
 
@@ -235,7 +234,7 @@ if (isset($cmd['delete'])) {
  */
 function directory_crawl($files)
 {
-    global $zip;
+    global $zip, $log;
 
     foreach ($files as $file) {
         if (preg_match('/\.zip/', $file)) {

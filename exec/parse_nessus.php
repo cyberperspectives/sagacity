@@ -582,7 +582,8 @@ class nessus_parser extends scan_xml_parser
             $this->log->script_log("Skipping tcp6 ports because there are " . count($netstat_keys) . " listening", E_DEBUG);
         }
 
-        $this->tgt->set_ID($this->db->save_Target($this->tgt));
+        $this->tgt->set_PP_Flag(true);
+        $this->tgt->set_ID($this->db->save_Target($this->tgt, false));
 
         $dt = DateTime::createFromFormat("D M d H:i:s Y", $this->tag["HOST_START"]);
         if ($dt < $this->scan->get_File_DateTime()) {
@@ -1332,7 +1333,8 @@ class nessus_parser extends scan_xml_parser
     {
         $this->log->script_log("ReportHost_end-START: {$this->tgt->get_Name()}");
         // save findings
-        $this->db->save_Target($this->tgt);
+        $this->tgt->set_PP_flag(true);
+        $this->db->save_Target($this->tgt, false);
 
         $this->log->script_log("Added finding counts: " . count($this->new_findings) . " for target " . $this->tgt->get_Name());
         $this->log->script_log("Updated finding counts: " . count($this->updated_findings) . " for target " . $this->tgt->get_Name());
@@ -1363,6 +1365,8 @@ class nessus_parser extends scan_xml_parser
     {
         $this->log->script_log("Saving host list");
         $this->db->update_Scan_Host_List($this->scan);
+
+        $this->db->post_Processing();
     }
 }
 

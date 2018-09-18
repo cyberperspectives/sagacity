@@ -1493,7 +1493,7 @@ function get_hosts($cat_id = null)
         return json_encode(['error' => "Invalid info"]);
     }
 
-    foreach ($tgts as $key => $tgt) {
+    foreach ($tgts as $tgt) {
         $chks = $db->get_Target_Checklists($tgt->get_ID());
         if ($cat_id) {
             $exp_scan_srcs = $db->get_Expected_Category_Sources($ste_cat);
@@ -1505,6 +1505,7 @@ function get_hosts($cat_id = null)
         $icons     = [];
         $icon_str  = '';
         $src_str   = '';
+        sort($chks);
 
         foreach ($chks as $chk) {
             if (!in_array($chk->get_Icon(), array_keys($icons))) {
@@ -1518,7 +1519,7 @@ function get_hosts($cat_id = null)
             $icon_str .= "<img src='/img/checklist_icons/$icon' title='{$data['name']}' class='checklist_image' />";
         }
 
-        foreach ($scan_srcs as $key => $src) {
+        foreach ($scan_srcs as $src) {
             $icon = $src['src']->get_Icon();
             if($src['scan_error']) {
                 $icon = strtolower($src['src']->get_Name()) . "-failed.png";

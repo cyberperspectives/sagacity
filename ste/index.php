@@ -236,7 +236,6 @@ include_once 'header.inc';
         error: function (xhr, status, error) {
           console.error(error);
         },
-        timeout: 5000,
         method: 'post',
         dataType: 'json'
       });

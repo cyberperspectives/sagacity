@@ -63,10 +63,6 @@ class ComposerStaticInit69a0c53551ee5f4e61c53efb549e5e72
         array (
             'Monolog\\' => 8,
         ),
-        'G' => 
-        array (
-            'Godsgood33\\Php_Db\\' => 18,
-        ),
         'C' => 
         array (
             'Complex\\' => 8,
@@ -94,10 +90,6 @@ class ComposerStaticInit69a0c53551ee5f4e61c53efb549e5e72
         'Monolog\\' => 
         array (
             0 => __DIR__ . '/..' . '/monolog/monolog/src/Monolog',
-        ),
-        'Godsgood33\\Php_Db\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/godsgood33/php-db/src',
         ),
         'Complex\\' => 
         array (

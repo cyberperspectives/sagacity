@@ -11,7 +11,6 @@ return array(
     'PhpOffice\\PhpSpreadsheet\\' => array($vendorDir . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet'),
     'PacificSec\\CPE\\' => array($vendorDir . '/pacificsec/cpe/src'),
     'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
-    'Godsgood33\\Php_Db\\' => array($vendorDir . '/godsgood33/php-db/src'),
     'Complex\\' => array($vendorDir . '/markbaker/complex/classes/src'),
     'Cocur\\BackgroundProcess\\' => array($vendorDir . '/cocur/background-process/src'),
 );

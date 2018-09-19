@@ -596,6 +596,12 @@ class checklist
 				case (preg_match("/Windows PAW/i", $this->name) ? true : false):
                     $this->icon = 'Windows PAW.jpg';
                     break;
+				case (preg_match("/SecNet/i", $this->name) ? true : false):
+                    $this->icon = 'Harris SecNet.jpg';
+                    break;
+				case (preg_match("/Desktop App/i", $this->name) ? true : false):
+                    $this->icon = 'Desktop Application.jpg';
+                    break;
                 default:
                     $this->icon = 'Orphan.png';
             }

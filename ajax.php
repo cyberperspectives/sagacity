@@ -52,7 +52,7 @@ include_once 'config.inc';
 include_once 'import.inc';
 include_once 'helper.inc';
 
-chdir(DOC_ROOT);
+chdir(dirname(__FILE__));
 
 $db   = new db();
 $conn = new mysqli(DB_SERVER, "web", db::decrypt_pwd(), 'sagacity');

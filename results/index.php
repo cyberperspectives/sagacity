@@ -160,7 +160,7 @@ $stes = $db->get_STE();
         var audio = new Audio("complete.mp3");
 <?php } ?>
     $(function () {
-      to = setTimeout(update_script_status, 3000);
+      to = setTimeout(update_script_status, <?php print UPDATE_FREQ * 1000; ?>);
       table = $('#results-table').DataTable({
         'columnDefs': [{'orderable': false, 'targets': [2, 5]}],
         'stripeClasses': ['odd_row', 'even_row'],
@@ -285,12 +285,12 @@ $stes = $db->get_STE();
             $(this).removeClass('mouseover-scan');
           });
           if ($('#toggle_refresh').val() === 'Stop Refresh') {
-            to = setTimeout(update_script_status, 3000);
+            to = setTimeout(update_script_status, <?php print UPDATE_FREQ * 1000; ?>);
           }
         },
         error: function (xhr, status, error) {
           if ($('#toggle_refresh').val() === 'Stop Refresh') {
-            to = setTimeout(update_script_status, 3000);
+            to = setTimeout(update_script_status, <?php print UPDATE_FREQ * 1000; ?>);
           }
         },
         dataType: 'json',
@@ -309,7 +309,7 @@ $stes = $db->get_STE();
         to = null;
       }
       else {
-        to = setTimeout(update_script_status, 3000);
+        to = setTimeout(update_script_status, <?php print UPDATE_FREQ * 1000; ?>);
         $('#toggle_refresh').val('Stop Refresh');
       }
     }
@@ -510,14 +510,14 @@ $stes = $db->get_STE();
               method: 'post'
             });
             if ($('#toggle_refresh').val() === 'Stop Refresh') {
-              to = setTimeout(update_script_status, 3000);
+              to = setTimeout(update_script_status, <?php print UPDATE_FREQ * 1000; ?>);
             }
             $(this).dialog('close');
           },
           Cancel: function () {
             $(this).dialog('close');
             if ($('#toggle_refresh').val() === 'Stop Refresh') {
-              to = setTimeout(update_script_status, 3000);
+              to = setTimeout(update_script_status, <?php print UPDATE_FREQ * 1000; ?>);
             }
           }
         }

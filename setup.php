@@ -58,6 +58,9 @@ if(!is_writable(dirname(__FILE__) . "/inc")) {
 if(!file_exists(dirname(__FILE__) . "/logs")) {
 	mkdir(dirname(__FILE__) . "/logs");
 }
+elseif(!is_writable(dirname(__FILE__) . "/logs")) {
+    die("Sagacity needs write access to the /logs directory to create system and scanner log files");
+}
 
 if (!function_exists('openssl_encrypt')) {
     print <<<EOO
@@ -389,6 +392,7 @@ EOL;
                   'cpe': ($('#cpe').is(":checked") ? '1' : '0'),
                   'cve': ($('#cve').is(":checked") ? '1' : '0'),
                   'stig': ($('#stig').is(":checked") ? '1' : '0'),
+                  'update-freq': $('#update-freq').val(),
                   'action': action
                 };
               }
@@ -600,6 +604,9 @@ EOL;
 
                             <label class='label'>Password File:</label>
                             <input type='text' id='pwd-file' value='inc/passwd' title='Relative path to the encrypted password file' /><br/>
+
+                            <label class='label'>AJAX Refresh Freq:</label>
+                            <input type='number' id='update-freq' value='3' title='Frequency that the AJAX calls refresh methods (in seconds)' />
                         </div>
 
                         <div class='right'>

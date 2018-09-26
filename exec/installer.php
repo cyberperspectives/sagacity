@@ -40,7 +40,8 @@ $db_step      = [
     'sample-data'   => ['filter' => FILTER_VALIDATE_BOOLEAN],
     'cpe'           => ['filter' => FILTER_VALIDATE_BOOLEAN],
     'cve'           => ['filter' => FILTER_VALIDATE_BOOLEAN],
-    'stig'          => ['filter' => FILTER_VALIDATE_BOOLEAN]
+    'stig'          => ['filter' => FILTER_VALIDATE_BOOLEAN],
+    'update-freq'   => ['filter' => FILTER_VALIDATE_INT, 'flag' => FILTER_NULL_ON_FAILURE]
 ];
 $company_step = [
     'company'       => $params,
@@ -148,6 +149,7 @@ function save_Database($params)
     my_str_replace("{PHP_CONF}", realpath(php_ini_loaded_file()), $config);
     my_str_replace("{DB_SERVER}", $params['db-server'], $config);
     my_str_replace("{DB_BIN}", $mysql, $config);
+    my_str_replace("'{UPDATE_FREQ}'", $params['update-freq'], $config);
     my_str_replace("@new", "@step1", $config);
 
     if (!file_exists($params['tmp-path'])) {

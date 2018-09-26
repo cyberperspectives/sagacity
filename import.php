@@ -91,7 +91,7 @@
             },
             success: function (data) {
               if ($('#toggle_refresh').html() == 'Stop Refresh' && !to) {
-                to = setTimeout(update_script_status, 3000);
+                to = setTimeout(update_script_status, <?php print UPDATE_FREQ * 1000; ?>);
               }
             },
             error: function (xhr, status, error) {

@@ -126,19 +126,7 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
         continue;
     }
 
-    $db->help->select("scans", ['status'], [
-        [
-            'field' => 'id',
-            'op'    => '=',
-            'value' => $scan->get_ID()
-        ]
-    ]);
-    $thread_status = $db->help->execute();
-    if ($thread_status['status'] == 'TERMINATED') {
-        unset($objSS);
-        rename(realpath(TMP . "/{$scan->get_File_Name()}"), TMP . "/terminated/{$scan->get_File_Name()}");
-		$log->notice("File parsing terminated by user");
-    }
+$scan->isTerminated();
 
 	$log->notice("Reading from {$wksht->getTitle()}");
 
@@ -163,86 +151,78 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
         'notes'          => 9,
         'check_contents' => 10
     ];
-    $finding_count   = [];
     $tgts            = [];
     $short_title_col = Coordinate::stringFromColumnIndex($idx['short_title']);
-    $row_count       = $wksht->getHighestDataRow() - 10;
+    $row_count       = $highestRow = $wksht->getHighestDataRow() - 10;
+    $highestCol      = $wksht->getHighestDataColumn(10);
 
-    foreach ($wksht->getRowIterator(10) as $row) {
-        foreach ($row->getCellIterator() as $cell) {
-            $ip            = null;
-            $db->help->select("scans", ['status'], [
-                [
-                    'field' => 'id',
-                    'op'    => '=',
-                    'value' => $scan->get_ID()
-                ]
-            ]);
-            $thread_status = $db->help->execute();
-            if ($thread_status['status'] == 'TERMINATED') {
-                unset($objSS);
-                rename(realpath(TMP . "/{$scan->get_File_Name()}"), TMP . "/terminated/{$scan->get_File_Name()}");
-				die($log->notice("File parsing terminated by user"));
-            }
+    for ($col = 'F' ; $col != $highestCol ; $col++) {
+        $cell = $wksht->getCell($col . '10');
+        $log->debug("Checking column: {$cell->getColumn()} {$cell->getCoordinate()}");
+        $ip            = null;
 
-            if ($cell->getColumn() > $short_title_col && !preg_match('/Overall/i', $cell->getValue())) {
-                if (preg_match('/status/i', $cell->getValue())) {
-					$log->error("Invalid host name ('status') in {$wksht->getTitle()}");
-                    break;
-                }
+        $scan->isTerminated();
 
-                if ($tgt_id = $db->check_Target($conf['ste'], $cell->getValue())) {
-                    $tgt = $db->get_Target_Details($conf['ste'], $tgt_id);
-                    if (is_array($tgt) && count($tgt) && isset($tgt[0]) && is_a($tgt[0], 'target')) {
-                        $tgt = $tgt[0];
-                    }
-                    else {
-						$log->error("Could not find host {$cell->getValue()}");
-                    }
-                }
-                else {
-                    $tgt = new target($cell->getValue());
-                    $tgt->set_OS_ID($gen_os->get_ID());
-                    $tgt->set_STE_ID($conf['ste']);
-                    $tgt->set_Location($conf['location']);
-                    $tgt->set_Notes('New Target');
-
-                    if (preg_match('/((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}/', $cell->getValue())) {
-                        $ip                       = $cell->getValue();
-                        $int                      = new interfaces(null, null, null, $ip, null, null, null, null);
-                        $tgt->interfaces["{$ip}"] = $int;
-                    }
-
-                    $tgt->set_ID($db->save_Target($tgt));
-                }
-
-                $tgts[] = $tgt;
-
-                $hl = new host_list();
-                $hl->setFindingCount($row_count);
-                $hl->setTargetId($tgt->get_ID());
-                $hl->setTargetName($tgt->get_Name());
-                if ($ip) {
-                    $hl->setTargetIp($ip);
-                }
-                elseif (is_array($tgt->interfaces) && count($tgt->interfaces)) {
-                    foreach ($tgt->interfaces as $int) {
-                        if (!in_array($int->get_IPv4(), ['0.0.0.0', '127.0.0.1'])) {
-                            $ip = $int->get_IPv4();
-                            break;
-                        }
-                    }
-                    $hl->setTargetIp($ip);
-                }
-
-                $scan->add_Target_to_Host_List($hl);
-            }
-
-            if (preg_match('/Overall/i', $cell->getValue())) {
+        if (!preg_match('/Overall/i', $cell->getValue())) {
+            if (preg_match('/status/i', $cell->getValue())) {
+				$log->error("Invalid host name ('status') in {$wksht->getTitle()}");
                 break;
             }
+
+            if ($tgt_id = $db->check_Target($conf['ste'], $cell->getValue())) {
+                $log->debug("Found host for {$cell->getValue()}");
+                $tgt = $db->get_Target_Details($conf['ste'], $tgt_id);
+                if (is_array($tgt) && count($tgt) && isset($tgt[0]) && is_a($tgt[0], 'target')) {
+                    $tgt = $tgt[0];
+                }
+                else {
+					$log->error("Could not find host {$cell->getValue()}");
+                }
+            }
+            else {
+                $log->debug("Creating new target {$cell->getValue()}");
+                $tgt = new target($cell->getValue());
+                $tgt->set_OS_ID($gen_os->get_ID());
+                $tgt->set_STE_ID($conf['ste']);
+                $tgt->set_Location($conf['location']);
+                $tgt->set_Notes('New Target');
+
+                if (preg_match('/((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}/', $cell->getValue())) {
+                    $ip                       = $cell->getValue();
+                    $int                      = new interfaces(null, null, null, $ip, null, null, null, null);
+                    $tgt->interfaces["{$ip}"] = $int;
+                }
+
+                $tgt->set_ID($db->save_Target($tgt));
+            }
+
+            $tgts[] = $tgt;
+
+            $log->debug("Adding new target to host list", ['row_count' => $row_count, 'tgt_id' => $tgt->get_ID(), 'tgt_name' => $tgt->get_Name()]);
+            $hl = new host_list();
+            $hl->setFindingCount($row_count);
+            $hl->setTargetId($tgt->get_ID());
+            $hl->setTargetName($tgt->get_Name());
+            if ($ip) {
+                $hl->setTargetIp($ip);
+            }
+            elseif (is_array($tgt->interfaces) && count($tgt->interfaces)) {
+                foreach ($tgt->interfaces as $int) {
+                    if (!in_array($int->get_IPv4(), ['0.0.0.0', '127.0.0.1'])) {
+                        $ip = $int->get_IPv4();
+                        break;
+                    }
+                }
+                $hl->setTargetIp($ip);
+            }
+
+            $scan->add_Target_to_Host_List($hl);
         }
-        break;
+
+        if (preg_match('/Overall/i', $cell->getValue())) {
+            $log->debug("Found overall: {$cell->getColumn()}");
+            break;
+        }
     }
 
     $db->update_Running_Scan($base_name, ['name' => 'host_count', 'value' => count($tgts)]);
@@ -267,6 +247,18 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
     $title_col = Coordinate::stringFromColumnIndex($idx['short_title']);
     $notes_col = Coordinate::stringFromColumnIndex($idx['notes']);
 
+    $log->debug("Columns", [
+        'stig_col' => $stig_col,
+        'vms_col' => $vms_col,
+        'cat_col' => $cat_col,
+        'ia_col' => $ia_col,
+        'title_col' => $title_col,
+        'overall_col' => Coordinate::stringFromColumnIndex($idx['overall']),
+        'consistent_col' => Coordinate::stringFromColumnIndex($idx['consistent']),
+        'check_contents_col' => Coordinate::stringFromColumnIndex($idx['check_contents']),
+        'notes_col' => $notes_col
+    ]);
+
     $new_findings     = [];
     $updated_findings = [];
     $row_count = 0;
@@ -278,6 +270,9 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
         $notes       = $wksht->getCell("{$notes_col}{$row->getRowIndex()}")->getValue();
 
         $stig = $db->get_Stig($stig_id);
+        if($row->getRowIndex() % 10 == 0) {
+            $scan->isTerminated();
+        }
 
         if (is_array($stig) && count($stig) && isset($stig[0]) && is_a($stig[0], 'stig')) {
             $stig = $stig[0];
@@ -304,6 +299,7 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
             $finding = $db->get_Finding($tgt, $stig);
 
             if (is_array($finding) && count($finding) && isset($finding[0]) && is_a($finding[0], 'finding')) {
+                /** @var finding $tmp */
                 $tmp = $finding[0];
 
                 if(preg_match("/Not a Finding|Not Applicable/i", $status)) {
@@ -340,9 +336,9 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
             }
         }
 
-        $db->update_Running_Scan($base_name, ['name' => 'perc_comp', 'value' => (($row->getRowIndex() - 10) / $row_count) * 100]);
+        $db->update_Running_Scan($base_name, ['name' => 'perc_comp', 'value' => (($row->getRowIndex() - 10) / $highestRow) * 100]);
         if (PHP_SAPI == 'cli') {
-            print "\r" . sprintf("%.2f%%", (($row->getRowIndex() - 10) / $row_count) * 100);
+            print "\r" . sprintf("%.2f%%", (($row->getRowIndex() - 10) / $highestRow) * 100);
         }
     }
 

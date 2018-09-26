@@ -125,6 +125,7 @@ function getValue($xml, $path, $starting = null, $keep = false)
  */
 function FileDetection($filename)
 {
+    $name = [];
     $name['base_name'] = basename($filename);
     // print "\tCheck if exists".PHP_EOL;
     if (!file_exists($filename)) {

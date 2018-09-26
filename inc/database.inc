@@ -1271,7 +1271,7 @@ class db_helper
             "Executing: $this->query_type\t" .
             "SQL: {$errmsg}" . PHP_EOL, FILE_APPEND);
 
-        if ($errno == E_DEBUG && $this->result && LOG_LEVEL == E_DEBUG) {
+        if ($errno == E_DEBUG && $this->result && LOG_LEVEL == E_DEBUG && is_a($this->result, 'mysqli_result')) {
             file_put_contents(realpath(LOG_PATH . '/db.debug'), print_r($this->result, true), FILE_APPEND);
         }
         elseif ($errno == E_ERROR && $this->c->error) {

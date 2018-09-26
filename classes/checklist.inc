@@ -312,8 +312,11 @@ class checklist
                 case (preg_match("/AIX/i", $this->name) ? true : false):
                     $this->icon = 'AIX.png';
                     break;
-                case (preg_match("/Application Security|Application Server|Application Layer Gateway/i", $this->name) ? true : false):
+                case (preg_match("/Application Security|Application Layer Gateway/i", $this->name) ? true : false):
                     $this->icon = 'Application Development.gif';
+                    break;
+				case (preg_match("/Application Server/i", $this->name) ? true : false):
+                    $this->icon = 'Application Server.jpg';
                     break;
                 case (preg_match("/Active Directory/i", $this->name) ? true : false):
                     $this->icon = 'Active Directory.png';

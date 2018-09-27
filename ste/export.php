@@ -239,8 +239,6 @@ foreach ($findings as $worksheet_name => $data) {
 
       $col = Coordinate::stringFromColumnIndex($col_id);
       $sheet->setCellValue("{$col}{$row}", $status);
-      $sheet->getCell("{$col}{$row}")->setDataValidation(clone $validation['host_status']);
-	  $log->debug("Set data validation for target $host_name");
     }
 
     $overall_str = "=IF(" .
@@ -252,7 +250,6 @@ foreach ($findings as $worksheet_name => $data) {
         "COLUMNS(F{$row}:{$last_tgt_col}{$row}), TRUE, FALSE)";
 
     $sheet->setCellValue($overall_col . $row, $overall_str);
-    $sheet->getCell("{$col}{$row}")->setDataValidation(clone $validation['host_status']);
 
     $sheet->setCellValue($same_col . $row, $same_str, true)
         ->getStyle("{$same_col}11:{$same_col}{$sheet->getHighestDataRow()}")
@@ -265,6 +262,9 @@ foreach ($findings as $worksheet_name => $data) {
 
     $row++;
   }
+
+  $sheet->setDataValidation("{$col}11:{$col}{$row}", clone $validation['host_status']);
+  $log->debug("Set data validation for target $host_name");
 
   $log->debug("Completed STIG parsing");
   $sheet->getStyle("F11:" . Coordinate::stringFromColumnIndex(count($data['target_list']) + 6) . $row)

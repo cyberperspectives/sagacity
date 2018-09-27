@@ -353,10 +353,16 @@ $conditions['not_reviewed_count']->getStyle()
     ->setEndColor($yellow);
 
 $validation['host_status']->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-$validation['host_status']->setFormula1("=ValidStatus");
+$validation['host_status']->setAllowBlank(false);
+$validation['host_status']->setFormula1('"Not Reviewed,Not a Finding,Open,Not Applicable,No Data,Exception,False Positive"');
 $validation['host_status']->setShowDropDown(true);
+$validation['host_status']->setShowErrorMessage(true);
+$validation['host_status']->setError("Selected value not valid");
+$validation['host_status']->setErrorTitle("Invalid selection");
+$validation['host_status']->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
 
 $validation['true_false']->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+$validation['true_false']->setAllowBlank(false);
 $validation['true_false']->setFormula1("=TRUE,FALSE");
 $validation['true_false']->setShowDropDown(true);
 

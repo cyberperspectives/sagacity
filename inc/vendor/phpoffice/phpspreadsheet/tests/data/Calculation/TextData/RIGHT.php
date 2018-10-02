@@ -1,0 +1,34 @@
+<?php
+
+return [
+    [
+        '',
+        null,
+        1,
+    ],
+    [
+        '',
+        '',
+        1,
+    ],
+    [
+        '#VALUE!',
+        'QWERTYUIOP',
+        -1,
+    ],
+    [
+        'GHI',
+        'ABCDEFGHI',
+        3,
+    ],
+    [
+        'UE',
+        true,
+        2,
+    ],
+    [
+        'SE',
+        false,
+        2,
+    ],
+];

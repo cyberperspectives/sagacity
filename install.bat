@@ -27,6 +27,7 @@
  REM - Jan 30, 2017 - Fixed error with copy of config-xampp-win.xml to config.xml where it required full path
  REM - Apr 5, 2017 - Added mkdir for \xampp\php\logs directory (not included when installed)
  REM - Jun 27, 2017 - Removed copy cgi-bin contents
+ REM - Sep 19, 2018 - Deleting unnecessary C:\xampp\htdocs folder.
 
 mkdir c:\xampp\php\logs
 
@@ -47,6 +48,9 @@ rename c:\xampp\apache\conf\extra\httpd-xampp.conf httpd-xampp.conf.old
 copy c:\xampp\www\conf\httpd-xampp.conf c:\xampp\apache\conf\extra
 rename c:\xampp\php\php.ini php.ini.old
 copy c:\xampp\www\conf\php.ini c:\xampp\php
+
+echo Deleting unnecessary C:\xampp\htdocs folder.
+del /F /S /Q c:\xampp\htdocs
 
 @echo Installing Apache service
 c:\xampp\apache\bin\httpd -k install

@@ -92,6 +92,7 @@ foreach ($lines as $line_num => $line) {
         continue;
     } # skip blank lines
     $line = trim($line, "\t\n\r"); # chomp would be nice...
+    $matches = [];
     if (!isset($filetype)) {
         if (preg_match('/Starting|\-oN/', $line)) {
             $filetype = "text";
@@ -242,8 +243,6 @@ if ($filetype == "xml") {
         $target[$ip]['description'] = $vendor;
         # Iterate through ports
         $ports                      = getValue($xml, "ports/port", $host, true);
-        $tcp_ports                  = [];
-        $udp_ports                  = [];
         foreach ($ports as $portxml) {
             $portid = $portxml->getAttribute("portid");
             $proto  = $portxml->getAttribute("protocol");
@@ -284,6 +283,7 @@ if ($filetype == "xml") {
 $db->update_Running_Scan($base_name, ['name' => 'host_count', 'value' => count($target)]);
 $count  = 0;
 $tgt_ip = null;
+
 foreach ($target as $ip => $tgt) {
     # get target ID
     $tgt_id = 0;
@@ -302,6 +302,7 @@ foreach ($target as $ip => $tgt) {
         $tgt_obj->set_STE_ID($conf['ste']);
         //$tgt_obj->set_Notes("New target found by NMap");
         $tgt_obj->set_OS_ID($sw->get_ID());
+        $tgt_obj->set_PP_Flag(true);
         if ($sw->get_Shortened_SW_String()) {
             $tgt_obj->set_OS_String($sw->get_Shortened_SW_String());
         }
@@ -344,10 +345,11 @@ foreach ($target as $ip => $tgt) {
             }
         }
 
-        $tgt_obj->set_ID($tgt_id = $db->save_Target($tgt_obj));
+        $tgt_obj->set_ID($tgt_id = $db->save_Target($tgt_obj, false));
     }
     else { #Update
         $db_tgt = $db->get_Target_Details($conf['ste'], $tgt_id)[0];
+        $db_tgt->set_PP_Flag(true);
 
         if (isset($tgt['tcp'])) {
             foreach ($tgt['tcp'] as $port_num => $port) {
@@ -388,7 +390,7 @@ foreach ($target as $ip => $tgt) {
             }
         }
 
-        $db->save_Target($db_tgt);
+        $db->save_Target($db_tgt, false);
     }
 
     $count++;
@@ -406,6 +408,7 @@ foreach ($target as $ip => $tgt) {
     $db->update_Running_Scan($base_name, ['name' => 'last_host', 'value' => $db_tgt->get_Name()]);
 }
 
+$db->post_Processing();
 $db->update_Scan_Host_List($scan);
 $db->update_Running_Scan($base_name, ['name' => 'perc_comp', 'value' => 100, 'complete' => 1]);
 if (!isset($cmd['debug'])) {

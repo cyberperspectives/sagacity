@@ -40,7 +40,8 @@ $db_step      = [
     'sample-data'   => ['filter' => FILTER_VALIDATE_BOOLEAN],
     'cpe'           => ['filter' => FILTER_VALIDATE_BOOLEAN],
     'cve'           => ['filter' => FILTER_VALIDATE_BOOLEAN],
-    'stig'          => ['filter' => FILTER_VALIDATE_BOOLEAN]
+    'stig'          => ['filter' => FILTER_VALIDATE_BOOLEAN],
+    'update-freq'   => ['filter' => FILTER_VALIDATE_INT, 'flag' => FILTER_NULL_ON_FAILURE]
 ];
 $company_step = [
     'company'       => $params,
@@ -101,16 +102,26 @@ function save_Database($params)
     $php   = null;
     $mysql = null;
     if (strtolower(substr(PHP_OS, 0, 3)) == 'lin') {
+		$res = [];
+		exec("which php", $res);
         if (file_exists('/bin/php')) {
             $php = realpath("/bin/php");
         }
+		elseif (is_array($res) && isset($res[0]) && file_exists($res[0])) {
+			$php = realpath($res[0]);
+		}
         else {
             die(json_encode(['error' => 'Cannot find the PHP executable']));
         }
 
+		$res = [];
+		exec("which mysql", $res);
         if (file_exists('/bin/mysql')) {
             $mysql = realpath('/bin/mysql');
         }
+		elseif (is_array($res) && isset($res[0]) && file_exists($res[0])) {
+			$mysql = realpath($res[0]);
+		}
         else {
             die(json_encode(['error' => 'Cannot find the MySQL executable']));
         }
@@ -138,6 +149,7 @@ function save_Database($params)
     my_str_replace("{PHP_CONF}", realpath(php_ini_loaded_file()), $config);
     my_str_replace("{DB_SERVER}", $params['db-server'], $config);
     my_str_replace("{DB_BIN}", $mysql, $config);
+    my_str_replace("'{UPDATE_FREQ}'", $params['update-freq'], $config);
     my_str_replace("@new", "@step1", $config);
 
     if (!file_exists($params['tmp-path'])) {

@@ -48,8 +48,6 @@ use Monolog\Handler\StreamHandler;
 
 set_time_limit(0);
 $db = new db();
-$checklists = [];
-$x = 0;
 $emass_ccis = null;
 $log_level = convert_log_level();
 $chk_hosts = filter_input_array(INPUT_POST, 'chk_host');
@@ -204,7 +202,6 @@ foreach ($findings as $worksheet_name => $data) {
   foreach ($data['stigs'] as $stig_id => $tgt_status) {
 	$log->debug("Running through STIG $stig_id", $tgt_status);
     $ia_controls_string = null;
-    $notes = '';
 
     // If $do_rmf is set, replace CCIs w/ eMASS RMF Control and build string to
     // insert into IA Controls cell, otherwise just use CCIs.
@@ -231,7 +228,7 @@ foreach ($findings as $worksheet_name => $data) {
         ->setCellValue("B{$row}", $tgt_status['echecklist']->get_VMS_ID())
         ->setCellValue("C{$row}", $tgt_status['echecklist']->get_Cat_Level_String())
         ->setCellValue("D{$row}", $ia_controls_string)
-        ->setCellValue("E{$row}", str_replace("\\n", "\n", html_entity_decode($tgt_status['echecklist']->get_Short_Title())));
+        ->setCellValue("E{$row}", deduplicateString($tgt_status['echecklist']->get_Short_Title()));
 	$log->debug("Added STIG info ($stig_id), not to targets");
 
     foreach ($data['target_list'] as $host_name => $col_id) {
@@ -242,8 +239,6 @@ foreach ($findings as $worksheet_name => $data) {
 
       $col = Coordinate::stringFromColumnIndex($col_id);
       $sheet->setCellValue("{$col}{$row}", $status);
-      $sheet->getCell("{$col}{$row}")->setDataValidation(clone $validation['host_status']);
-	  $log->debug("Set data validation for target $host_name");
     }
 
     $overall_str = "=IF(" .
@@ -255,19 +250,21 @@ foreach ($findings as $worksheet_name => $data) {
         "COLUMNS(F{$row}:{$last_tgt_col}{$row}), TRUE, FALSE)";
 
     $sheet->setCellValue($overall_col . $row, $overall_str);
-    $sheet->getCell("{$col}{$row}")->setDataValidation(clone $validation['host_status']);
 
     $sheet->setCellValue($same_col . $row, $same_str, true)
         ->getStyle("{$same_col}11:{$same_col}{$sheet->getHighestDataRow()}")
         ->setConditionalStyles([$conditions['true'], $conditions['false']]);
     //->setDataValidation($validation['true_false']);
 
-    $sheet->setCellValue($notes_col . $row, html_entity_decode($tgt_status['echecklist']->get_Notes()))
-        ->setCellValue($check_contents_col . $row, str_replace("\\n", "\n", html_entity_decode($tgt_status['echecklist']->get_Check_Contents())));
+    $sheet->setCellValue($notes_col . $row, deduplicateString($tgt_status['echecklist']->get_Notes()))
+        ->setCellValue($check_contents_col . $row, deduplicateString($tgt_status['echecklist']->get_Check_Contents()));
 	$log->debug("Added remaining cells");
 
     $row++;
   }
+
+  $sheet->setDataValidation("{$col}11:{$col}{$row}", clone $validation['host_status']);
+  $log->debug("Set data validation for target $host_name");
 
   $log->debug("Completed STIG parsing");
   $sheet->getStyle("F11:" . Coordinate::stringFromColumnIndex(count($data['target_list']) + 6) . $row)
@@ -302,7 +299,7 @@ foreach ($findings as $worksheet_name => $data) {
 
   updateHostHeader($sheet, $data['target_list'], $db);
 
-  $log->debug("Completed worksheet $worksheet");
+  $log->debug("Completed worksheet $worksheet_name");
 }
 
 $ss->removeSheetByIndex(2);
@@ -488,4 +485,21 @@ function updateHostHeader($sheet, $tgts, &$db) {
       ->setCellValue('C5', $not_a_finding)
       ->setCellValue('C6', $not_applicable)
       ->setCellValue('C7', $not_reviewed);
+}
+
+/**
+ * Method to split a string into an array (by new line \n) and use array_unique to remove duplicate strings
+ *
+ * @param string $str
+ *
+ * @return string
+ */
+function deduplicateString($str)
+{
+    $ret = null;
+    $ret = str_replace(["\\n", PHP_EOL], "\r", $str);
+    $ret = array_unique(explode("\r", $ret));
+    $ret = html_entity_decode(implode("\r", $ret));
+
+    return $ret;
 }

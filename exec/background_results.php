@@ -80,8 +80,6 @@ $dbh = new db();
 
 $files   = glob("*.*");
 $stack   = [];
-$running = [];
-$time    = 0;
 $threads = [];
 
 foreach ($files as $file) {

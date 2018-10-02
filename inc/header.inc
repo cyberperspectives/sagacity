@@ -190,7 +190,7 @@ if (!$nasl['nasl-count']) {
                   }
 
                   if (reload) {
-                    setTimeout(getLoadStatus, 1000);
+                    setTimeout(getLoadStatus, <?php print UPDATE_FREQ * 1000; ?>);
                   }
                   else {
                     $('#db-err').remove();

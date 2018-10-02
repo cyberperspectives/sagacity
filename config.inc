@@ -15,6 +15,7 @@
  *  - Nov 14, 2017 - File created
  *  - May 24, 2018 - Updated constants for 1.3.2 release
  *  - Jun 2, 2018 - Added new STIG_EXCLUSIONS constant to permanently exclude STIGs
+ *  - Aug 28, 2018 - Updated constants for 1.3.3 release
  */
 // @new
 /**
@@ -29,8 +30,8 @@ define('E_DEBUG', 65535);
 define('DOC_ROOT', '{DOC_ROOT}');
 define('PWD_FILE', '{PWD_FILE}');
 define('TMP', '{TMP_PATH}');
-define('VER', '1.3.2');
-define('REL_DATE', '2018-05-31');
+define('VER', '1.3.3');
+define('REL_DATE', '2018-08-31');
 define('LOG_LEVEL', '{E_ERROR}');
 define('LOG_PATH', '{LOG_PATH}');
 define('SALT', '{SALT}');
@@ -59,6 +60,7 @@ define('NOTIFICATIONS', '{NOTIFICATIONS}');
 define('PORT_LIMIT', '{PORT_LIMIT}');
 define('MAX_RESULTS', '{MAX_RESULTS}');
 define('ECHECKLIST_FORMAT', '{ECHECKLIST_FORMAT}');
+define('UPDATE_FREQ', '{UPDATE_FREQ}');
 
 /**
  * Company variables

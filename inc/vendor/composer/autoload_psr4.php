@@ -9,6 +9,8 @@ return array(
     'Psr\\SimpleCache\\' => array($vendorDir . '/psr/simple-cache/src'),
     'Psr\\Log\\' => array($vendorDir . '/psr/log/Psr/Log'),
     'PhpOffice\\PhpSpreadsheet\\' => array($vendorDir . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet'),
+    'PacificSec\\CPE\\' => array($vendorDir . '/pacificsec/cpe/src'),
     'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
+    'Complex\\' => array($vendorDir . '/markbaker/complex/classes/src'),
     'Cocur\\BackgroundProcess\\' => array($vendorDir . '/cocur/background-process/src'),
 );

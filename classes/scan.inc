@@ -104,7 +104,7 @@ class scan
     /**
      * Enum defining the type of script
      *
-     * @var file_types
+     * @var string
      */
     protected $type = null;
 
@@ -419,7 +419,7 @@ class scan
     /**
      * Getter function for the scan type
      *
-     * @return file_types
+     * @return string
      */
     public function get_Type()
     {
@@ -429,7 +429,7 @@ class scan
     /**
      * Setter function for the scan type
      *
-     * @param file_types $type_in
+     * @param string $type_in
      */
     public function set_Type($type_in)
     {
@@ -510,6 +510,30 @@ class scan
     public function set_Status($status_in)
     {
         $this->status = $status_in;
+    }
+
+    /**
+     * Method to check if the scan has been terminated by the user
+     */
+    public function isTerminated()
+    {
+        global $db, $log;
+        $db->help->select("scans", ['status'], [
+            [
+                'field' => 'id',
+                'op'    => '=',
+                'value' => $this->id
+            ]
+        ]);
+        $thread_status = $db->help->execute();
+
+        $this->status = $thread_status['status'];
+
+        if ($this->status == TERMINIATED) {
+            rename(realpath(TMP . "/{$this->file_name}"), TMP . "/terminated/{$this->file_name}");
+            $log->notice("File parsing terminated by user");
+            die();
+        }
     }
 
     /**

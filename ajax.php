@@ -52,7 +52,7 @@ include_once 'config.inc';
 include_once 'import.inc';
 include_once 'helper.inc';
 
-chdir(DOC_ROOT);
+chdir(dirname(__FILE__));
 
 $db   = new db();
 $conn = new mysqli(DB_SERVER, "web", db::decrypt_pwd(), 'sagacity');
@@ -202,8 +202,10 @@ elseif ($action == 'delete-cat') {
     }
 }
 elseif ($action == 'delete-file') {
-    $file = TMP . "/" . filter_input(INPUT_POST, 'filename', FILTER_SANITIZE_STRING);
-    if (file_exists($file)) {
+    $file = filter_input(INPUT_POST, 'filename', FILTER_SANITIZE_STRING);
+    $file = realpath($file);
+
+    if ($file && preg_match("/^" . preg_quote(TMP, '/') . "/", $file)) {
         if (unlink($file)) {
             print header(JSON) . json_encode([
                     'success' => 'Deleted file'
@@ -216,6 +218,7 @@ elseif ($action == 'delete-file') {
         }
     }
     else {
+        $file = filter_input(INPUT_POST, 'filename', FILTER_SANITIZE_STRING);
         print header(JSON) . json_encode([
                 'error' => "$file does not exist"
         ]);
@@ -1470,7 +1473,7 @@ function update_stig_control()
  *
  * @param int $cat_id
  *
- * @return type
+ * @return mixed
  */
 function get_hosts($cat_id = null)
 {
@@ -1490,7 +1493,7 @@ function get_hosts($cat_id = null)
         return json_encode(['error' => "Invalid info"]);
     }
 
-    foreach ($tgts as $key => $tgt) {
+    foreach ($tgts as $tgt) {
         $chks = $db->get_Target_Checklists($tgt->get_ID());
         if ($cat_id) {
             $exp_scan_srcs = $db->get_Expected_Category_Sources($ste_cat);
@@ -1502,6 +1505,7 @@ function get_hosts($cat_id = null)
         $icons     = [];
         $icon_str  = '';
         $src_str   = '';
+        sort($chks);
 
         foreach ($chks as $chk) {
             if (!in_array($chk->get_Icon(), array_keys($icons))) {
@@ -1515,7 +1519,7 @@ function get_hosts($cat_id = null)
             $icon_str .= "<img src='/img/checklist_icons/$icon' title='{$data['name']}' class='checklist_image' />";
         }
 
-        foreach ($scan_srcs as $key => $src) {
+        foreach ($scan_srcs as $src) {
             $icon = $src['src']->get_Icon();
             if($src['scan_error']) {
                 $icon = strtolower($src['src']->get_Name()) . "-failed.png";

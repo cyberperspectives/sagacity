@@ -28,6 +28,7 @@
  REM - Apr 5, 2017 - Added mkdir for \xampp\php\logs directory (not included when installed)
  REM - Jun 27, 2017 - Removed copy cgi-bin contents
  REM - Sep 19, 2018 - Deleting unnecessary C:\xampp\htdocs folder.
+ REM - Oct 3, 2018 - Redirected deletion of htdocs folder to nul
 
 mkdir c:\xampp\php\logs
 
@@ -50,20 +51,25 @@ rename c:\xampp\php\php.ini php.ini.old
 copy c:\xampp\www\conf\php.ini c:\xampp\php
 
 echo Deleting unnecessary C:\xampp\htdocs folder.
-del /F /S /Q c:\xampp\htdocs
+del /F /S /Q c:\xampp\htdocs 1>nul
 
 @echo Installing Apache service
 c:\xampp\apache\bin\httpd -k install
 net start apache2.4
 
+echo Thank you for installing Sagacity.  We want to know what you think!
+echo Please contact us at https://www.cyberperspectives.com/contact_us
+echo.
+echo If you like this tool, please tell a friend or co-worker!
+echo.
 set /p browser="Continue setup with http://localhost/setup.php? (Y/n) "
 
-set result=0
-if "%browser%"=="Y" (set result=1)
-if "%browser%"=="y" (set result=1)
-if "%browser%"=="Yes" (set result=1)
-if "%browser%"=="yes" (set result=1)
-if "%browser%"=="YES" (set result=1)
+set result=1
+if "%browser%"=="N" (set result=0)
+if "%browser%"=="n" (set result=0)
+if "%browser%"=="no" (set result=0)
+if "%browser%"=="No" (set result=0)
+if "%browser%"=="NO" (set result=0)
 
 if "%result%"=="1" (
   start http://localhost

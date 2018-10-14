@@ -9850,65 +9850,40 @@ class db
      */
     public function get_Cat_Count(ste_cat &$cat)
     {
-        $op    = (empty($cat->get_ID()) ? IS : '=');
-        $value = ($op == IS ? null : $cat->get_ID());
-        $this->help->select("get_pdi_count", ["SUM(`pdi_count`) AS 'total'"], [
-            [
+        $where = [];
+        if($cat->get_ID()) {
+            $where[] = [
                 'field' => 'cat_id',
-                'op'    => $op,
-                'value' => $value
-            ]
-        ]);
-        $rows  = $this->help->execute();
-
-        if (is_array($rows) && isset($rows['total'])) {
-            $cat->total = $rows['total'];
-            $cat->nr    = $rows['total'];
+                'value' => $cat->get_ID()
+            ];
         }
         else {
-            $cat->total = 0;
+            $where[] = [
+                'field' => 'ste_id',
+                'value' => $cat->get_STE_ID()
+            ];
         }
+        $this->help->select("target", ['cat_1', 'cat_2', 'cat_3', 'closed', 'not_applicable', 'not_reviewed'], $where);
 
-        $this->help->select("get_finding_count", ['status', "SUM(`finding_count`) AS 'finding_count'"], [
-            [
-                'field' => 'cat_id',
-                'op'    => $op,
-                'value' => $value
-            ]
-            ], [
-            'group' => 'status'
-        ]);
         $rows = $this->help->execute();
-
-        if (is_array($rows) && count($rows) && isset($rows['status'])) {
-            $rows = [0 => $rows];
+        if(is_array($rows) && count($rows) && isset($rows['cat_1'])) {
+            $cat->open += $rows['cat_1'] + $rows['cat_2'] + $rows['cat_3'];
+            $cat->na += $rows['not_applicable'];
+            $cat->nf += $rows['closed'];
+            $cat->nr += $rows['not_reviewed'];
         }
-
-        if (is_array($rows) && count($rows) && isset($rows[0])) {
-            foreach ($rows as $row) {
-                $cat->nr -= $row['finding_count'];
-                if ($row['status'] == 'Not Reviewed') {
-                    $cat->nr += ($row['finding_count'] * 2); // to account for what was just subtracted
-                }
-                elseif ($row['status'] == 'Not a Finding' || $row['status'] == 'False Positive') {
-                    $cat->nf += $row['finding_count'];
-                }
-                elseif ($row['status'] == 'Open' || $row['status'] == 'Exception') {
-                    $cat->open += $row['finding_count'];
-                }
-                elseif ($row['status'] == 'Not Applicable') {
-                    $cat->na += $row['finding_count'];
-                }
+        elseif(is_array($rows) && count($rows) && isset($rows[0])) {
+            foreach($rows as $r) {
+                $cat->open += $r['cat_1'] + $r['cat_2'] + $r['cat_3'];
+                $cat->na += $r['not_applicable'];
+                $cat->nf += $r['closed'];
+                $cat->nr += $r['not_reviewed'];
             }
         }
 
-        $this->help->select_count("target", [
-            [
-                'field' => 'cat_id',
-                'op'    => $op,
-                'value' => $value
-            ]
-        ]);
+        $cat->total = $cat->open + $cat->na + $cat->nf + $cat->nr;
+
+        $this->help->select_count("target", $where);
         $cat->tgt_count = $this->help->execute();
     }
 

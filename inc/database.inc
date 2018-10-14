@@ -11037,7 +11037,11 @@ class db
             ]);
             $tgts = $this->help->execute();
 
-            if (is_array($tgts) && count($tgts)) {
+            if(is_array($tgts) && count($tgts) && isset($tgts['id'])) {
+                $tgts = [0 => $tgts];
+            }
+
+            if (is_array($tgts) && count($tgts) && isset($tgts[0])) {
                 foreach ($tgts as $tgt) {
                     $this->help->query_type = db_helper::INSERT;
                     $this->help->sql        = "INSERT IGNORE INTO `target_checklist` (`tgt_id`,`chk_id`) " .

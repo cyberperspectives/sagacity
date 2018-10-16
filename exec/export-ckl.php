@@ -59,6 +59,16 @@ else {
 
 print "Destination: $dest" . PHP_EOL;
 
+$status_map = [
+    'Not Reviewed' => 'Not_Reviewed',
+    'Not a Finding' => 'NotAFinding',
+    'Open' => 'Open',
+    'Not Applicable' => 'Not_Applicable',
+    'No Data' => 'Not_Reviewed',
+    'Exception' => 'Open',
+    'False Positive' => 'NotAFinding'
+];
+
 $xml = new Array2XML();
 $xml->standalone = true;
 $xml->formatOutput = true;
@@ -110,6 +120,7 @@ if ($tgt_count = count($tgts)) {
       }
 
       $arr = [
+        '@comment' => "CyberPerspectives Sagacity v" . VER,
         'ASSET' => [
           'ASSET_TYPE'      => 'Computing',
           'HOST_NAME'       => $tgt->get_Name(),
@@ -306,20 +317,11 @@ if ($tgt_count = count($tgts)) {
           ]
             ], $cci_list);
 
-        $status = "Not_Reviewed";
+        $status = 'Not_Reviewed';
         $notes = '';
 
         if (is_a($find, 'finding')) {
-          $status = $find->get_Finding_Status_String();
-          if ($status == 'Not a Finding' || $status == 'False Positive') {
-            $status = "NotAFinding";
-          }
-          elseif($status == 'Exception') {
-              $status = 'Open';
-          }
-          else {
-            $status = str_replace(" ", "_", $status);
-          }
+          $status = $status_map[$find->get_Finding_Status_String()];
           $notes = $find->get_Notes();
         }
 

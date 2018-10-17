@@ -468,20 +468,11 @@ include_once 'header.inc';
                         }
                     }
 
+                    /**
+                     * @var ste_cat $cat
+                     */
                     foreach ($cats as $cat) {
-                        $nr   = $db->get_Finding_Count_By_Status($cat->get_ID(), "Not Reviewed");
-                        $na   = $db->get_Finding_Count_By_Status($cat->get_ID(), "Not Applicable");
-                        $nf   = $db->get_Finding_Count_By_Status($cat->get_ID(), "Not a Finding");
-                        $open = $db->get_Finding_Count_By_Status($cat->get_ID(), "Open");
-
-                        $count = $db->get_STE_Cat_TGT_Count($cat->get_ID());
-
-                        print $cat->get_Table_Row($count, [
-                                "open" => $open,
-                                "nf"   => $nf,
-                                "na"   => $na,
-                                "nr"   => $nr
-                        ]);
+                        print $cat->get_Table_Row();
                     }
                 }
                 else {

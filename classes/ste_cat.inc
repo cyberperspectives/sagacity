@@ -254,10 +254,10 @@ class ste_cat
      */
     public function get_Table_Row($intCount = 0, $status_count = null)
     {
-        $nf   = 0;
-        $open = 0;
-        $na   = 0;
-        if (!is_null($status_count)) {
+        $nf   = $this->nf;
+        $open = $this->open;
+        $na   = $this->na;
+        if (!is_null($status_count) && is_array($status_count)) {
             if (isset($status_count['nf'])) {
                 $nf = $status_count['nf'];
             }
@@ -269,6 +269,10 @@ class ste_cat
             if (isset($status_count['open'])) {
                 $open = $status_count['open'];
             }
+        }
+
+        if(!$intCount) {
+            $intCount = $this->tgt_count;
         }
 
         $cat_sources = [];

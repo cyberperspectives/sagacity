@@ -4269,13 +4269,13 @@ class db
     public function get_Finding_Count_By_Status($cat_id, $status, $cat = null, $ctrl = null)
     {
         $joins = [
-            "LEFT JOIN sagacity.target_checklist tc ON t.id=tc.tgt_id",
-            "LEFT JOIN sagacity.pdi_checklist_lookup pcl ON pcl.checklist_id=tc.chk_id",
-            "LEFT JOIN sagacity.findings f ON f.pdi_id=pcl.pdi_id AND t.id=f.tgt_id",
-            "LEFT JOIN sagacity.findings_status fs ON fs.id=f.findings_status_id"
+            "JOIN target_checklist tc ON t.id = tc.tgt_id",
+            "JOIN pdi_checklist_lookup pcl ON pcl.checklist_id = tc.chk_id",
+            "LEFT JOIN findings f ON f.pdi_id = pcl.pdi_id AND t.id = f.tgt_id",
+            "LEFT JOIN findings_status fs ON fs.id = f.findings_status_id"
         ];
         if (!is_null($ctrl)) {
-            $joins[] = "JOIN `sagacity`.`finding_controls` fc ON fc.`finding_id`=f.`id`";
+            $joins[] = "JOIN finding_controls fc ON fc.finding_id = f.id";
         }
 
         $where = [
@@ -4323,20 +4323,20 @@ class db
         }
 
         $field           = ($status == 'Not Reviewed' ? "COUNT(DISTINCT(pcl.pdi_id)) AS 'count'" : "COUNT(DISTINCT(f.id)) AS 'count'");
-        $this->help->select_count("sagacity.target t", $where, ['table_joins' => $joins]);
+        $this->help->select_count("target t", $where, ['table_joins' => $joins]);
         $this->help->sql = str_replace("COUNT(1) AS 'count'", $field, $this->help->sql);
 
         $cnt = $this->help->execute();
 
         $joins = [
-            "LEFT JOIN sagacity.pdi_checklist_lookup pcl ON pcl.checklist_id=c.id",
-            "LEFT JOIN sagacity.findings f ON f.pdi_id=pcl.pdi_id",
-            "LEFT JOIN sagacity.findings_status fs ON f.findings_status_id=fs.id",
-            "JOIN sagacity.target t ON t.id=f.tgt_id"
+            "JOIN pdi_checklist_lookup pcl ON pcl.checklist_id = c.id",
+            "JOIN findings f ON f.pdi_id = pcl.pdi_id",
+            "LEFT JOIN findings_status fs ON f.findings_status_id = fs.id",
+            "JOIN target t ON t.id = f.tgt_id"
         ];
 
         if (!is_null($ctrl) && is_a($ctrl, 'proc_ia_controls')) {
-            $joins[] = "JOIN sagacity.finding_controls fc ON fc.finding_id=f.id";
+            $joins[] = "JOIN finding_controls fc ON fc.finding_id = f.id";
         }
 
         $where = [
@@ -4388,7 +4388,7 @@ class db
             ];
         }
 
-        $this->help->select_count("sagacity.checklist c", $where, array('table_joins' => $joins));
+        $this->help->select_count("checklist c", $where, array('table_joins' => $joins));
         $this->help->sql = str_replace("COUNT(1) AS 'count'", $field, $this->help->sql);
 
         $cnt += $this->help->execute();
@@ -8404,8 +8404,11 @@ class db
         }
 
         if ($del_tgts) {
+            /**
+             * @var host_list $host
+             */
             foreach ($scan->get_Host_List() as $host) {
-                $this->delete_Target($host->targetId);
+                $this->delete_Target($host->getTargetId());
             }
         }
 
@@ -9845,6 +9848,7 @@ class db
     }
 
     /**
+     * Method to retrieve the category count data from the database for a specific category
      *
      * @param ste_cat $cat
      */
@@ -9854,12 +9858,14 @@ class db
         if($cat->get_ID()) {
             $where[] = [
                 'field' => 'cat_id',
+                'op' => '=',
                 'value' => $cat->get_ID()
             ];
         }
         else {
             $where[] = [
                 'field' => 'ste_id',
+                'op' => '=',
                 'value' => $cat->get_STE_ID()
             ];
         }
@@ -11343,8 +11349,8 @@ class db
             ]
         ], [
             'table_joins' => [
-                "LEFT JOIN target_checklist tc ON tc.tgt_id = t.id",
-                "LEFT JOIN pdi_checklist_lookup pcl ON tc.chk_id = pcl.checklist_id",
+                "JOIN target_checklist tc ON tc.tgt_id = t.id",
+                "JOIN pdi_checklist_lookup pcl ON tc.chk_id = pcl.checklist_id",
                 "LEFT JOIN findings f ON f.tgt_id = t.id AND f.pdi_id = pcl.pdi_id",
                 "LEFT JOIN findings_status fs ON f.findings_status_id = fs.id"
             ],
@@ -11382,6 +11388,7 @@ class db
                         $na                          += $row['finding_count'];
                         break;
                     case 'Not Reviewed':
+                    case 'No Data':
                         $nr                          += $row['finding_count'];
                         break;
                     case 'Open':
@@ -11566,10 +11573,16 @@ class db
             if (!$tgt->is_PP_Suspended()) {
                 $this->post_Processing($tgt->get_ID());
             }
+            else {
+                $this->update_Target_Counts($tgt->get_ID());
+            }
         }
         else {
             if ($pp === true) {
                 $this->post_Processing($tgt->get_ID());
+            }
+            else {
+                $this->update_Target_Counts($tgt->get_ID());
             }
         }
 

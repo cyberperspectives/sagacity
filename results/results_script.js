@@ -66,11 +66,3 @@ function add_import() {
   $('#import').css('display', 'block');
   view_box();
 }
-
-function del_scan(form) {
-  if ($('#toggle_refresh').val() == 'Stop Refresh') {
-    clearTimeout(to);
-    to = null;
-  }
-  $('#delete-target-confirm').dialog('open');
-}

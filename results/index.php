@@ -55,27 +55,21 @@ set_time_limit(120);
 
 $db = new db();
 
-$sources     = $db->get_Sources();
-$task_status = $db->get_Task_Statuses();
-
 $ste_id = filter_input(INPUT_POST, 'ste', FILTER_VALIDATE_INT);
-if (!$ste_id) {
+if (! $ste_id) {
     $ste_id = filter_input(INPUT_COOKIE, 'ste', FILTER_VALIDATE_INT);
 }
-$status      = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
-$type        = filter_input(INPUT_POST, 'type', FILTER_SANITIZE_STRING);
-$scans       = [];
+$status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
+$type = filter_input(INPUT_POST, 'type', FILTER_SANITIZE_STRING);
+$scans = [];
 
 if ($type != 'all' && $status != 'all') {
     $scans = $db->get_ScanData($ste_id, null, $status, $type);
-}
-elseif ($type != 'all') {
+} elseif ($type != 'all') {
     $scans = $db->get_ScanData($ste_id, null, null, $type);
-}
-elseif ($status != 'all') {
+} elseif ($status != 'all') {
     $scans = $db->get_ScanData($ste_id, null, $status);
-}
-elseif (isset($ste_id)) {
+} elseif (isset($ste_id)) {
     $scans = $db->get_ScanData($ste_id);
 }
 
@@ -86,76 +80,81 @@ $stes = $db->get_STE();
 
 <!--  add in page style tags for Results page size -->
 <style type="text/css">
-    .scan_type {
-        width: 25px;
-    }
+.scan_type {
+	width: 25px;
+}
 
-    #importBtn {
-        margin: auto;
-        width: 1200px;
-        text-align: right;
-    }
+#importBtn {
+	margin: auto;
+	width: 1200px;
+	text-align: right;
+}
 
-    #host_list_frame {
-        width: 100%;
-        height: 100%;
-    }
+#host_list_frame {
+	width: 100%;
+	height: 100%;
+}
 
-    #progress p {
-        width: 1000px;
-    }
+#progress p {
+	width: 1000px;
+}
 
-    /* Results Management list host button */
-    .button-list {
-        display: inline-block;
-        outline: 0;
-        white-space: nowrap;
-        background: #A4C1DD;
-        box-shadow: inset 0px 0px 0px 1px #192364, 0px 2px 3px 0px rgba(0, 0, 0, 0.25);
-        border: solid 1px #102D5F;
-        border-radius: 6px;
-        background-image: -moz-linear-gradient(top, #A4C1DD, #1D57A0);
-        background-image: -webkit-linear-gradient(top, #A4C1DD, #1D57A0);
-        background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#A4C1DD), to(#1D57A0));
-        background-image: -ms-linear-gradient(top, #A4C1DD, #1D57A0);
-        background-image: -o-linear-gradient(top, #A4C1DD, #1D57A0);
-        background-image: linear-gradient(top, #A4C1DD, #1D57A0);
-        text-decoration: none;
-        text-shadow: -1px -1px 0 rgba(0, 0, 0, 0.5);
-        font-size: 12pt;
-        color: #fff;
-        font-family: 'Yanone Kaffeesatz';
-        width: 70px;
-        height: 30px;
-    }
+/* Results Management list host button */
+.button-list {
+	display: inline-block;
+	outline: 0;
+	white-space: nowrap;
+	background: #A4C1DD;
+	box-shadow: inset 0px 0px 0px 1px #192364, 0px 2px 3px 0px
+		rgba(0, 0, 0, 0.25);
+	border: solid 1px #102D5F;
+	border-radius: 6px;
+	background-image: -moz-linear-gradient(top, #A4C1DD, #1D57A0);
+	background-image: -webkit-linear-gradient(top, #A4C1DD, #1D57A0);
+	background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#A4C1DD),
+		to(#1D57A0));
+	background-image: -ms-linear-gradient(top, #A4C1DD, #1D57A0);
+	background-image: -o-linear-gradient(top, #A4C1DD, #1D57A0);
+	background-image: linear-gradient(top, #A4C1DD, #1D57A0);
+	text-decoration: none;
+	text-shadow: -1px -1px 0 rgba(0, 0, 0, 0.5);
+	font-size: 12pt;
+	color: #fff;
+	font-family: 'Yanone Kaffeesatz';
+	width: 70px;
+	height: 30px;
+}
 
-    /* Button mouseover Activity for scan table */
-    .mouseover-scan {
-        background: #E55234;
-        box-shadow: inset 0px 0px 0px 1px #F5AC97, 0px 2px 3px 0px rgba(0, 0, 0, 0.25);
-        border: solid 1px #B72204;
-        border-radius: 6px;
-        background-image: -moz-linear-gradient(top, #B41D08, #EB6541);
-        background-image: -webkit-linear-gradient(top, #B41D08, #EB6541);
-        background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#B41D08), to(#EB6541));
-        background-image: -ms-linear-gradient(top, #B41D08, #EB6541);
-        background-image: -o-linear-gradient(top, #B41D08, #EB6541);
-        background-image: linear-gradient(top, #B41D08, #EB6541);
-    }
+/* Button mouseover Activity for scan table */
+.mouseover-scan {
+	background: #E55234;
+	box-shadow: inset 0px 0px 0px 1px #F5AC97, 0px 2px 3px 0px
+		rgba(0, 0, 0, 0.25);
+	border: solid 1px #B72204;
+	border-radius: 6px;
+	background-image: -moz-linear-gradient(top, #B41D08, #EB6541);
+	background-image: -webkit-linear-gradient(top, #B41D08, #EB6541);
+	background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#B41D08),
+		to(#EB6541));
+	background-image: -ms-linear-gradient(top, #B41D08, #EB6541);
+	background-image: -o-linear-gradient(top, #B41D08, #EB6541);
+	background-image: linear-gradient(top, #B41D08, #EB6541);
+}
 
-    td span {
-        display: none;
-    }
+td span {
+	display: none;
+}
 
-    .checklist_image {
-        width: 32px;
-        vertical-align: middle;
-    }
+.checklist_image {
+	width: 32px;
+	vertical-align: middle;
+}
 </style>
 
 <script type='text/javascript'>
     var to;
     var table;
+    var button;
 <?php if (NOTIFICATIONS && file_exists("complete.mp3")) { ?>
         var audio = new Audio("complete.mp3");
 <?php } ?>
@@ -211,16 +210,19 @@ $stes = $db->get_STE();
           for (var x in data.results) {
             var kill = '';
             var scan_id = data.results[x].scan_id;
-            if ($('#id-' + scan_id).length) {
-              var cur_status = table.cell(table.rows('#id-' + scan_id), 5).data();
-              table.cell(table.rows('#id-' + scan_id), 4).data(data.results[x].run_time);
-              table.cell(table.rows('#id-' + scan_id), 5).data(data.results[x].status);
-              table.cell(table.rows('#id-' + scan_id), 6).data("<progress min='0' max='100' value='" + data.results[x].perc_comp + "' title='" + data.results[x].perc_comp + "%'></progress><span>" + data.results[x].perc_comp + "</span>");
+            var row = table.row('#id-' + scan_id);
+            if(row.length) {
+              var idx = row.index();
+              tmp = row.data();
+              var cur_status = tmp[5];
+              tmp[4] = data.results[x].run_time;
+              tmp[5] = data.results[x].status;
+              tmp[6] = "<progress min='0' max='100' value='" + data.results[x].perc_comp + "' title='" + data.results[x].perc_comp + "%'></progress><span>" + data.results[x].perc_comp + "</span>";
               kill = $('#action-' + scan_id + ' .kill');
               if (data.results[x].status === 'RUNNING' && !kill.length) {
-                $('#action-' + scan_id).append("<a class='kill-link' href='kill.php?ste=<?php print $ste_id; ?>&id=" + scan_id + "&pid=" + data.results[x].pid + "' target='_blank'>" +
+                tmp[7] += "<a class='kill-link' href='kill.php?ste=<?php print $ste_id; ?>&id=" + scan_id + "&pid=" + data.results[x].pid + "' target='_blank'>" +
                         "<img class='kill checklist_image' src='/img/X.png' style='vertical-align:middle;' title='Kill' />" +
-                        "</a>");
+                        "</a>";
               }
               else if (cur_status === 'RUNNING' && data.results[x].status === 'COMPLETE') {
                 $('#action-' + scan_id + '.kill-link').remove();
@@ -228,6 +230,7 @@ $stes = $db->get_STE();
                 audio.play();
 <?php } ?>
               }
+              table.row(idx).invalidate(tmp).draw(false);
             }
             else {
               if ($('#status').val() && $('#type').val()) {
@@ -266,25 +269,23 @@ $stes = $db->get_STE();
               row.append("<td class='dt-body-center' id='action-" + scan_id + "'>" +
                       (data.results[x].error ? "<img src='/img/error.png' class='checklist_image' onclick='javascript:List_host(" + scan_id + ");' />" : "") +
                       "<a href='javascript:void(0);' title='Host Listing' onclick='javascript:List_host(" + scan_id + ");'><img src='/img/options.png' class='checklist_image' /></a>&nbsp;" +
-                      "<form method='post' action='index.php' onsubmit='return del_scan(this);' style='display:inline;'>" +
-                      "<input type='hidden' name='ste' value='<?php print $ste_id ?>' />" +
-                      "<input type='hidden' name='delete_scan' value='" + scan_id + "' />" +
-                      "<input type='hidden' name='delete_targets' value='0' />" +
-                      "<input type='image' class='checklist_image' src='/img/delete.png' border='0' alt='Delete' />" +
-                      "</form>" + kill
+                      "<img src='/img/delete.png' class='checklist_image' " +
+                        "onclick='scan_id=" + scan_id + ";del_scan($(this));' " +
+                        "title='Delete a scan file' />"
+                      + kill
                       );
               table.row.add(row[0]);
             }
           }
 
-          table.order(table.order()[0]).draw();
+          table.order(table.order()[0]).draw(false);
           $('.button-delete,.button-list').mouseover(function () {
             $(this).addClass('mouseover-scan');
           });
           $('.button-delete,.button-list').mouseout(function () {
             $(this).removeClass('mouseover-scan');
           });
-          if ($('#toggle_refresh').val() === 'Stop Refresh') {
+          if ($('#toggle_refresh').val() === 'Stop Refresh' && (!$('#delete-target-confirm').dialog('isOpen') || !$('#delete-scan-confirm').dialog('isOpen'))) {
             to = setTimeout(update_script_status, <?php print UPDATE_FREQ * 1000; ?>);
           }
         },
@@ -296,8 +297,7 @@ $stes = $db->get_STE();
         dataType: 'json',
         //timeout: 5000,
         method: 'post'
-      }
-      );
+      });
     }
     /**
      *
@@ -329,8 +329,8 @@ $stes = $db->get_STE();
                             <form method="post" action="index.php">
                                 ST&amp;E Name:
                                 <select name='ste' style='width: 400px;' id="ste"
-                                        onchange="setCookie('ste', this.value);this.form.submit();">
-                                    <option value='0'> -- Please Select an ST&amp;E -- </option>
+                                    onchange="setCookie('ste', this.value);this.form.submit();">
+                                    <option value='0'>-- Please Select an ST&amp;E --</option>
                                     <?php
                                     if (is_array($stes) && count($stes)) {
                                         foreach ($stes as $ste) {
@@ -348,23 +348,26 @@ $stes = $db->get_STE();
                         </div>
                         <div id="importBtn">
                             <!-- Results tab Import Button -->
-                            <input type='button' class="button" value='Stop Refresh'
-                                   id="toggle_refresh" onclick="javascript:toggle_refresh();" />
-                            <input type='button' class='button' value='Import'
-                                   onclick="javascript:add_import();" />
+                            <input type='button' class="button"
+                                value='Stop Refresh' id="toggle_refresh"
+                                onclick="javascript:toggle_refresh();" />
+                            <input type='button' class='button'
+                                value='Import'
+                                onclick="javascript:add_import();" />
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div style='margin:20px auto auto auto;width:1200px;'>
-                <table id="results-table" class='display compact hover' data-order='[[ 3, "desc" ]]' data-page-length='25'>
+            <div style='margin: 20px auto auto auto; width: 1200px;'>
+                <table id="results-table" class='display compact hover'
+                    data-page-length='25'>
                     <thead>
                         <tr>
-                            <th style='width:325px;'>Name</th>
-                            <th style='width:75px;'>Date</th>
-                            <th style='width:65px;'>
-                                <select id='type' style='width:60px;'>
+                            <th style='width: 325px;'>Name</th>
+                            <th style='width: 75px;'>Date</th>
+                            <th style='width: 65px;'>
+                                <select id='type' style='width: 60px;'>
                                     <option value=''>TYPE</option>
                                     <option>Data Collection</option>
                                     <option>eChecklist</option>
@@ -379,10 +382,10 @@ $stes = $db->get_STE();
                                     <option>STIG Viewer</option>
                                 </select>
                             </th>
-                            <th style='width:65px;'>Start</th>
+                            <th style='width: 65px;'>Start</th>
                             <th>Running</th>
-                            <th style='width:80px;'>
-                                <select id='status' style='width:75px;'>
+                            <th style='width: 80px;'>
+                                <select id='status' style='width: 75px;'>
                                     <option value=''>STATUS</option>
                                     <option>IN QUEUE</option>
                                     <option>RUNNING</option>
@@ -393,8 +396,11 @@ $stes = $db->get_STE();
                             </th>
                             <th>% Comp</th>
                             <th>Action&nbsp;&nbsp;
-                                <a href="kill.php?pid=*&ste=<?php print (isset($ste_id) ? $ste_id : '0'); ?>" target='_new'>
-                                    <img src='/img/X.png' class='checklist_image' style='vertical-align:middle;' title='Kill and Remove All' />
+                                <a href="kill.php?pid=*&ste=<?php print (isset($ste_id) ? $ste_id : '0'); ?>"
+                                    target='_new'>
+                                    <img src='/img/X.png' class='checklist_image'
+                                        style='vertical-align: middle;'
+                                        title='Kill and Remove All' />
                                 </a>
                             </th>
                         </tr>
@@ -406,36 +412,45 @@ $stes = $db->get_STE();
                                 $diff = $scan->get_Last_Update()->diff($scan->get_Start_Time());
 
                                 ?>
-                                <tr id='<?php print "id-{$scan->get_ID()}"; ?>'>
-                                    <td title='<?php print $scan->get_Notes(); ?>'><?php print $scan->get_File_Name(); ?></td>
-                                    <td><?php print $scan->get_File_DateTime()->format("Y-m-d"); ?></td>
-                                    <td class='dt-body-center'>
-                                        <img class='scan_type' src='/img/scan_types/<?php print $scan->get_Source()->get_Icon(); ?>' title='<?php print $scan->get_Source()->get_Name(); ?>' /><br />
-                                        <span><?php print $scan->get_Source()->get_Name(); ?></span>
-                                    </td>
-                                    <td><?php print $scan->get_Start_Time()->format("y-m-d H:i:s"); ?></td>
-                                    <td><?php print (!is_null($diff) ? $diff->format("%H:%I:%S") : ""); ?></td>
-                                    <td><?php print $scan->get_Status(); ?></td>
-                                    <td>
-                                        <progress min='0' max='100' value='<?php print $scan->get_Percentage_Complete(); ?>' title='<?php print $scan->get_Percentage_Complete(); ?>%'></progress>
-                                        <span><?php print $scan->get_Percentage_Complete(); ?></span>
-                                    </td>
-                                    <td class='dt-body-center' id="action-<?php print $scan->get_ID(); ?>">
-                                        <?php if ($scan->isScanError()) { ?>
-                                            <img src='/img/error.png' class='checklist_image' onclick='javascript:List_host(<?php print $scan->get_ID(); ?>);' />&nbsp;
-                                        <?php } ?>
-                                        <a href='javascript:void(0);' title='Host Listing' onclick='javascript:List_host(<?php print $scan->get_ID(); ?>);'>
-                                            <img src='/img/options.png' class='checklist_image' title='See what hosts are on this target' />
-                                        </a>
-                                        &nbsp;
-                                        <img src='/img/delete.png' class='checklist_image' onclick='scan_id =<?php print $scan->get_ID(); ?>;del_scan();' title='Delete a scan file' />
-                                        <?php if ($scan->get_Status() == 'RUNNING') { ?>
-                                            <a class='kill-link' href='kill.php?<?php print "ste={$ste_id}&id={$scan->get_ID()}&pid={$scan->get_PID()}"; ?>' target='_blank'>
-                                                <img src='/img/X.png' class='kill checklist_image' style='vertical-align:middle;' title='Kill' />
-                                            </a>
-                                        <?php } ?>
-                                    </td>
-                                </tr>
+                        <tr id='<?php print "id-{$scan->get_ID()}"; ?>'>
+                            <td title='<?php print $scan->get_Notes(); ?>'><?php print $scan->get_File_Name(); ?></td>
+                            <td><?php print $scan->get_File_DateTime()->format("Y-m-d"); ?></td>
+                            <td class='dt-body-center'>
+                                <img class='scan_type' src='/img/scan_types/<?php print $scan->get_Source()->get_Icon(); ?>'
+                                    title='<?php print $scan->get_Source()->get_Name(); ?>' /><br />
+                                <span><?php print $scan->get_Source()->get_Name(); ?></span>
+                            </td>
+                            <td><?php print $scan->get_Start_Time()->format("y-m-d H:i:s"); ?></td>
+                            <td><?php print (!is_null($diff) ? $diff->format("%H:%I:%S") : ""); ?></td>
+                            <td><?php print $scan->get_Status(); ?></td>
+                            <td>
+                                <progress min='0' max='100'
+                                    value='<?php print $scan->get_Percentage_Complete(); ?>'
+                                    title='<?php print $scan->get_Percentage_Complete(); ?>%'></progress>
+                                <span><?php print $scan->get_Percentage_Complete(); ?></span>
+                            </td>
+                            <td class='dt-body-center' id="action-<?php print $scan->get_ID(); ?>">
+                                <?php if ($scan->isScanError()) { ?>
+                                    <img src='/img/error.png' class='checklist_image'
+                                        onclick='javascript:List_host(<?php print $scan->get_ID(); ?>);' />&nbsp;
+                                <?php } ?>
+                                <a href='javascript:void(0);' title='Host Listing'
+                                    onclick='javascript:List_host(<?php print $scan->get_ID(); ?>);'>
+                                    <img src='/img/options.png' class='checklist_image'
+                                        title='See what hosts are on this target' />
+                                </a>&nbsp;
+                                <img src='/img/delete.png' class='checklist_image'
+                                    onclick='scan_id=<?php print $scan->get_ID(); ?>;del_scan($(this));'
+                                    title='Delete a scan file' />
+                                <?php if ($scan->get_Status() == 'RUNNING') { ?>
+                                    <a class='kill-link' target='_blank'
+                                        href='kill.php?<?php print "ste={$ste_id}&id={$scan->get_ID()}&pid={$scan->get_PID()}"; ?>'>
+                                        <img src='/img/X.png' class='kill checklist_image'
+                                            style='vertical-align: middle;' title='Kill' />
+                                    </a>
+                                <?php } ?>
+                            </td>
+                        </tr>
                                 <?php
                             }
                         }
@@ -460,6 +475,18 @@ $stes = $db->get_STE();
         $(this).removeClass('mouseover-scan');
       });
 
+      $('#delete-target-confirm').on('dialogclose', function(e) {
+        if ($('#toggle_refresh').val() === 'Stop Refresh' && !$('#delete-scan-confirm').dialog('isOpen')) {
+          to = setTimeout(update_script_status, <?php print UPDATE_FREQ * 1000; ?>);
+        }
+      });
+
+      $('#delete-scan-confirm').on('dialogclose', function(e) {
+        if ($('#toggle_refresh').val() === 'Stop Refresh') {
+          to = setTimeout(update_script_status, <?php print UPDATE_FREQ * 1000; ?>);
+        }
+      });
+
       $('#delete-target-confirm').dialog({
         autoOpen: false,
         resizable: false,
@@ -473,6 +500,7 @@ $stes = $db->get_STE();
             $(this).dialog('close');
           },
           'No': function () {
+            delete_targets = false;
             $('#delete-scan-confirm').dialog('open');
             $(this).dialog('close');
           }
@@ -499,7 +527,7 @@ $stes = $db->get_STE();
                   alert(data.error);
                 }
                 else if (data.success) {
-                  //alert(data.success);
+                  table.row($(button).closest('tr').index()).remove().draw();
                   $('#id-' + scan_id).remove();
                 }
               },
@@ -509,29 +537,44 @@ $stes = $db->get_STE();
               dataType: 'json',
               method: 'post'
             });
-            if ($('#toggle_refresh').val() === 'Stop Refresh') {
-              to = setTimeout(update_script_status, <?php print UPDATE_FREQ * 1000; ?>);
-            }
+
             $(this).dialog('close');
           },
           Cancel: function () {
             $(this).dialog('close');
-            if ($('#toggle_refresh').val() === 'Stop Refresh') {
-              to = setTimeout(update_script_status, <?php print UPDATE_FREQ * 1000; ?>);
-            }
           }
         }
       });
     });
+
+    function del_scan(pressed_button) {
+      if ($('#toggle_refresh').val() == 'Stop Refresh') {
+        clearTimeout(to);
+        to = null;
+      }
+      button = pressed_button;
+      $('#delete-target-confirm').dialog('open');
+    }
 </script>
 
 <div id='delete-target-confirm' title='Delete associated targets?'>
-    <p><span class='ui-icon ui-icon-alert' style='float:left;margin:12px 12px 20px 0;'></span> Do you want to delete the associated targets?</p><br />
-    <p>WARNING: This will delete ALL targets in this scan and all associated data even if it was imported from another scan. This action is irreversible</p>
+    <p>
+        <span class='ui-icon ui-icon-alert'
+            style='float: left; margin: 12px 12px 20px 0;'></span> Do
+        you want to delete the associated targets?
+    </p>
+    <br />
+    <p>WARNING: This will delete ALL targets in this scan and all
+        associated data even if it was imported from another scan. This
+        action is irreversible</p>
 </div>
 
 <div id='delete-scan-confirm' title='Delete this scan?'>
-    <p><span class='ui-icon ui-icon-alert' style='float:left;margin:12px 12px 20px 0;'></span> Are you sure you want to delete this scan?</p>
+    <p>
+        <span class='ui-icon ui-icon-alert'
+            style='float: left; margin: 12px 12px 20px 0;'></span> Are
+        you sure you want to delete this scan?
+    </p>
 </div>
 
 <!-- code for list button -->

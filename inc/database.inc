@@ -4093,7 +4093,7 @@ class db
                     }
                 }
 
-                $ret[] = $find;
+                $ret[$find->get_PDI_ID()] = $find;
             }
         }
 

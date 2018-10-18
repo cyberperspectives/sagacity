@@ -831,7 +831,7 @@ function logify($fname)
         touch(LOG_PATH . "/{$fname}.log");
     }
 
-    return LOG_PATH . "/{$fname}.log";
+    return realpath(LOG_PATH . "/{$fname}.log");
 }
 
 /**

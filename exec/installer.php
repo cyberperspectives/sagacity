@@ -41,7 +41,7 @@ $db_step      = [
     'cpe'           => ['filter' => FILTER_VALIDATE_BOOLEAN],
     'cve'           => ['filter' => FILTER_VALIDATE_BOOLEAN],
     'stig'          => ['filter' => FILTER_VALIDATE_BOOLEAN],
-    'update-freq'   => ['filter' => FILTER_VALIDATE_INT, 'flag' => FILTER_NULL_ON_FAILURE]
+    'update-freq'   => ['filter' => FILTER_VALIDATE_FLOAT, 'flag' => FILTER_NULL_ON_FAILURE]
 ];
 $company_step = [
     'company'       => $params,
@@ -194,7 +194,6 @@ function save_Database($params)
         unset($db);
     }
 
-    $successful = true;
     $zip        = new ZipArchive();
     $db         = new mysqli(DB_SERVER, $params['root-uname'], $params['root-pwd'], 'mysql');
     if ($db->connect_errno && $db->connect_errno == 1045) {
@@ -361,7 +360,6 @@ EOO;
 
             if (preg_grep("/Access Denied/i", $output)) {
                 $errors[]   = $output;
-                $successful = false;
             }
             else {
                 unlink($file);

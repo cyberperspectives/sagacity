@@ -601,11 +601,95 @@ if (isset($cmd['stig'])) {
         'stig-progress'    => 0,
         'stig-count'       => 0
     ]);
-    $path = TMP . "/stigs";
+    $path = TMP . "/stigs/zip";
     check_path($path);
+    $stigUrlArray = [];
+    $tmp = [];
+    $tmp1 = [];
+    $tmp2 = [];
+    $tmp3 = [];
 
     $diff->resetClock();
     print "Started STIG ingestion ({$diff->getStartClockTime()})" . PHP_EOL;
+
+    $url_1 = "https://iase.disa.mil/stigs/Pages/a-z.aspx";
+    $url_2 = "https://iase.disa.mil";
+    $sunset_url = "https://iase.disa.mil/stigs/Lists/Sunset%20Master%20List/FinalView.aspx";
+    $regex = "/a href=\"([^ ]+zip\/U_[^ ]+STIG\.zip)[^\>]+\>([^\<]+)\<\/a\>/i";
+
+    if (!isset($cmd['po']) || isset($cmd['do'])) {
+        $log->debug("Checking url: $url_1");
+        $pg_contents = file_get_contents($url_1);
+
+        if(preg_match("/RefreshPageTo\(event, ([^\}]+\})/i", $pg_contents, $tmp)) {
+            $url_2 .= str_replace(["\u0026", '"'], ["&", ""], html_entity_decode($tmp[1]));
+        }
+
+        $log->debug("Checking url: $url_2");
+        $pg_contents2 = file_get_contents($url_2);
+        $log->debug("Checking url: $sunset_url");
+        $sunset_contents = file_get_contents($sunset_url);
+
+        $log->debug("Retrieving all matches");
+        preg_match_all($regex, $pg_contents, $tmp1);
+        preg_match_all($regex, $pg_contents2, $tmp2);
+        preg_match_all($regex, $sunset_contents, $tmp3);
+
+        $stigUrlArray = array_merge($tmp1[1], $tmp2[1], $tmp3[1]);
+        $log->debug("Match count: " . count($stigUrlArray));
+
+        print "Downloading " . count($stigUrlArray) . PHP_EOL;
+        if(is_array($stigUrlArray) && count($stigUrlArray)) {
+            foreach($stigUrlArray as $url) {
+                $stigFname = basename($url);
+                $log->debug("Downloading $stigFname");
+                download_file($url, "{$path}/$stigFname");
+            }
+        }
+    }
+
+    if (!isset($cmd['do']) || isset($cmd['po'])) {
+        $stig_files = array_merge(
+            glob("{$path}/*.zip"), glob("{$path}/*.xml"), glob(TMP . "/*.zip"), glob(TMP . "/*.xml"), glob(TMP . "/stigs/xml/*.xml")
+        );
+        if (!count($stig_files)) {
+            die("Could not locate any XCCDF STIG libraries " . realpath(TMP));
+        }
+
+        $script = realpath(defined('PHP_BIN') ? PHP_BIN : PHP) .
+            " -c " . realpath(PHP_CONF) .
+            " -f " . realpath(DOC_ROOT . "/exec/background_stigs.php") . " --" .
+            (isset($cmd['exclude']) && $cmd['exclude'] ? " --exclude=\"{$cmd['exclude']}\"" : "") .
+            " --delete";
+
+        $log->debug("Script to run $script");
+        passthru($script);
+    }
+
+    $db->help->select_count("sagacity.stigs");
+    $stig_count = $db->help->execute();
+
+    $db->set_Setting("stig-count", $stig_count);
+
+    $diff->stopClock();
+
+    print PHP_EOL . "Finished at {$diff->getEndClockTime()}" . PHP_EOL .
+        "Total Time: {$diff->getDiffString()}" . PHP_EOL;
+
+    sleep(3);
+}
+
+if (is_a($diff->getTotalDiff(), 'DateInterval')) {
+    print "Total Script Time: {$diff->getTotalDiffString()}" . PHP_EOL;
+}
+
+/**
+ * Function to download the latest STIG compilation library zip file for extraction and updating
+ */
+function getStigLibrary()
+{
+    global $current_date, $cmd, $log, $db;
+    $path = TMP;
 
     $mon      = '01';
     $prev_mon = '10';
@@ -671,109 +755,6 @@ if (isset($cmd['stig'])) {
             }
         }
     }
-
-    if (!isset($cmd['do']) || isset($cmd['po'])) {
-        $stig_files = array_merge(
-            glob("{$path}/*.zip"), glob("{$path}/*.xml"), glob(TMP . "/*.zip"), glob(TMP . "/*.xml"), glob(TMP . "/stigs/xml/*.xml")
-        );
-        if (!file_exists($stig_fname) && !count($stig_files)) {
-            die("Could not locate $stig_fname or find any other zip files in " . realpath(TMP));
-        }
-
-        $script = realpath(defined('PHP_BIN') ? PHP_BIN : PHP) .
-            " -c " . realpath(PHP_CONF) .
-            " -f " . realpath(DOC_ROOT . "/exec/background_stigs.php") . " --" .
-            (isset($cmd['exclude']) && $cmd['exclude'] ? " --exclude=\"{$cmd['exclude']}\"" : "") .
-            " --delete";
-
-        $log->debug("Script to run $script");
-        passthru($script);
-    }
-
-    $db->help->select_count("sagacity.stigs");
-    $stig_count = $db->help->execute();
-
-    $db->set_Setting("stig-count", $stig_count);
-
-    $diff->stopClock();
-
-    print PHP_EOL . "Finished at {$diff->getEndClockTime()}" . PHP_EOL .
-        "Total Time: {$diff->getDiffString()}" . PHP_EOL;
-
-    sleep(3);
-}
-
-/**
- * Update Sunset STIG library from DISA content
- */
-if (isset($cmd['sunset'])) {
-    $db->set_Setting_Array([
-        'stig-dl-progress' => 0,
-        'stig-progress'    => 0,
-        'stig-count'       => 0
-    ]);
-    $path = TMP . "/stigs/zip";
-    check_path($path);
-    $sunset_array = [];
-
-    $diff->resetClock();
-    print "Started Sunset STIG ingestion ({$diff->getStartClockTime()})" . PHP_EOL;
-
-    $sunset_url="https://iase.disa.mil/stigs/Lists/Sunset%20Master%20List/FinalView.aspx";
-
-    if (ping("disa.mil") && !isset($cmd['po'])) {
-        $log->debug("Checking for $sunset_url");
-        if ($found = url_exists($sunset_url)) {
-            $contents=file_get_contents($sunset_url);
-        }
-
-        if (!$found) {
-            $log->debug("Unable to download $sunset_url, aborting Sunset");
-            die("Unable to open $sunset_url, aborting Sunset");
-        }
-
-        preg_match_all("/a href=\"([^ ]+zip\/U_[^ ]+STIG\.zip)/", $contents, $sunset_array);
-
-        foreach($sunset_array[1] as $url) {
-            $sunset_fname = basename($url);
-            download_file($url, "{$path}/$sunset_fname");
-        }
-    }
-
-    if (!isset($cmd['do']) || isset($cmd['po'])) {
-        $stig_files = array_merge(
-            glob("{$path}/*.zip"), glob("{$path}/*.xml"),
-            glob(TMP . "/*.zip"), glob(TMP . "/*.xml"), glob(TMP . "/stigs/xml/*.xml")
-        );
-        if (!count($stig_files)) {
-            die("Could not find any other zip files in " . realpath(TMP));
-        }
-
-        $script = realpath(defined('PHP_BIN') ? PHP_BIN : PHP) .
-            " -c " . realpath(PHP_CONF) .
-            " -f " . realpath(DOC_ROOT . "/exec/background_stigs.php") . " --" .
-            (isset($cmd['exclude']) && $cmd['exclude'] ? " --exclude=\"{$cmd['exclude']}\"" : "") .
-            " --delete";
-
-        $log->debug("Script to run $script");
-        passthru($script);
-    }
-
-    $db->help->select_count("sagacity.stigs");
-    $stig_count = $db->help->execute();
-
-    $db->set_Setting("stig-count", $stig_count);
-
-    $diff->stopClock();
-
-    print PHP_EOL . "Finished at {$diff->getEndClockTime()}" . PHP_EOL .
-    "Total Time: {$diff->getDiffString()}" . PHP_EOL;
-
-    sleep(3);
-}
-
-if (is_a($diff->getTotalDiff(), 'DateInterval')) {
-    print "Total Script Time: {$diff->getTotalDiffString()}" . PHP_EOL;
 }
 
 /**
@@ -793,7 +774,6 @@ Usage: php update_db.php [--cpe] [--cve] [--nvd] [--nasl] [--stig] [-u={URL}] [-
  --nasl         To download OpenVAS NVT library and update NASL files
                     You can also extract *.nasl files from the Nessus library to $tmp/nessus_plugins and it will include these in the update
  --stig         To download and update the STIG library
- --sunset       To download and update the STIG library with the STIGs DISA has archived
 
  --do           To download the files only...do not call the parsers will overwrite any existing files
  --po           To parse the downloaded files only, do not download

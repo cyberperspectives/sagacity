@@ -58,6 +58,9 @@ if ($fn) {
         case TECH_ECHECKLIST_EXCEL:
             print header(JSON) . json_encode(['imageUrl' => '/img/scan_types/echecklist.png']);
             break;
+        case HOST_LIST:
+            print header(JSON) . json_encode(['imageUrl' => '/img/file.png']);
+            break;
         default:
             print header(JSON) . json_encode(['imageUrl' => null]);
             unlink(TMP . "/" . basename($fn));

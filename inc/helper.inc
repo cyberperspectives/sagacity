@@ -242,6 +242,9 @@ function FileDetection($filename)
         if (preg_match('/Checklist:|Unclassified|Secret|STIG[_| ]ID/i', $line)) {
             $name['type'] = ECHECKLIST_CSV;
         }
+        elseif (preg_match("/host\-list/", $name['base_name'])) {
+            $name['type'] = HOST_LIST;
+        }
         elseif (preg_match('/^\"NetBIOSName|^\"JobName/', $line)) {
             $name['type'] = UNSUPPORTED_RETINA_CSV;
         }

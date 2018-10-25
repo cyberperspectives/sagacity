@@ -2713,7 +2713,7 @@ class db
                     ]
                 ]);
                 $sw_rows = $this->help->execute();
-                if (count($sw_rows)) {
+                if (is_array($sw_rows) && count($sw_rows)) {
                     if (isset($sw_rows['sw_id'])) {
                         $sw_rows = [0 => $sw_rows];
                     }

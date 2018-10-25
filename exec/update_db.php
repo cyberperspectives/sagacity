@@ -601,6 +601,7 @@ if (isset($cmd['stig'])) {
         'stig-progress'    => 0,
         'stig-count'       => 0
     ]);
+    check_path(TMP . "/stigs");
     $path = TMP . "/stigs/zip";
     check_path($path);
     $stigUrlArray = [];
@@ -639,6 +640,11 @@ if (isset($cmd['stig'])) {
         $log->debug("Match count: " . count($stigUrlArray));
 
         print "Downloading " . count($stigUrlArray) . PHP_EOL;
+
+        $stigUrlArray = array_unique(array_map(function($url){return str_replace("http://", "https://", $url);}, $stigUrlArray);
+        sort($stigUrlArray);
+        $log->debug("stig array", $stigUrlArray);
+
         if(is_array($stigUrlArray) && count($stigUrlArray)) {
             foreach($stigUrlArray as $url) {
                 $stigFname = basename($url);

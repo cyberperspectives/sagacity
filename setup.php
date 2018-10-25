@@ -112,7 +112,7 @@ EOO;
 
 if (!class_exists('ZipArchive')) {
     print <<<EOO
-The PHP ZipArchive moduel is not installed or enabled.<br />
+The PHP ZipArchive module is not installed or enabled.<br />
 Visit <a href='/?phpinfo=1'>PHPInfo</a> to double-check this.<br /><br />
 EOO;
     $fail = true;
@@ -127,7 +127,7 @@ EOO;
 }
 elseif (strtolower(substr(PHP_OS, 0, 3)) == 'win') {
     try {
-        $com = new COM("WScript.Shell");
+        new COM("WScript.Shell");
     }
     catch (Exception $e) {
         print <<<EOO
@@ -170,7 +170,6 @@ EOO;
     $fail = true;
 }
 
-$match     = [];
 $mem_limit = return_bytes(ini_get("memory_limit"));
 $gig       = return_bytes('1G');
 if ($mem_limit < $gig) {
@@ -347,10 +346,10 @@ EOL;
 
     switch ($step) {
         case 2:
-            print "        $('#tabs').tabs('disable', 1);" . PHP_EOL;
+            print "$('#tabs').tabs('disable', 1);" . PHP_EOL;
         case 1:
-            print "        $('#tabs').tabs('disable', 0);" . PHP_EOL;
-            print "        setTimeout(function(){enable_next(current_step);}, 3000);" . PHP_EOL;
+            print "$('#tabs').tabs('disable', 0);" . PHP_EOL;
+            print "setTimeout(function(){enable_next(current_step);}, 3000);" . PHP_EOL;
     }
 }
 

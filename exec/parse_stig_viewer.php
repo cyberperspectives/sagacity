@@ -296,6 +296,8 @@ foreach ($vulns as $vul) {
     $vuln_count++;
 }
 
+$db->update_Target_Counts($tgt->get_ID());
+
 unset($xml);
 if (!isset($cmd['debug'])) {
     rename($cmd['f'], TMP . "/stig_viewer/$base_name");

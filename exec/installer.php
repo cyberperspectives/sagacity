@@ -181,7 +181,9 @@ function save_Database($params)
      * 	CREATE DB PASSWORD FILE
      * --------------------------------- */
     $enc_pwd = my_encrypt($params['web-pwd']);
-    file_put_contents(DOC_ROOT . "/" . PWD_FILE, $enc_pwd);
+    if(!file_put_contents(DOC_ROOT . "/" . PWD_FILE, $enc_pwd)) {
+        die(json_encode(['error' => "Could not create the password file"]));
+    }
 
     if (isset($params['conf-root-pwd']) && $params['conf-root-pwd'] == $params['root-pwd']) {
         $db = new mysqli(DB_SERVER, $params['root-uname'], '', 'mysql');

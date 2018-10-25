@@ -347,6 +347,13 @@ $scan->isTerminated();
     }
 }
 
+/**
+ * @var host_list $h
+ */
+foreach($host_list as $h) {
+    $db->update_Target_Counts($h->getTargetId());
+}
+
 unset($objSS);
 $db->update_Scan_Host_List($scan, $host_list);
 if (!isset($cmd['debug'])) {

@@ -169,18 +169,26 @@ class scc_parser extends scan_xml_parser
      */
     public function cdf_Benchmark_cdf_Group($attrs)
     {
-        $this->vms = $this->db->get_GoldDisk($attrs['id']);
+        $this->found_rule = false;
+        $match = [];
+        $this->vms_id = null;
+        $this->vms = null;
+
+        if(preg_match("/(V\-[\d]+)/", $attrs['id'], $match)) {
+            $this->vms_id = $match[1];
+            $this->group_id = $this->vms_id;
+        }
+        else {
+            return;
+        }
+        $this->vms = $this->db->get_GoldDisk($this->vms_id);
 
         if (is_array($this->vms) && count($this->vms) && isset($this->vms[0]) && is_a($this->vms[0], 'golddisk')) {
-            $this->group_id = $this->vms[0]->get_PDI_ID();
-        } else {
-            $this->group_id = $attrs['id'];
-            $this->vms = null;
+            $this->vms = $this->vms[0];
+            $this->group_id = $this->vms->get_PDI_ID();
         }
 
-        $this->vms_id = $attrs['id'];
-        $this->groups[$this->group_id] = array();
-        $this->found_rule = false;
+        $this->groups[$this->group_id] = [];
     }
 
     /**

@@ -43,7 +43,7 @@ if "%result%"=="1" (
 )
 
 echo.
-echo Thank you for trying Sagacity.  If you have any questions or comments, please echo contact us at https://www.cyberperspectives.com/contact_us
+echo Thank you for trying Sagacity.  If you have any questions or comments, please contact us at https://www.cyberperspectives.com/contact_us
 echo.
 
 if "%result%"=="1" (

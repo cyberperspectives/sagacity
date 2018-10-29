@@ -855,3 +855,29 @@ function convert_log_level()
             return Logger::ERROR;
     }
 }
+
+/**
+ * Helper method to scrape a web page
+ *
+ * @param string $url
+ *
+ * @return string
+ */
+function scrape_webpage($url)
+{
+    $config = [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HEADER => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13',
+        CURLOPT_URL => $url
+    ];
+    $c = curl_init();
+
+    curl_setopt_array($c, $config);
+
+    $output = curl_exec($c);
+
+    return $output;
+}

@@ -461,6 +461,7 @@ if (isset($cmd['nasl'])) {
         'nasl-count'       => 0
     ]);
     $count = 0;
+    check_path(TMP . "/nessus_plugins");
 
     // Capture start time for performance monitoring
     $diff->resetClock();
@@ -601,55 +602,93 @@ if (isset($cmd['stig'])) {
         'stig-progress'    => 0,
         'stig-count'       => 0
     ]);
+    $path = TMP . "/stigs";
     check_path(TMP . "/stigs");
-    $path = TMP . "/stigs/zip";
-    check_path($path);
-    $stigUrlArray = [];
-    $tmp = [];
-    $tmp1 = [];
-    $tmp2 = [];
-    $tmp3 = [];
+    check_path(TMP . "/stigs/zip");
+    $sunset_array = [];
 
     $diff->resetClock();
     print "Started STIG ingestion ({$diff->getStartClockTime()})" . PHP_EOL;
 
-    $url_1 = "https://iase.disa.mil/stigs/Pages/a-z.aspx";
-    $url_2 = "https://iase.disa.mil";
-    $sunset_url = "https://iase.disa.mil/stigs/Lists/Sunset%20Master%20List/FinalView.aspx";
-    $regex = "/a href=\"([^ ]+zip\/U_[^ ]+STIG\.zip)[^\>]+\>([^\<]+)\<\/a\>/i";
+    $mon      = '01';
+    $prev_mon = '10';
+    $year     = (int) $current_date->format("Y");
 
-    if (!isset($cmd['po']) || isset($cmd['do'])) {
-        $log->debug("Checking url: $url_1");
-        $pg_contents = file_get_contents($url_1);
+    if (between($current_date->format("n"), 4, 6)) {
+        $mon      = '04';
+        $prev_mon = '01';
+    }
+    elseif (between($current_date->format("n"), 7, 9)) {
+        $mon      = '07';
+        $prev_mon = '04';
+    }
+    elseif (between($current_date->format("n"), 10, 12)) {
+        $mon      = '10';
+        $prev_mon = '07';
+    }
 
-        if(preg_match("/RefreshPageTo\(event, ([^\}]+\})/i", $pg_contents, $tmp)) {
-            $url_2 .= str_replace(["\u0026", '"'], ["&", ""], html_entity_decode($tmp[1]));
+    $current_url    = "https://iasecontent.disa.mil/stigs/zip/Compilations/U_SRG-STIG_Library_{$year}_{$mon}.zip";
+    $current_v2_url = "https://iasecontent.disa.mil/stigs/zip/Compilations/U_SRG-STIG_Library_{$year}_{$mon}_v2.zip";
+    $sunset_url     = "https://iase.disa.mil/stigs/Lists/Sunset%20Master%20List/FinalView.aspx";
+    $stig_fname = "{$path}/stig_library-{$year}_{$mon}.zip";
+
+    if (!file_exists($stig_fname) && ping("disa.mil") && !isset($cmd['po'])) {
+        if (isset($cmd['u'])) {
+            $url = $cmd['u'];
+            $log->debug("Checking for $url");
+
+            if (url_exists($url)) {
+                download_file($url, $stig_fname, $db->help, 'stig-dl-progress');
+            }
         }
+        else {
+            $log->debug("Checking for $current_url");
 
-        $log->debug("Checking url: $url_2");
-        $pg_contents2 = file_get_contents($url_2);
-        $log->debug("Checking url: $sunset_url");
-        $sunset_contents = file_get_contents($sunset_url);
+            if ($found = url_exists($current_url)) {
+                download_file($current_url, $stig_fname, $db->help, 'stig-dl-progress');
+            }
+            if (!$found) {
+                $log->debug("Checking for $current_v2_url");
 
-        $log->debug("Retrieving all matches");
-        preg_match_all($regex, $pg_contents, $tmp1);
-        preg_match_all($regex, $pg_contents2, $tmp2);
-        preg_match_all($regex, $sunset_contents, $tmp3);
+                if ($found = url_exists($current_v2_url)) {
+                    download_file($current_v2_url, $stig_fname, $db->help, 'stig-dl-progress');
+                }
+            }
+            if ($mon == '01') {
+                $year--;
+            }
 
-        $stigUrlArray = array_merge($tmp1[1], $tmp2[1], $tmp3[1]);
-        $log->debug("Match count: " . count($stigUrlArray));
+            $prev_url    = "https://iasecontent.disa.mil/stigs/zip/Compilations/U_SRG-STIG_Library_{$year}_{$prev_mon}.zip";
+            $prev_v2_url = "https://iasecontent.disa.mil/stigs/zip/Compilations/U_SRG-STIG_Library_{$year}_{$prev_mon}_v2.zip";
 
-        print "Downloading " . count($stigUrlArray) . PHP_EOL;
+            if (!$found) {
+                $log->debug("Checking for $prev_url");
+                if ($found = url_exists($prev_url)) {
+                    download_file($prev_url, $stig_fname, $db->help, 'stig-dl-progress');
+                }
+            }
+            if (!$found) {
+                $log->debug("Checking for $prev_v2_url");
+                if (url_exists($prev_v2_url)) {
+                    download_file($prev_v2_url, $stig_fname, $db->help, 'stig-dl-progress');
+                }
+            }
+        }
+    }
 
-        $stigUrlArray = array_unique(array_map(function($url){return str_replace("http://", "https://", $url);}, $stigUrlArray);
-        sort($stigUrlArray);
-        $log->debug("stig array", $stigUrlArray);
+    if(ping("disa.mil") && !isset($cmd['po'])) {
+        $log->debug("Checking for $sunset_url");
 
-        if(is_array($stigUrlArray) && count($stigUrlArray)) {
-            foreach($stigUrlArray as $url) {
-                $stigFname = basename($url);
-                $log->debug("Downloading $stigFname");
-                download_file($url, "{$path}/$stigFname");
+        if(url_exists($sunset_url)) {
+            $log->debug("Downloading sunset STIGs");
+            $contents = file_get_contents($sunset_url);
+            preg_match_all("/a href=\"([^ ]+STIG\.zip)/", $contents, $sunset_array);
+
+            if(is_array($sunset_array) && isset($sunset_array[1]) && count($sunset_array[1])) {
+                foreach($sunset_array[1] as $url) {
+                    $sunset_fname = basename($url);
+                    download_file($url, TMP . "/stigs/zip/{$sunset_fname}");
+                }
             }
         }
     }

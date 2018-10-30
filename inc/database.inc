@@ -11923,7 +11923,7 @@ class db
             $stig     = $this->get_STIG_By_PDI($find->get_PDI_ID());
             $pri_find = $this->get_Finding($pri_tgt, $stig);
 
-            if (is_array($pri_find) && count($pri_find)) {
+            if (is_array($pri_find) && count($pri_find) && isset($pri_find[0])) {
                 $pri_find = $pri_find[0];
                 if ($pri_find->get_Finding_Status() != $find->get_Finding_Status()) {
                     $pri_find->set_Finding_Status_By_String($pri_find->get_Deconflicted_Status($find->get_Finding_Status_String()));

@@ -604,7 +604,7 @@ include_once 'header.inc';
     </form>
 
     <form method='post' action='#' style='margin-left: 20px;'
-          onsubmit="$('#submit').attr('disabled', true);return true;" id='host-list-form'>
+          onsubmit="if(!$('#host-list-file').val()){return false;}$('#submit').attr('disabled', true);return true;" id='host-list-form'>
         <div style='font-weight:400;color:red;'>Must keep 'host-list' as part of the filename</div>
         <input type='hidden' name='file' id='host-list-file' style='display:none;' />
         <input type='hidden' name='action' value='import_host_list' />

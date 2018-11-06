@@ -112,10 +112,8 @@ foreach ($files as $file) {
 
 $scan_id = 0;
 
-foreach ($findings as $key => $find) {
-  if (false) {
-    $find = new finding();
-  }
+/** @var finding $find */
+foreach ($findings as $find) {
   $ret = array();
   if ($find->get_Scan_ID()) {
     $scan_id = $find->get_Scan_ID();

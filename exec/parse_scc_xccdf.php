@@ -104,8 +104,6 @@ class scc_parser extends scan_xml_parser
 
     var $found_rule = false;
 
-    var $log = null;
-
     /**
      * Constructor
      *
@@ -665,9 +663,7 @@ class scc_parser extends scan_xml_parser
             */
 
             if (is_array($existing_findings) && count($existing_findings) && isset($existing_findings[$pdi_id])) {
-                /**
-                 * @var finding $finding
-                 */
+                /** @var finding $finding */
                 $finding = $existing_findings[$pdi_id];
 
                 $finding->set_Finding_Status_By_String($finding->get_Deconflicted_Status($group['status']));
@@ -679,7 +675,7 @@ class scc_parser extends scan_xml_parser
 
                 $update_findings[$pdi_id] = $finding;
             } else {
-                $new_findings[$pdi_id] = new finding(null, $this->tgt->get_ID(), $pdi_id, $this->scan->get_ID(), $group['status'], $note, finding::NC, null, 1);
+                $new_findings[$pdi_id] = new finding($this->tgt->get_ID(), $pdi_id, $this->scan->get_ID(), $group['status'], $note, finding::NC, null, 1);
             }
         }
 
@@ -689,11 +685,11 @@ class scc_parser extends scan_xml_parser
         $hl->setTargetId($this->tgt->get_ID());
         $hl->setTargetName($this->tgt->get_Name());
         $hl->setFindingCount(count($new_findings) + count($update_findings));
-        $hl->setScanError(false);
 
         $this->db->update_Target_Counts($this->tgt->get_ID());
 
         $this->scan->add_Target_to_Host_List($hl);
+        $this->db->update_Scan_Host_List($this->scan);
     }
 }
 

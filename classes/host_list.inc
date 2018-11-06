@@ -13,6 +13,7 @@
  * Change Log:
  * - Jan 16, 2018 - File created
  * - Feb 6, 2018 - Added getter/setter methods
+ * - Nov 6, 2018 - Deleted unused constructor
  */
 
 /**
@@ -64,14 +65,6 @@ class host_list
      * @var string
      */
     private $_scanNotes = null;
-
-    /**
-     * Constructor
-     */
-    public function __construct()
-    {
-
-    }
 
     /**
      * Getter function for _targetId

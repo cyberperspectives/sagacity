@@ -190,10 +190,11 @@ if ($tgt_count = count($tgts)) {
       $total_stigs += $pdi_count = (is_array($pdis) ? count($pdis) : 0);
       $count = 0;
 
+      $findings = $db->get_Finding($tgt);
+
       foreach ($pdis as $pdi) {
-        $find = $db->get_Finding($tgt, new stig($pdi['pdi_id'], $pdi['STIG_ID'], null));
-        if (is_array($find) && count($find) && isset($find[0]) && is_a($find[0], 'finding')) {
-          $find = $find[0];
+        if (isset($findings[$pdi['pdi_id']])) {
+          $find = $findings[$pdi['pdi_id']];
         }
 
         $sev = 'low';

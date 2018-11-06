@@ -22,6 +22,7 @@
  *  - May 25, 2017 - Fixed bug of get_Category method returning empty severity (defaults to II if empty)
  *  - Jan 10, 2018 - Formatting
  *  - May 24, 2018 - Simplified get_Finding_Status_ID method
+ *  - Nov 6, 2018 - Removed ID property to keep from duplicate findings
  */
 
 /**
@@ -31,13 +32,6 @@
  *
  */
 class finding {
-
-  /**
-   * Finding ID
-   *
-   * @var integer
-   */
-  protected $id = null;
 
   /**
    * Target ID
@@ -155,7 +149,6 @@ class finding {
   /**
    * Constructor
    *
-   * @param integer $int_ID
    * @param integer $int_Tgt_ID
    * @param integer $int_PDI_ID
    * @param integer $int_Scan_ID
@@ -165,8 +158,7 @@ class finding {
    * @param string $str_Orig_Src
    * @param integer $int_Finding_Itr
    */
-  public function __construct($int_ID, $int_Tgt_ID, $int_PDI_ID, $int_Scan_ID, $Finding_Status, $str_Notes, $int_Change_ID, $str_Orig_Src, $int_Finding_Itr) {
-    $this->id = $int_ID;
+  public function __construct($int_Tgt_ID, $int_PDI_ID, $int_Scan_ID, $Finding_Status, $str_Notes, $int_Change_ID, $str_Orig_Src, $int_Finding_Itr) {
     $this->tgt_id = $int_Tgt_ID;
     $this->pdi_id = $int_PDI_ID;
     $this->scan_id = $int_Scan_ID;
@@ -180,15 +172,6 @@ class finding {
     $this->change_id = $int_Change_ID;
     $this->orig_src = $str_Orig_Src;
     $this->finding_itr = $int_Finding_Itr;
-  }
-
-  /**
-   * Getter function for Finding ID
-   *
-   * @return integer
-   */
-  public function get_ID() {
-    return $this->id;
   }
 
   /**

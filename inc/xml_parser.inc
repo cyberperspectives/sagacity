@@ -178,7 +178,7 @@ class scan_xml_parser
     /**
      * The previous stack element
      *
-     * @var unknown
+     * @var string
      */
     var $previous = null;
 
@@ -192,9 +192,9 @@ class scan_xml_parser
     /**
      * Construct
      *
-     * @param unknown $obj_in
-     * @param unknown $ste_id_in
-     * @param unknown $scan_fname
+     * @param mixed $obj_in
+     * @param int $ste_id_in
+     * @param string $scan_fname
      */
     function __construct($obj_in, $ste_id_in, $scan_fname)
     {

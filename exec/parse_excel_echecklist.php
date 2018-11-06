@@ -25,6 +25,7 @@
  *  - Aug 28, 2017 - Fixed couple minor bugs
  *  - Jan 15, 2018 - Formatting, reorganized use statements, and cleaned up
  *  - May 24, 2018 - Attempt to fix bug #413
+ *  - Nov 6, 2018 - performance improvements, ensure duplicate findings are not created, make eChecklist true status, update for removing findings.id 
  */
 $cmd = getopt("f:", ['debug::', 'help::']);
 set_time_limit(0);
@@ -126,7 +127,7 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
         continue;
     }
 
-$scan->isTerminated();
+    $scan->isTerminated();
 
 	$log->notice("Reading from {$wksht->getTitle()}");
 
@@ -155,6 +156,7 @@ $scan->isTerminated();
     $short_title_col = Coordinate::stringFromColumnIndex($idx['short_title']);
     $row_count       = $highestRow = $wksht->getHighestDataRow() - 10;
     $highestCol      = $wksht->getHighestDataColumn(10);
+    $tgt_findings    = [];
 
     for ($col = 'F' ; $col != $highestCol ; $col++) {
         $cell = $wksht->getCell($col . '10');
@@ -219,7 +221,9 @@ $scan->isTerminated();
             $scan->add_Target_to_Host_List($hl);
         }
 
-        if (preg_match('/Overall/i', $cell->getValue())) {
+        $tgt_findings[$tgt->get_ID()] = $db->get_Finding($tgt);
+
+        if (preg_match('/overall/i', $cell->getValue())) {
             $log->debug("Found overall: {$cell->getColumn()}");
             break;
         }
@@ -294,34 +298,24 @@ $scan->isTerminated();
             $status = $wksht->getCell(Coordinate::stringFromColumnIndex($idx['target'] + $x) . $row->getRowIndex())
                 ->getValue();
 
-			$log->debug("{$tgt->get_Name()} {$stig->get_ID()} ($status)");
-
-            $finding = $db->get_Finding($tgt, $stig);
-
-            if (is_array($finding) && count($finding) && isset($finding[0]) && is_a($finding[0], 'finding')) {
+			$findings = $tgt_findings[$tgt->get_ID()];
+			if (is_array($findings) && count($findings) && isset($findings[$stig->get_PDI_ID()]) && is_a($findings[$stig->get_PDI_ID()], 'finding')) {
                 /** @var finding $tmp */
-                $tmp = $finding[0];
+                $tmp = $findings[$stig->get_PDI_ID()];
 
-                if(preg_match("/Not a Finding|Not Applicable/i", $status)) {
-                    $ds = $tmp->get_Deconflicted_Status($status);
-                    $tmp->set_Finding_Status_By_String($ds);
-                }
-                else {
-                    $tmp->set_Finding_Status_By_String($status);
-                }
-
+                $tmp->set_Finding_Status_By_String($status);
                 $tmp->set_Notes($notes);
                 $tmp->set_Category($cat_lvl);
 
                 $updated_findings[] = $tmp;
             }
             else {
-                $tmp = new finding(null, $tgt->get_ID(), $stig->get_PDI_ID(), $scan->get_ID(), $status, $notes, null, null, null);
+                $tmp = new finding($tgt->get_ID(), $stig->get_PDI_ID(), $scan->get_ID(), $status, $notes, null, null, null);
                 $tmp->set_Category($cat_lvl);
 
                 $new_findings[] = $tmp;
             }
-
+            $log->debug("{$tgt->get_Name()} {$stig->get_ID()} ({$tmp->get_Finding_Status_String()})");
             $x++;
         }
 
@@ -347,10 +341,8 @@ $scan->isTerminated();
     }
 }
 
-/**
- * @var host_list $h
- */
-foreach($host_list as $h) {
+/** @var host_list $h */
+foreach($scan->get_Host_List() as $h) {
     $db->update_Target_Counts($h->getTargetId());
 }
 

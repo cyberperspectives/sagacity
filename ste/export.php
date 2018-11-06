@@ -43,8 +43,11 @@ use PhpOffice\PhpSpreadsheet\Writer\Ods;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use PhpOffice\PhpSpreadsheet\Writer\Html;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Worksheet;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
+
+global $conditions, $validation, $borders;
 
 set_time_limit(0);
 $db = new db();
@@ -137,7 +140,6 @@ $host_status = array(
 foreach ($findings as $worksheet_name => $data) {
   $log->debug("Looping through worksheet $worksheet_name");
   $chk_arr = [];
-  $named_range = '';
 
   // Build the "Checklist" cell string with titles of all checklists on this worksheet
   foreach ($data['checklists'] as $key => $chk_id) {
@@ -354,7 +356,7 @@ $log->debug("Writing complete");
 /**
  * Update the header on the worksheet
  *
- * @param \PhpOffice\PhpSpreadsheet\Worksheet $sheet
+ * @param Worksheet $sheet
  * @param array:integer $tgts
  * @param db $db
  */

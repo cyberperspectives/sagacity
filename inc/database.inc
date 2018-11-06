@@ -74,6 +74,7 @@
  *  - Jun 2, 2018 - Formatting and added set_Setting_Array method
  *  - Jun 5, 2018 - Changed set_Setting_Array method to use SQL update instead of replace
  *  - Sep 5, 2018 - Fix for #8
+ *  - Nov 3, 2018 - Fix for fix #62, commented out last INSERT in post_Processing, jao
  */
 include_once 'base.inc';
 include_once 'software.inc';
@@ -11476,12 +11477,13 @@ EOQ;
             ]);
             $this->help->execute();
 
-            $this->help->sql = "INSERT IGNORE INTO findings (tgt_id,pdi_id,findings_status_id) " .
-                "SELECT {$id},pcl.pdi_id,1 " .
-                "FROM target_checklist tc " .
-                "JOIN pdi_checklist_lookup pcl ON pcl.checklist_id = tc.chk_id " .
-                "WHERE tc.tgt_id = {$id}";
-            $this->help->execute();
+# Commented out 3 Nov 18 to fix #62 - Jeff Odegard
+#            $this->help->sql = "INSERT IGNORE INTO findings (tgt_id,pdi_id,findings_status_id) " .
+#                "SELECT {$id},pcl.pdi_id,1 " .
+#                "FROM target_checklist tc " .
+#                "JOIN pdi_checklist_lookup pcl ON pcl.checklist_id = tc.chk_id " .
+#                "WHERE tc.tgt_id = {$id}";
+#            $this->help->execute();
 
             $this->update_Target_Counts($id);
         }

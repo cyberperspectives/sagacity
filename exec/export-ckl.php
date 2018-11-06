@@ -73,6 +73,8 @@ $xml = new Array2XML();
 $xml->standalone = true;
 $xml->formatOutput = true;
 
+$chk_comp_count = 0;
+$tgt_comp_count = 0;
 $total_chk_count = 0;
 $total_stigs = 0;
 
@@ -83,6 +85,7 @@ if ($tgt_count = count($tgts)) {
     $host_ip = (is_array($tgt->interfaces) && count($tgt->interfaces) ? current($tgt->interfaces)->get_IPv4() : null);
     $host_fqdn = (is_array($tgt->interfaces) && count($tgt->interfaces) ? current($tgt->interfaces)->get_FQDN() : null);
     $host_mac = (is_array($tgt->interfaces) && count($tgt->interfaces) ? current($tgt->interfaces)->get_MAC() : null);
+    //$host_mac = (count($tgt->interfaces) ? current($tgt->interfaces)->get_Mac() : null);
 
     print "Target: {$tgt->get_Name()}" . PHP_EOL;
 
@@ -119,8 +122,8 @@ if ($tgt_count = count($tgts)) {
       $arr = [
         '@comment' => "CyberPerspectives Sagacity v" . VER,
         'ASSET' => [
-          'ROLE'            => 'None',
-          'ASSET_TYPE'      => 'Computing',
+          'ROLE'			=> 'None',
+		  'ASSET_TYPE'      => 'Computing',
           'HOST_NAME'       => $tgt->get_Name(),
           'HOST_IP'         => $host_ip,
           'HOST_MAC'        => $host_mac,
@@ -218,7 +221,7 @@ if ($tgt_count = count($tgts)) {
         }
 
         // decoding because check contents are already encoded
-        //$cc = str_replace("\\n", "\n", htmlentities(html_entity_decode($pdi['check_contents'])));
+        $cc = str_replace("\\n", "<br />", htmlentities(html_entity_decode($pdi['check_contents'])));
 
         $stig_data = array_merge([
           [
@@ -255,11 +258,11 @@ if ($tgt_count = count($tgts)) {
           ],
           [
             'VULN_ATTRIBUTE' => 'Check_Content',
-            'ATTRIBUTE_DATA' => htmlentities(str_replace("\\n", "\n", html_entity_decode(html_entity_decode($pdi['check_contents']))))
+            'ATTRIBUTE_DATA' => $cc
           ],
           [
             'VULN_ATTRIBUTE' => 'Fix_Text',
-            'ATTRIBUTE_DATA' => htmlentities(str_replace("\\n", "\n", html_entity_decode(html_entity_decode($pdi['fix_text']))))
+            'ATTRIBUTE_DATA' => htmlentities($pdi['fix_text'])
           ],
           [
             'VULN_ATTRIBUTE' => 'False_Positives',
@@ -299,11 +302,7 @@ if ($tgt_count = count($tgts)) {
           ],
           [
             'VULN_ATTRIBUTE' => 'Check_Content_Ref',
-            'ATTRIBUTE_DATA' => 'M'
-          ],
-          [
-            'VULN_ATTRIBUTE' => 'Weight',
-            'ATTRIBUTE_DATA' => '10.0'
+            'ATTRIBUTE_DATA' => ''
           ],
           [
             'VULN_ATTRIBUTE' => 'Class',
@@ -323,7 +322,6 @@ if ($tgt_count = count($tgts)) {
         $notes = '';
 
         if (is_a($find, 'finding')) {
-            /** @var finding $find */
           $status = $status_map[$find->get_Finding_Status_String()];
           $notes = $find->get_Notes();
         }

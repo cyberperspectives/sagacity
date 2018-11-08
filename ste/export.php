@@ -265,7 +265,7 @@ foreach ($findings as $worksheet_name => $data) {
     $row++;
   }
 
-  $sheet->setDataValidation("{$col}11:{$col}{$row}", clone $validation['host_status']);
+  $sheet->setDataValidation("F11:{$last_tgt_col}{$row}", clone $validation['host_status']);
   $log->debug("Set data validation for target $host_name");
 
   $log->debug("Completed STIG parsing");

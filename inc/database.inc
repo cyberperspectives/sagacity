@@ -5249,14 +5249,13 @@ EOQ;
 
             $current_finding = $this->get_Finding($tgts, $ref);
             if (is_array($current_finding) && count($current_finding) > 0) {
-                $current_finding = $current_finding[0];
+                $current_finding = current($current_finding);
             }
 
             $current_status = '';
 
-            if (is_array($current_finding) && count($current_finding)) {
+            if (is_a($current_finding, 'finding')) {
                 $current_status = $current_finding->get_Finding_Status_String();
-                // $current_source = $current_finding->get();
 
                 if ($current_status != $status) {
                     $current_notes = $current_finding->get_Notes();

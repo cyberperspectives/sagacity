@@ -26,6 +26,7 @@
  *  - Jan 15, 2018 - Formatting, reorganized use statements, and cleaned up
  *  - May 24, 2018 - Attempt to fix bug #413
  *  - Nov 6, 2018 - performance improvements, ensure duplicate findings are not created, make eChecklist true status, update for removing findings.id 
+ *  - Nov 8, 2018 - added functionality to assign OS and checklists based on worksheet contents
  */
 $cmd = getopt("f:", ['debug::', 'help::']);
 set_time_limit(0);
@@ -112,6 +113,7 @@ else {
     $scan->set_ID($scan_id);
 }
 
+/** @var software $gen_os */
 $gen_os = $db->get_Software("cpe:/o:generic:generic:-", true);
 if (is_array($gen_os) && count($gen_os) && isset($gen_os[0]) && is_a($gen_os[0], 'software')) {
     $gen_os = $gen_os[0];
@@ -139,6 +141,11 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
 			$log->warning("Invalid headers in {$wksht->getTitle()}");
         continue;
     }
+    
+    $chk_arr = explode(', ', $wksht->getCell("B9")->getValue());
+    $checklists = $db->get_Checklist_By_Name($chk_arr);
+    $os_str = $wksht->getCell("G4")->getValue();
+    $os = $db->get_Software_By_String($os_str);
 
     $idx             = [
         'stig_id'        => 1,
@@ -173,22 +180,59 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
 
             if ($tgt_id = $db->check_Target($conf['ste'], $cell->getValue())) {
                 $log->debug("Found host for {$cell->getValue()}");
+                /** @var target $tgt */
                 $tgt = $db->get_Target_Details($conf['ste'], $tgt_id);
                 if (is_array($tgt) && count($tgt) && isset($tgt[0]) && is_a($tgt[0], 'target')) {
                     $tgt = $tgt[0];
+                    if($tgt->get_OS_ID() == $gen_os->get_ID() && is_a($os, 'software')) {
+                        $log->debug("Assigning operating system to {$tgt->get_Name()}", [$os]);
+                        $tgt->set_OS_ID($os->get_ID());
+                        $tgt->set_OS_String($os->get_Shortened_SW_String());
+                    }
                 }
                 else {
 					$log->error("Could not find host {$cell->getValue()}");
                 }
+                
+                if(is_a($checklists, 'checklist')) {
+                    if(!isset($tgt->checklists[$checklists->get_ID()])) {
+                        $log->debug("Assigning checklists to {$tgt->get_Name()}", [$checklists]);
+                        $tgt->checklists[$checklists->get_ID()] = $checklists;
+                    }
+                } elseif(is_array($checklists) && count($checklists)) {
+                    $log->debug("Assigning checklists to {$tgt->get_Name()}", $checklists);
+                    foreach($checklists as $c) {
+                        /** @var checklist $c */
+                        if(!isset($tgt->checklists[$c->get_ID()])) {
+                            $tgt->checklists[$c->get_ID()] = $c;
+                        }
+                    }
+                }
+                
+                $db->save_Target($tgt);
             }
             else {
                 $log->debug("Creating new target {$cell->getValue()}");
                 $tgt = new target($cell->getValue());
-                $tgt->set_OS_ID($gen_os->get_ID());
+                $tgt->set_OS_ID((is_a($os, 'software') ? $os->get_ID() : $gen_os->get_ID()));
+                $tgt->set_OS_String((is_a($os, 'software') ? $os->get_Shortened_SW_String() : $gen_os->get_Shortened_SW_String()));
                 $tgt->set_STE_ID($conf['ste']);
                 $tgt->set_Location($conf['location']);
                 $tgt->set_Notes('New Target');
-
+                
+                if(is_a($checklists, 'checklist')) {
+                    if(!isset($tgt->checklists[$checklists->get_ID()])) {
+                        $tgt->checklists[$checklists->get_ID()] = $checklists;
+                    }
+                } elseif(is_array($checklists) && count($checklists)) {
+                    foreach($checklists as $c) {
+                        /** @var checklist $c */
+                        if(!isset($tgt->checklists[$c->get_ID()])) {
+                            $tgt->checklists[$c->get_ID()] = $c;
+                        }
+                    }
+                }
+                
                 if (preg_match('/((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}/', $cell->getValue())) {
                     $ip                       = $cell->getValue();
                     $int                      = new interfaces(null, null, null, $ip, null, null, null, null);
@@ -218,9 +262,16 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
                 $hl->setTargetIp($ip);
             }
 
-            $scan->add_Target_to_Host_List($hl);
+            if(!isset($scan->get_Host_List()[$tgt->get_ID()])) {
+                $scan->add_Target_to_Host_List($hl);
+            } else {
+                $existingFindingCount = $scan->get_Host_List()[$tgt->get_ID()]->getFindingCount();
+                $hl->addFindingCount($existingFindingCount);
+                $scan->add_Target_to_Host_List($hl);
+            }
         }
 
+        $db->update_Scan_Host_List($scan);
         $tgt_findings[$tgt->get_ID()] = $db->get_Finding($tgt);
 
         if (preg_match('/overall/i', $cell->getValue())) {
@@ -347,7 +398,6 @@ foreach($scan->get_Host_List() as $h) {
 }
 
 unset($objSS);
-$db->update_Scan_Host_List($scan, $host_list);
 if (!isset($cmd['debug'])) {
     rename($cmd['f'], TMP . "/echecklist/$base_name");
 }

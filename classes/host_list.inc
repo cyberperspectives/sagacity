@@ -14,6 +14,7 @@
  * - Jan 16, 2018 - File created
  * - Feb 6, 2018 - Added getter/setter methods
  * - Nov 6, 2018 - Deleted unused constructor
+ * - Nov 8, 2018 - Added method to increase finding count
  */
 
 /**
@@ -144,6 +145,16 @@ class host_list
     public function setFindingCount($intFindingCount)
     {
         $this->_findingCount = $intFindingCount;
+    }
+    
+    /**
+     * Method to add findings to the count
+     * 
+     * @param int $intFindingCount
+     */
+    public function addFindingCount($intFindingCount)
+    {
+        $this->_findingCount += $intFindingCount;
     }
 
     /**

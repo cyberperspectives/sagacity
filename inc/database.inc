@@ -75,6 +75,7 @@
  *  - Jun 5, 2018 - Changed set_Setting_Array method to use SQL update instead of replace
  *  - Sep 5, 2018 - Fix for #8
  *  - Nov 3, 2018 - Fix for fix #62, commented out last INSERT in post_Processing, jao
+ *  - Nov 8, 2018 - Added a couple methods to support changes for #25
  */
 include_once 'base.inc';
 include_once 'software.inc';
@@ -2775,6 +2776,36 @@ class db
 
         return $ret;
     }
+    
+    /**
+     * Function to get the checklists by the checklist name in an eChecklist file
+     * 
+     * @param array:string $chk_arr
+     * 
+     * @return array:checklist
+     */
+    public function get_Checklist_By_Name($chk_arr)
+    {
+        $ret = [];
+        $this->help->select("checklist", null, [
+            [
+                'field' => "CONCAT(`name`, ' V', `ver`, 'R', `release`, ' (', `type`, ')')",
+                'op' => IN,
+                'value' => $chk_arr,
+                'backticks' => false
+            ]
+        ]);
+        $rows = $this->help->execute();
+        if(is_array($rows) && count($rows) && isset($rows[0])) {
+            foreach($rows as $row) {
+                $ret[] = new checklist($row['id'], $row['checklist_id'], $row['name'], $row['description'], new DateTime($row['date']), $row['file_name'], $row['ver'], $row['release'], $row['type'], $row['icon']);
+            }
+        } elseif(is_array($rows) && count($rows) && isset($rows['id'])) {
+            $ret = new checklist($rows['id'], $rows['checklist_id'], $rows['name'], $rows['description'], new DateTime($rows['date']), $rows['file_name'], $rows['ver'], $rows['release'], $rows['type'], $rows['icon']);
+        }
+        
+        return $ret;
+    }
 
     /**
      * Function to get the checklist based on the checklist filename
@@ -3202,10 +3233,11 @@ class db
 
         if (is_array($chks) && count($chks) && isset($chks[0])) {
             foreach ($chks as $row) {
+                /** @var checklist $checklist */
                 $checklist = $this->get_Checklist($row['id'])[0];
                 $checklist->set_Classification($row['class']);
 
-                $chk[] = $checklist;
+                $chk[$checklist->get_ID()] = $checklist;
             }
         }
 
@@ -9369,6 +9401,37 @@ EOQ;
 
         return $ret;
     }
+    
+    /**
+     * Function to retrieve a software item by using the software string
+     * 
+     * @param string $sw_string
+     * 
+     * @return software|NULL
+     */
+    public function get_Software_By_String($sw_string)
+    {
+        $ret = null;
+        $this->help->select("software", null, [
+            [
+                'field' => 'sw_string',
+                'op' => '=',
+                'value' => $sw_string
+            ]
+        ], [
+            'limit' => 1
+        ]);
+        $row = $this->help->execute();
+        
+        if(is_array($row) && count($row) && isset($row['id'])) {
+            $ret = new software($row['cpe'], $row['cpe23']);
+            $ret->set_ID($row['id']);
+            $ret->set_SW_String($row['sw_string']);
+            $ret->set_Shortened_SW_String($row['short_sw_string']);
+        }
+        
+        return $ret;
+    }
 
     /**
      * Function to retrieve a software item by using the CPE or CPE v2.3
@@ -11683,9 +11746,6 @@ EOQ;
                 Sagacity_Error::err_handler("Failure retrieving the target that was just saved {$tgt->get_Name()}", E_ERROR);
             }
         } else {
-            /*
-             * @todo get current target and check for OS ID > 2
-             */
             $exist_tgt = $this->get_Target_Details($tgt->get_STE_ID(), $tgt->get_ID());
             if (is_array($exist_tgt) && count($exist_tgt) && isset($exist_tgt[0]) && is_a($exist_tgt[0], 'target')) {
                 $exist_tgt = $exist_tgt[0];
@@ -11837,6 +11897,7 @@ EOQ;
         ]);
         $this->help->execute();
 
+        /** @var checklist $chk */
         $chk_arr = [];
         if (is_array($checklists) && count($checklists) && isset($checklists[0]) && is_a($checklists[0], 'checklist')) {
             foreach ($checklists as $chk) {

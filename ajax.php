@@ -229,8 +229,10 @@ elseif ($action == 'get-cat-data') {
     $checklist = $db->get_Checklist_By_File($fname);
 
     if (isset($checklist[0])) {
-        $checklist[0]->type = ucfirst($checklist[0]->type);
-        print header(JSON) . json_encode($checklist[0]);
+        $chk = $checklist[0];
+        
+        $chk->type = ucfirst($chk->type);
+        print header(JSON) . json_encode($chk);
     }
     else {
         print header(JSON) . json_encode(array('error' => 'Error finding checklist'));
@@ -1481,9 +1483,11 @@ function get_hosts($cat_id = null)
     $ste_id = filter_input(INPUT_COOKIE, 'ste', FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
     $tgts   = [];
 
+    $exp_scan_srcs = null;
     if ($cat_id) {
         $ste_cat = $db->get_Category($cat_id)[0];
         $tgts    = $db->get_Target_By_Category($cat_id);
+        $exp_scan_srcs = $db->get_Expected_Category_Sources($ste_cat);
     }
     elseif (is_numeric($ste_id)) {
         $tgts = $db->get_Unassigned_Targets($ste_id);
@@ -1494,12 +1498,6 @@ function get_hosts($cat_id = null)
 
     foreach ($tgts as $tgt) {
         $chks = $db->get_Target_Checklists($tgt->get_ID());
-        if ($cat_id) {
-            $exp_scan_srcs = $db->get_Expected_Category_Sources($ste_cat);
-        }
-        else {
-            $exp_scan_srcs = null;
-        }
         $scan_srcs = $db->get_Target_Scan_Sources($tgt, $exp_scan_srcs);
         $icons     = [];
         $icon_str  = '';
@@ -1520,13 +1518,13 @@ function get_hosts($cat_id = null)
 
         foreach ($scan_srcs as $src) {
             $icon = $src['src']->get_Icon();
-            if($src['scan_error']) {
+            if(isset($src['scan_error']) && $src['scan_error']) {
                 $icon = strtolower($src['src']->get_Name()) . "-failed.png";
             }
 
             $src_str .= "<img src='/img/scan_types/{$icon}' title='{$src['src']->get_Name()}";
-            if (isset($src['count']) && $src['count']) {
-                $src_str .= " ({$src['count']})";
+            if (isset($src['file_name']) && $src['file_name']) {
+                $src_str .= "\n{$src['file_name']}";
             }
             $src_str .= "' class='checklist_image' />";
         }

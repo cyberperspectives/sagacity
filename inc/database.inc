@@ -4252,6 +4252,7 @@ class db
             foreach ($rows as $row) {
                 $find = new finding($row['tgt_id'], $row['pdi_id'], $row['scan_id'], $row['findings_status_id'], $row['notes'], $row['change_id'], $row['orig_src'], $row['finding_itr']);
                 $find->set_Category($row['cat']);
+                $this->get_Finding_Notes($find);
 
                 $this->help->select("finding_controls", [
                     'ia_control'
@@ -4794,40 +4795,68 @@ EOQ;
             return 0;
         }
     }
-
+    
     /**
-     * Function for retrieving the notes from a particular finding
+     * Getter method to get finding notes
      *
-     * @param integer $pdi_id
-     * @param integer $tgt_id
-     *
-     * @return string|NULL
+     * @param finding $find
      */
-    public function get_Finding_Notes($pdi_id, $tgt_id)
+    public function get_Finding_Notes(finding &$find)
     {
-        $this->help->select("sagacity.findings", ['f.notes'], [
+        $this->help->select("analyst_notes", ['note'], [
             [
-                'field' => 'f.pdi_id',
+                'field' => 'tgt_id',
                 'op' => '=',
-                'value' => $pdi_id
+                'value' => $find->get_Tgt_ID()
             ],
             [
-                'field' => 'f.tgt_id',
+                'field' => 'pdi_id',
                 'op' => '=',
-                'value' => $tgt_id,
+                'value' => $find->get_PDI_ID(),
                 'sql_op' => 'AND'
             ]
         ]);
-
-        $rows = $this->help->execute();
-
-        if(is_array($rows) && count($rows) && isset($rows['notes'])) {
-            return $rows['notes'];
-        } elseif(is_array($rows) && count($rows) && isset($rows[0]) && isset($rows[0]['notes'])) {
-            return $rows[0]['notes'];
+        $row = $this->help->execute();
+        if(isset($row['note'])) {
+            $find->set_Analyst_Notes($row['note']);
         }
-
-        return null;
+        
+        $this->help->select("scan_notes sn", ['sn.note', 'src.name'], [
+            [
+                'field' => 'tgt_id',
+                'op' => '=',
+                'value' => $find->get_Tgt_ID()
+            ],
+            [
+                'field' => 'pdi_id',
+                'op' => '=',
+                'value' => $find->get_PDI_ID(),
+                'sql_op' => 'AND'
+            ],
+            [
+                'field' => 'scan_id',
+                'op' => '=',
+                'value' => $find->get_Scan_ID(),
+                'sql_op' => 'AND'
+            ]
+        ], [
+            'table_joins' => [
+                "JOIN scans s ON sn.scan_id = s.id",
+                "JOIN sources src ON src.id = s.src_id"
+            ]
+        ]);
+        $rows = $this->help->execute();
+        if(is_array($rows) && count($rows) && isset($rows[0])) {
+            $notes = $find->get_Scanner_Notes();
+            foreach($rows as $row) {
+                $notes .= $row['name'] . ":\r" . $row['note'];
+            }
+            $find->set_Scanner_Notes($notes);
+        } elseif(isset($rows['note'])) {
+            $notes = $find->get_Scanner_Notes();
+            $notes .= $rows['name'] . ":\r" . $rows['note'];
+            $find->set_Scanner_Notes($notes);
+        }
     }
 
     /**
@@ -8718,9 +8747,10 @@ EOQ;
             "src.id",
             "src.name",
             "src.icon",
-            "SUM(hl.finding_count) AS 'finding_count'",
             "hl.scanner_error",
-            "hl.notes"
+            "hl.notes",
+            "hl.finding_count",
+            "s.file_name"
         ], [
             [
                 'field' => 'hl.tgt_id',
@@ -8730,8 +8760,7 @@ EOQ;
             'table_joins' => [
                 "LEFT JOIN scans s ON s.src_id=src.id",
                 "LEFT JOIN host_list hl ON hl.scan_id=s.id"
-            ],
-            'group' => 'src.name,src.id'
+            ]
         ]);
 
         $rows = $this->help->execute();
@@ -8747,23 +8776,23 @@ EOQ;
                 foreach ($rows as $row) {
                     $ret[$row['id']]['src'] = new source($row['id'], $row['name']);
                     $ret[$row['id']]['src']->set_Icon($row['icon']);
-                    $ret[$row['id']]['count'] = $row['finding_count'];
                     $ret[$row['id']]['scan_error'] = (boolean) $row['scanner_error'];
                     $ret[$row['id']]['notes'] = $row['notes'];
+                    $ret[$row['id']]['file_name'] = ($ret[$row['id']]['file_name'] ? "{$row['file_name']} ({$row['finding_count']})" : "{$ret[$row['id']]['file_name']}\n{$row['file_name']} ({$row['finding_count']})");
                 }
             } else {
                 foreach ($rows as $row) {
                     if (isset($exp_scan_srcs[$row['id']])) {
                         $exp_scan_srcs[$row['id']]['src']->set_Icon($row['icon']);
-                        $exp_scan_srcs[$row['id']]['count'] = $row['finding_count'];
                         $exp_scan_srcs[$row['id']]['scan_error'] = (boolean) $row['scanner_error'];
                         $exp_scan_srcs[$row['id']]['notes'] = $row['notes'];
+                        $exp_scan_srcs[$row['id']]['file_name'] = ($exp_scan_srcs[$row['id']]['file_name'] ? "{$row['file_name']} ({$row['finding_count']})" : "{$exp_scan_srcs[$row['id']]['file_name']}\n{$row['file_name']} ({$row['finding_count']})");
                     } else {
                         $exp_scan_srcs[$row['id']]['src'] = new source($row['id'], $row['name']);
                         $exp_scan_srcs[$row['id']]['src']->set_Icon($row['icon']);
-                        $exp_scan_srcs[$row['id']]['count'] = $row['finding_count'];
                         $exp_scan_srcs[$row['id']]['scan_error'] = (boolean) $row['scanner_error'];
                         $exp_scan_srcs[$row['id']]['notes'] = $row['notes'];
+                        $exp_scan_srcs[$row['id']]['file_name'] = "{$row['file_name']} ({$row['finding_count']})";
                     }
                 }
 

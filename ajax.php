@@ -542,8 +542,7 @@ function sw_filter($is_os = false)
         'table_joins' => [
             "LEFT JOIN `sagacity`.`target_software` ts ON ts.`sft_id` = s.`id`" . ($tgt_id ? " AND ts.`tgt_id` = $tgt_id" : "")
         ],
-        'order'       => 's.cpe',
-        'limit'       => 25
+        'order'       => 's.cpe'
     ]);
 
     $sw = $db->help->execute();

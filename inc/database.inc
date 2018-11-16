@@ -8798,7 +8798,10 @@ EOQ;
             ];
         }
 
-        $this->help->select("sagacity.catalog_scripts", null, $where, [
+        $this->help->select("sagacity.catalog_scripts cs", ['c.id', 'cs.*'], $where, [
+            'table_joins' => [
+                "LEFT JOIN sagacity.checklist c ON c.file_name = cs.file_name"
+            ],
             'order' => "FIELD(`status`, 'ERROR','RUNNING','IN QUEUE','COMPLETE'),`file_name`"
         ]);
 
@@ -8813,6 +8816,7 @@ EOQ;
             foreach ($rows as $row) {
                 $script = new catalog_script();
 
+                $script->{'id'} = $row['id'];
                 $script->file_name = $row['file_name'];
                 $script->pid = $row['pid'];
                 $script->start_time = new DateTime($row['start_time']);

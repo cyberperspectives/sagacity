@@ -504,6 +504,9 @@ td span {
             $('#delete-scan-confirm').dialog('open');
             $(this).dialog('close');
           }
+        },
+        open: function() {
+        	$(this).parent().find('.ui-dialog-buttonpane button:eq(1)').focus();
         }
       });
 
@@ -543,6 +546,9 @@ td span {
           Cancel: function () {
             $(this).dialog('close');
           }
+        },
+        open: function() {
+        	$(this).parent().find('.ui-dialog-buttonpane button:eq(1)').focus();
         }
       });
     });

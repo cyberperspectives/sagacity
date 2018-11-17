@@ -6036,6 +6036,16 @@
 					"default": ""
 				},
 				{
+					"name": "scan_id",
+					"dataType": "int(11)",
+					"type": 3,
+					"length": 11,
+					"values": [],
+					"ai": false,
+					"nn": true,
+					"default": ""
+				},
+				{
 					"name": "note",
 					"dataType": "mediumtext",
 					"type": 250,
@@ -6062,6 +6072,15 @@
 					"schema": "sagacity",
 					"table": "findings",
 					"field": "pdi_id",
+					"update": null,
+					"delete": null
+				},
+				{
+					"id": "scan_find_scan_notes_id",
+					"local": "scan_id",
+					"schema": "sagacity",
+					"table": "scans",
+					"field": "id",
 					"update": null,
 					"delete": null
 				}

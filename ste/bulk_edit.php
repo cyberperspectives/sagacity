@@ -422,8 +422,9 @@ include_once 'header.inc';
                   <select name='checklists[]' class='checklists' id="checklists" multiple='multiple'>
                     <?php
                     $all_chks = $db->get_Checklist();
-                    foreach ($all_chks as $key => $chk):print $chk->print_Option();
-                    endforeach;
+                    /** @var checklist $chk */
+                    foreach ($all_chks as $chk)
+                        print $chk->print_Option();
                     ?>
                   </select>
                 </td>

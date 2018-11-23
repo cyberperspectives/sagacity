@@ -1515,18 +1515,20 @@ function get_hosts($cat_id = null)
         foreach ($icons as $icon => $data) {
             $icon_str .= "<img src='/img/checklist_icons/$icon' title='{$data['name']}' class='checklist_image' />";
         }
-
+        
         foreach ($scan_srcs as $src) {
-            $icon = $src['src']->get_Icon();
-            if(isset($src['scan_error']) && $src['scan_error']) {
-                $icon = strtolower($src['src']->get_Name()) . "-failed.png";
+            if(isset($src['src']) && is_a($src['src'], 'source')) {
+                $icon = $src['src']->get_Icon();
+                if(isset($src['scan_error']) && $src['scan_error']) {
+                    $icon = strtolower($src['src']->get_Name()) . "-failed.png";
+                }
+                
+                $src_str .= "<img src='/img/scan_types/{$icon}' title='{$src['src']->get_Name()}";
+                if (isset($src['file_name']) && $src['file_name']) {
+                    $src_str .= "\n{$src['file_name']}";
+                }
+                $src_str .= "' class='checklist_image' />";
             }
-
-            $src_str .= "<img src='/img/scan_types/{$icon}' title='{$src['src']->get_Name()}";
-            if (isset($src['file_name']) && $src['file_name']) {
-                $src_str .= "\n{$src['file_name']}";
-            }
-            $src_str .= "' class='checklist_image' />";
         }
 
         $ret['targets'][] = array_merge([

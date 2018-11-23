@@ -8774,25 +8774,33 @@ EOQ;
         if (is_array($rows) && count($rows) && isset($rows[0])) {
             if (is_null($exp_scan_srcs)) {
                 foreach ($rows as $row) {
-                    $ret[$row['id']]['src'] = new source($row['id'], $row['name']);
-                    $ret[$row['id']]['src']->set_Icon($row['icon']);
-                    $ret[$row['id']]['scan_error'] = (boolean) $row['scanner_error'];
-                    $ret[$row['id']]['notes'] = $row['notes'];
-                    $ret[$row['id']]['file_name'] = ($ret[$row['id']]['file_name'] ? "{$row['file_name']} ({$row['finding_count']})" : "{$ret[$row['id']]['file_name']}\n{$row['file_name']} ({$row['finding_count']})");
+                    $src = new source($row['id'], $row['name']);
+                    $src->set_Icon($row['icon']);
+                    $ret[$row['id']] = [
+                        'src' => $src,
+                        'scan_error' => (boolean) $row['scanner_error'],
+                        'notes' => $row['notes'],
+                        'file_name' => (!isset($ret[$row['id']]['file_name']) ? "{$row['file_name']} ({$row['finding_count']})" : "{$ret[$row['id']]['file_name']}\n{$row['file_name']} ({$row['finding_count']})")
+                    ];
                 }
             } else {
                 foreach ($rows as $row) {
                     if (isset($exp_scan_srcs[$row['id']])) {
                         $exp_scan_srcs[$row['id']]['src']->set_Icon($row['icon']);
-                        $exp_scan_srcs[$row['id']]['scan_error'] = (boolean) $row['scanner_error'];
-                        $exp_scan_srcs[$row['id']]['notes'] = $row['notes'];
-                        $exp_scan_srcs[$row['id']]['file_name'] = ($exp_scan_srcs[$row['id']]['file_name'] ? "{$row['file_name']} ({$row['finding_count']})" : "{$exp_scan_srcs[$row['id']]['file_name']}\n{$row['file_name']} ({$row['finding_count']})");
+                        $exp_scan_srcs[$row['id']] = [
+                            'scan_error' => (boolean) $row['scanner_error'],
+                            'notes' => $row['notes'],
+                            'file_name' => (!isset($exp_scan_srcs[$row['id']]['file_name']) ? "{$row['file_name']} ({$row['finding_count']})" : "{$exp_scan_srcs[$row['id']]['file_name']}\n{$row['file_name']} ({$row['finding_count']})")
+                        ];
                     } else {
-                        $exp_scan_srcs[$row['id']]['src'] = new source($row['id'], $row['name']);
-                        $exp_scan_srcs[$row['id']]['src']->set_Icon($row['icon']);
-                        $exp_scan_srcs[$row['id']]['scan_error'] = (boolean) $row['scanner_error'];
-                        $exp_scan_srcs[$row['id']]['notes'] = $row['notes'];
-                        $exp_scan_srcs[$row['id']]['file_name'] = "{$row['file_name']} ({$row['finding_count']})";
+                        $src = new source($row['id'], $row['name']);
+                        $src->set_Icon($row['icon']);
+                        $exp_scan_srcs[$row['id']] = [
+                            'src' => $src,
+                            'scan_error' => (boolean) $row['scanner_error'],
+                            'notes' => $row['notes'],
+                            'file_name' => "{$row['file_name']} ({$row['finding_count']})"
+                        ];
                     }
                 }
 

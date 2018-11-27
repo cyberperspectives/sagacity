@@ -29,6 +29,7 @@
  REM - Jun 27, 2017 - Removed copy cgi-bin contents
  REM - Sep 19, 2018 - Deleting unnecessary C:\xampp\htdocs folder.
  REM - Oct 3, 2018 - Redirected deletion of htdocs folder to nul
+ REM - Nov 27, 2018 - Added php-dev.ini to conf folder and added prompts to allow for development installation
 
 mkdir c:\xampp\php\logs
 
@@ -48,7 +49,26 @@ copy c:\xampp\www\conf\httpd-ssl.conf c:\xampp\apache\conf\extra
 rename c:\xampp\apache\conf\extra\httpd-xampp.conf httpd-xampp.conf.old
 copy c:\xampp\www\conf\httpd-xampp.conf c:\xampp\apache\conf\extra
 rename c:\xampp\php\php.ini php.ini.old
-copy c:\xampp\www\conf\php.ini c:\xampp\php
+
+set /p dev="Do you want to install the dev configuration? (Y/n) "
+set result=0
+if "%dev%"=="Y" (set result=1)
+if "%dev%"=="y" (set result=1)
+if "%dev%"=="Yes" (set result=1)
+if "%dev%"=="YES" (set result=1)
+if "%dev%"=="yes" (set result=1)
+
+if "%result%"=="1" (
+  copy c:\xampp\www\conf\php-dev.ini c:\xampp\php
+  copy c:\xampp\www\conf\php_xdebug-2.6.0-7.2-vc15.dll
+  @echo For a dev installation we also recommend installing QCacheGrindWin at
+  @echo.
+  @echo https://sourceforge.net/projects/qcachegrindwin/
+  @echo.
+) else (
+  copy c:\xampp\www\conf\php.ini c:\xampp\php
+  del c:\xampp\www\conf\php_xdebug-2.6.0-7.2-vc15.dll 1>nul
+)
 
 echo Deleting unnecessary C:\xampp\htdocs folder.
 del /F /S /Q c:\xampp\htdocs 1>nul

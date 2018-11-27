@@ -419,7 +419,7 @@ class scc_parser extends scan_xml_parser
         // error_log(print_r($this->tag, true));
         $host_name = $this->tag['host_name'];
         if (preg_match("/\./", $host_name)) {
-            $host_name = preg_replace("/^([^\.]+)\./i", "$1", $host_name);
+            $host_name = preg_replace("/^([^.]+).*/i", "$1", $host_name);
         }
 
         if (! ($tgt_id = $this->db->check_Target($this->ste_id, $host_name))) {

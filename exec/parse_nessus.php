@@ -1211,7 +1211,7 @@ class nessus_parser extends scan_xml_parser
             $finding = $this->db->get_Finding($this->tgt, $this->plugin->db_plugin);
 
             if (is_array($finding) && count($finding)) {
-                $finding = $finding[0];
+                $finding = current($finding[0]);
             }
 
             if (is_a($finding, 'finding')) {

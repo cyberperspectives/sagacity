@@ -8785,7 +8785,7 @@ EOQ;
                 }
             } else {
                 foreach ($rows as $row) {
-                    if (isset($exp_scan_srcs[$row['id']])) {
+                    if (isset($exp_scan_srcs[$row['id']]) && isset($exp_scan_srcs[$row['id']]['src']) && is_a($exp_scan_srcs[$row['id']]['src'], 'source')) {
                         $exp_scan_srcs[$row['id']]['src']->set_Icon($row['icon']);
                         $exp_scan_srcs[$row['id']] = [
                             'scan_error' => (boolean) $row['scanner_error'],

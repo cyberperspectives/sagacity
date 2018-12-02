@@ -118,10 +118,16 @@ class scc_parser extends scan_xml_parser
         $this->groups = [];
         $this->tag = [];
         parent::__construct($this, $ste_id_in, $fname_in);
-        $this->db->update_Running_Scan($this->scan->get_File_Name(), [
-            'name' => 'pid',
-            'value' => getmypid()
-        ]);
+    }
+    
+    /**
+     * Function to parse \cdf:Benchmark
+     * 
+     * @param array $attrs
+     */
+    public function cdf_Benchmark($attrs)
+    {
+        $this->scan->set_Start_Time(new DateTime("now", new DateTimeZone("UTC")));
     }
 
     /**

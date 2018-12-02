@@ -967,7 +967,11 @@ class db_helper
 
         if (isset($json->constraints) && is_array($json->constraints) && count($json->constraints)) {
             foreach ($json->constraints as $con) {
-                $this->sql .= ", CONSTRAINT `{$con->id}` " . "FOREIGN KEY (`{$con->local}`) " . "REFERENCES `{$con->schema}`.`{$con->table}` (`{$con->field}`) " . "ON DELETE " . (is_null($con->delete) ? "NO ACTION" : strtoupper($con->delete)) . " " . "ON UPDATE " . (is_null($con->update) ? "NO ACTION" : strtoupper($con->update));
+                $this->sql .= ", CONSTRAINT `{$con->id}` " . 
+                    "FOREIGN KEY (`{$con->local}`) " . 
+                    "REFERENCES `{$con->schema}`.`{$con->table}` (`{$con->field}`) " . 
+                    "ON DELETE " . (!isset($con->delete) || is_null($con->delete) ? "NO ACTION" : strtoupper($con->delete)) . " " . 
+                    "ON UPDATE " . (!isset($con->update) || is_null($con->update) ? "NO ACTION" : strtoupper($con->update));
             }
         }
 
@@ -8721,8 +8725,11 @@ EOQ;
             foreach ($src_arr as $row) {
                 $src = new source($row['id'], $row['name']);
                 $icon = null;
-                if ($row['icon']) {
-                    $icon = str_replace(" ", "-", substr($row['icon'], 0, - 4)) . "-missing.png";
+                $missing_fname = str_replace(" ", "-", substr($row['icon'], 0, - 4)) . "-missing.png";
+                if ($row['icon'] && file_exists(DOC_ROOT . "/img/scan_types/{$missing_fname}")) {
+                    $icon = $missing_fname;
+                } else {
+                    $icon = $row['icon'];
                 }
                 $src->set_Icon($icon);
                 $ret[$src->get_ID()]['src'] = $src;
@@ -8742,7 +8749,7 @@ EOQ;
      */
     public function get_Target_Scan_Sources($tgt, &$exp_scan_srcs = null)
     {
-        $ret = [];
+        $ret = (!is_null($exp_scan_srcs) ? $exp_scan_srcs : []);
         $this->help->select("sources src", [
             "src.id",
             "src.name",
@@ -8762,9 +8769,8 @@ EOQ;
                 "LEFT JOIN host_list hl ON hl.scan_id=s.id"
             ]
         ]);
-
         $rows = $this->help->execute();
-
+        
         if (is_array($rows) && count($rows) && isset($rows['id'])) {
             $rows = [
                 0 => $rows
@@ -8772,39 +8778,15 @@ EOQ;
         }
 
         if (is_array($rows) && count($rows) && isset($rows[0])) {
-            if (is_null($exp_scan_srcs)) {
-                foreach ($rows as $row) {
-                    $src = new source($row['id'], $row['name']);
-                    $src->set_Icon($row['icon']);
-                    $ret[$row['id']] = [
-                        'src' => $src,
-                        'scan_error' => (boolean) $row['scanner_error'],
-                        'notes' => $row['notes'],
-                        'file_name' => (!isset($ret[$row['id']]['file_name']) ? "{$row['file_name']} ({$row['finding_count']})" : "{$ret[$row['id']]['file_name']}\n{$row['file_name']} ({$row['finding_count']})")
-                    ];
-                }
-            } else {
-                foreach ($rows as $row) {
-                    if (isset($exp_scan_srcs[$row['id']]) && isset($exp_scan_srcs[$row['id']]['src']) && is_a($exp_scan_srcs[$row['id']]['src'], 'source')) {
-                        $exp_scan_srcs[$row['id']]['src']->set_Icon($row['icon']);
-                        $exp_scan_srcs[$row['id']] = [
-                            'scan_error' => (boolean) $row['scanner_error'],
-                            'notes' => $row['notes'],
-                            'file_name' => (!isset($exp_scan_srcs[$row['id']]['file_name']) ? "{$row['file_name']} ({$row['finding_count']})" : "{$exp_scan_srcs[$row['id']]['file_name']}\n{$row['file_name']} ({$row['finding_count']})")
-                        ];
-                    } else {
-                        $src = new source($row['id'], $row['name']);
-                        $src->set_Icon($row['icon']);
-                        $exp_scan_srcs[$row['id']] = [
-                            'src' => $src,
-                            'scan_error' => (boolean) $row['scanner_error'],
-                            'notes' => $row['notes'],
-                            'file_name' => "{$row['file_name']} ({$row['finding_count']})"
-                        ];
-                    }
-                }
-
-                return $exp_scan_srcs;
+            foreach($rows as $row) {
+                $src = new source($row['id'], $row['name']);
+                $src->set_Icon($row['icon']);
+                
+                $ret[$src->get_ID()]['src'] = $src;
+                $ret[$src->get_ID()]['count'] = $row['finding_count'];
+                $ret[$src->get_ID()]['notes'] = $row['notes'];
+                $ret[$src->get_ID()]['scan_error'] = $row['scanner_error'];
+                $ret[$src->get_ID()]['file_name'] = $row['file_name'];
             }
         }
 
@@ -11145,7 +11127,7 @@ EOQ;
                 'value' => $intCat
             ]
         ], [
-            'order' => 'name'
+            'order' => 'LENGTH(name),name'
         ]);
 
         $rows = $this->help->execute();
@@ -11188,7 +11170,7 @@ EOQ;
                 'sql_op' => 'AND'
             ]
         ], [
-            'order' => 'name'
+            'order' => 'LENGTH(name),name'
         ]);
         $ret = [];
 
@@ -12622,6 +12604,18 @@ EOQ;
         if (! $this->help->execute()) {
             $this->help->debug(E_ERROR);
 
+            return false;
+        }
+        $this->help->delete("analyst_notes", null, [
+            [
+                'field' => 'tgt_id',
+                'op' => '=',
+                'value' => $tgt_id
+            ]
+        ]);
+        if (! $this->help->execute()) {
+            $this->help->debug(E_ERROR);
+            
             return false;
         }
         $this->help->delete("target", null, [

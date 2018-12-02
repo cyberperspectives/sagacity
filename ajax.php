@@ -48,9 +48,13 @@
  */
 set_time_limit(0);
 
+include_once 'vendor/autoload.php';
 include_once 'config.inc';
 include_once 'import.inc';
 include_once 'helper.inc';
+
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
 chdir(dirname(__FILE__));
 

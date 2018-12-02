@@ -252,8 +252,8 @@
 					"schema": "sagacity",
 					"table": "sw_man_match",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -454,8 +454,8 @@
 					"schema": "rmf",
 					"table": "family",
 					"field": "abbr",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -502,8 +502,8 @@
 					"schema": "rmf",
 					"table": "controls",
 					"field": "control_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "rmf_related_controls_related_id",
@@ -511,8 +511,8 @@
 					"schema": "rmf",
 					"table": "controls",
 					"field": "control_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -563,8 +563,8 @@
 					"schema": "rmf",
 					"table": "controls",
 					"field": "control_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -641,8 +641,8 @@
 					"schema": "rmf",
 					"table": "controls",
 					"field": "control_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -704,8 +704,8 @@
 					"schema": "rmf",
 					"table": "controls",
 					"field": "control_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "rmf_eny_baseline_enh_id",
@@ -713,8 +713,8 @@
 					"schema": "rmf",
 					"table": "control_enh",
 					"field": "enh_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -805,8 +805,8 @@
 					"schema": "rmf",
 					"table": "controls",
 					"field": "control_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "fk_cci_control_enh1",
@@ -814,8 +814,8 @@
 					"schema": "rmf",
 					"table": "control_enh",
 					"field": "enh_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -1363,8 +1363,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "fp_src_id",
@@ -1372,8 +1372,8 @@
 					"schema": "sagacity",
 					"table": "sources",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -1423,8 +1423,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "exp_sys_id",
@@ -1432,8 +1432,8 @@
 					"schema": "sagacity",
 					"table": "system",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -1776,8 +1776,8 @@
 					"schema": "sagacity",
 					"table": "proc_ia_controls",
 					"field": "control_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -1858,8 +1858,8 @@
 					"schema": "sagacity",
 					"table": "proc_ia_controls",
 					"field": "control_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -2013,8 +2013,8 @@
 					"schema": "sagacity",
 					"table": "checklist",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "chk_sw_lu_sw_id",
@@ -2022,8 +2022,8 @@
 					"schema": "sagacity",
 					"table": "software",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -2125,8 +2125,8 @@
 					"schema": "sagacity",
 					"table": "checklist",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "pdi_pdi_id",
@@ -2134,8 +2134,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -2237,8 +2237,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -2285,8 +2285,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -2432,8 +2432,8 @@
 					"schema": "sagacity",
 					"table": "cci",
 					"field": "cci_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -2600,8 +2600,8 @@
 					"schema": "sagacity",
 					"table": "cve_db",
 					"field": "cve_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -2648,8 +2648,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "cve_cve_id",
@@ -2657,8 +2657,8 @@
 					"schema": "sagacity",
 					"table": "cve_db",
 					"field": "cve_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -2697,8 +2697,8 @@
 					"schema": "sagacity",
 					"table": "cve_db",
 					"field": "cve_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -2748,8 +2748,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -2807,8 +2807,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -3014,8 +3014,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -3071,8 +3071,8 @@
 					"schema": "sagacity",
 					"table": "iavm_notices",
 					"field": "noticeId",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -3138,8 +3138,8 @@
 					"schema": "sagacity",
 					"table": "iavm_notices",
 					"field": "noticeId",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -3215,8 +3215,8 @@
 					"schema": "sagacity",
 					"table": "iavm_notices",
 					"field": "noticeId",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -3282,8 +3282,8 @@
 					"schema": "sagacity",
 					"table": "iavm_notices",
 					"field": "noticeId",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -3339,8 +3339,8 @@
 					"schema": "sagacity",
 					"table": "iavm_notices",
 					"field": "noticeId",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -3387,8 +3387,8 @@
 					"schema": "sagacity",
 					"table": "cve_db",
 					"field": "cve_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "iavm_lookup_id",
@@ -3396,8 +3396,8 @@
 					"schema": "sagacity",
 					"table": "iavm_notices",
 					"field": "noticeId",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -3542,8 +3542,8 @@
 					"schema": "sagacity",
 					"table": "nessus_plugins",
 					"field": "plugin_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -3590,8 +3590,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "nessus_n_id",
@@ -3599,8 +3599,8 @@
 					"schema": "sagacity",
 					"table": "nessus_plugins",
 					"field": "plugin_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -3663,8 +3663,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -3761,8 +3761,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -3879,8 +3879,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -3927,8 +3927,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -4169,8 +4169,8 @@
 					"schema": "sagacity",
 					"table": "system",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "ste_site_id",
@@ -4178,8 +4178,8 @@
 					"schema": "sagacity",
 					"table": "sites",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -4241,8 +4241,8 @@
 					"schema": "sagacity",
 					"table": "people",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "ste_team_ste_id",
@@ -4250,8 +4250,8 @@
 					"schema": "sagacity",
 					"table": "ste",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -4310,8 +4310,8 @@
 					"schema": "sagacity",
 					"table": "ste",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -4358,8 +4358,8 @@
 					"schema": "sagacity",
 					"table": "ste_cat",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "ste_cat_src_id",
@@ -4367,8 +4367,8 @@
 					"schema": "sagacity",
 					"table": "sources",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -4467,8 +4467,8 @@
 					"schema": "sagacity",
 					"table": "ste_cat",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "cat_int_ques_id",
@@ -4476,8 +4476,8 @@
 					"schema": "sagacity",
 					"table": "interview_questions",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -4669,8 +4669,8 @@
 					"schema": "sagacity",
 					"table": "sources",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "scan_ste_id",
@@ -4678,8 +4678,8 @@
 					"schema": "sagacity",
 					"table": "ste",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -4968,8 +4968,8 @@
 					"schema": "sagacity",
 					"table": "ste_cat",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "t_os_id",
@@ -4977,8 +4977,8 @@
 					"schema": "sagacity",
 					"table": "software",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "t_ste_id",
@@ -4986,8 +4986,8 @@
 					"schema": "sagacity",
 					"table": "ste",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "t_auto_id",
@@ -4995,8 +4995,8 @@
 					"schema": "sagacity",
 					"table": "task_status",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "t_man_id",
@@ -5004,8 +5004,8 @@
 					"schema": "sagacity",
 					"table": "task_status",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "t_data_id",
@@ -5013,8 +5013,8 @@
 					"schema": "sagacity",
 					"table": "task_status",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "t_fp_cat1_id",
@@ -5022,8 +5022,8 @@
 					"schema": "sagacity",
 					"table": "task_status",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			],
 			"index": [
@@ -5148,8 +5148,8 @@
 					"schema": "sagacity",
 					"table": "target",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -5248,8 +5248,8 @@
 					"schema": "sagacity",
 					"table": "target",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -5388,8 +5388,8 @@
 					"schema": "sagacity",
 					"table": "target",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -5508,8 +5508,8 @@
 					"schema": "sagacity",
 					"table": "target",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -5565,8 +5565,8 @@
 					"schema": "sagacity",
 					"table": "checklist",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "tgt_tgt_chk_id",
@@ -5574,8 +5574,8 @@
 					"schema": "sagacity",
 					"table": "target",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -5625,8 +5625,8 @@
 					"schema": "sagacity",
 					"table": "software",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "tgt_tgt_sft_id",
@@ -5634,8 +5634,8 @@
 					"schema": "sagacity",
 					"table": "target",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -5705,8 +5705,8 @@
 					"schema": "sagacity",
 					"table": "scans",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "host_tgt_id",
@@ -5714,8 +5714,8 @@
 					"schema": "sagacity",
 					"table": "target",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -5795,8 +5795,8 @@
 					"schema": "sagacity",
 					"table": "interfaces",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "pps_pps_id",
@@ -5804,8 +5804,8 @@
 					"schema": "sagacity",
 					"table": "ports_proto_services",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -5914,8 +5914,8 @@
 					"schema": "sagacity",
 					"table": "pdi_catalog",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "find_tgt_id",
@@ -5923,8 +5923,8 @@
 					"schema": "sagacity",
 					"table": "target",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "find_scan_id",
@@ -5932,8 +5932,8 @@
 					"schema": "sagacity",
 					"table": "scans",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "find_status_id",
@@ -5941,8 +5941,8 @@
 					"schema": "sagacity",
 					"table": "findings_status",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -5993,8 +5993,8 @@
 					"schema": "sagacity",
 					"table": "findings",
 					"field": "tgt_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "find_pdi_ctrl_id",
@@ -6002,8 +6002,8 @@
 					"schema": "sagacity",
 					"table": "findings",
 					"field": "pdi_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -6063,8 +6063,8 @@
 					"schema": "sagacity",
 					"table": "findings",
 					"field": "tgt_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "scan_find_pdi_notes_id",
@@ -6072,8 +6072,8 @@
 					"schema": "sagacity",
 					"table": "findings",
 					"field": "pdi_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "scan_find_scan_notes_id",
@@ -6081,8 +6081,8 @@
 					"schema": "sagacity",
 					"table": "scans",
 					"field": "id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},
@@ -6132,8 +6132,8 @@
 					"schema": "sagacity",
 					"table": "findings",
 					"field": "tgt_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				},
 				{
 					"id": "analyst_find_pdi_notes_id",
@@ -6141,8 +6141,8 @@
 					"schema": "sagacity",
 					"table": "findings",
 					"field": "pdi_id",
-					"update": null,
-					"delete": null
+					"update": "CASCADE",
+					"delete": "CASCADE"
 				}
 			]
 		},

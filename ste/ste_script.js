@@ -384,7 +384,7 @@ function display_ops_hosts(hosts) {
     var odd = true;
 
     for (var x in hosts.targets) {
-      $(cat).after(
+      $(cat).append(
               "<div class='" + (odd ? "odd_row" : "even_row") + " cat_" + cat_id + "'>" +
               "<span class='cat-cell' style='width:102px;text-align:left'>" +
               "<input type='checkbox' class='tgt-sel' value='" + hosts.targets[x].id + "' onclick='javascript:update_tgt_chk(this);' />" +

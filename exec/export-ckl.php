@@ -358,7 +358,8 @@ Total STIGs: $total_stigs
 EOO;
 
 /**
- *
+ * Function to retrieve all the PDIs for a specified target and checklist
+ * 
  * @global db $db
  *
  * @param target $tgt

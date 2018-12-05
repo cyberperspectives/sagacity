@@ -59,7 +59,7 @@ if "%dev%"=="YES" (set result=1)
 if "%dev%"=="yes" (set result=1)
 
 if "%result%"=="1" (
-  copy c:\xampp\www\conf\php-dev.ini c:\xampp\php
+  copy c:\xampp\www\conf\php-dev.ini c:\xampp\php\php.ini
   copy c:\xampp\www\conf\php_xdebug-2.6.0-7.2-vc15.dll
   @echo For a dev installation we also recommend installing QCacheGrindWin at
   @echo.

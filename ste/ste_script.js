@@ -449,9 +449,9 @@ function display_stats_hosts(hosts) {
               "<span class='cat-cell na' title='Not Applicable' style='text-align:center;'>" + hosts.targets[x].na + "</span>" +
               "<span class='cat-cell nr' title='Not Reviewed' style='text-align:center;'>" + hosts.targets[x].nr + "</span>" +
               "<span class='cat-cell comp' title='Percentage Compliant' style='text-align:center;background-color: " +
-              getColorForPercentage(hosts.targets[x].comp) + ";'>" + (hosts.targets[x].comp.toFixed(2) * 100) + "%</span>" +
+              getColorForPercentage(hosts.targets[x].comp) + ";'>" + (hosts.targets[x].comp * 100).toFixed(2) + "%</span>" +
               "<span class='cat-cell assessed' title='Percentage Assessed' style='text-align:center;background-color: " +
-              getColorForPercentage(hosts.targets[x].assessed) + ";'>" + (hosts.targets[x].assessed.toFixed(2) * 100) + "%</span>" +
+              getColorForPercentage(hosts.targets[x].assessed) + ";'>" + (hosts.targets[x].assessed * 100).toFixed(2) + "%</span>" +
               "<span class='cat-cell scans'>" +
               (hosts.targets[x].scans ? hosts.targets[x].scans : "&nbsp;") +
               "</span>" +

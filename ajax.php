@@ -1501,6 +1501,7 @@ function get_hosts($cat_id = null)
     }
 
     foreach ($tgts as $tgt) {
+        /** @var target $tgt */
         $chks = $db->get_Target_Checklists($tgt->get_ID());
         $scan_srcs = $db->get_Target_Scan_Sources($tgt, $exp_scan_srcs);
         $icons     = [];
@@ -1555,8 +1556,8 @@ function get_hosts($cat_id = null)
             'cat_1'    => $tgt->getCat1Count(),
             'cat_2'    => $tgt->getCat2Count(),
             'cat_3'    => $tgt->getCat3Count(),
-            'comp'     => $tgt->getCompliantPercent(),
-            'assessed' => $tgt->getAssessedPercent()
+            'comp'     => floatval(number_format($tgt->getCompliantPercent(), 6)),
+            'assessed' => floatval(number_format($tgt->getAssessedPercent(), 6))
         ]);
     }
 

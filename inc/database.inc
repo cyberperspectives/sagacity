@@ -3436,6 +3436,7 @@ class db
             }
         }
 
+        /*
         $where = [
             [
                 'field' => 'gof.cat_id',
@@ -3546,6 +3547,7 @@ class db
                 }
             }
         }
+        */
 
         return $ret;
     }

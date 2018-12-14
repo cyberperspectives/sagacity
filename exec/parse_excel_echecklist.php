@@ -127,6 +127,9 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
     elseif (isset($conf['ignore']) && $wksht->getSheetState() == Worksheet::SHEETSTATE_HIDDEN) {
 		$log->info("Skipping hidden worksheet {$wksht->getTitle()}");
         continue;
+    } elseif ($wksht->getTitle() == 'Orphan') {
+        $log->info("Skipping Orphan worksheet because it creates problems right now");
+        continue;
     }
 
     $scan->isTerminated();
@@ -279,6 +282,15 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
             break;
         }
     }
+    
+    if(count($tgts) > 100) {
+        $db->update_Running_Scan($base_name, ['name' => 'status', 'value' => 'ERROR']);
+        $db->update_Running_Scan($base_name, ['name' => 'notes', 'value' => "Too many targets in worksheet {$wksht->getTitle()}"]);
+        $log->error("Too many targets in worksheet {$wksht->getTitle()}");
+        unset($objSS);
+        rename($cmd['f'], TMP . "/terminated/$base_name");
+        die();
+    }
 
     $db->update_Running_Scan($base_name, ['name' => 'host_count', 'value' => count($tgts)]);
 
@@ -368,11 +380,9 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
             }
             $log->debug("{$tgt->get_Name()} {$stig->get_ID()} ({$tmp->get_Finding_Status_String()})");
             $x++;
-        }
-
-        $row_count++;
-
-        if($row_count % 100 == 0) {
+        }         
+        
+        if(count($updated_findings) + count($new_findings) >= 1000) {
             if(!$db->add_Findings_By_Target($updated_findings, $new_findings)) {
                 die(print_r(debug_backtrace(), true));
             } else {

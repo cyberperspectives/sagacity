@@ -70,14 +70,15 @@ EOO;
     $fail = true;
 }
 else {
-    $algorithms = ["AES-256-CBC-HMAC-SHA256", "AES-256-CBC-HMAC-SHA1", "AES-256-CBC"];
-    if (in_array($algorithms[0], openssl_get_cipher_methods())) {
+    $algorithms = ["aes-256-cbc-hmac-sha256", "aec-256-cbc-hmac-sha1", "aes-256-cbc"];
+    $ciphers = array_map('strtolower', openssl_get_cipher_methods());
+    if (in_array($algorithms[0], $ciphers)) {
         $idx = 0;
     }
-    elseif (in_array($algorithms[1], openssl_get_cipher_methods())) {
+    elseif (in_array($algorithms[1], $ciphers)) {
         $idx = 1;
     }
-    elseif (in_array($algorithms[2], openssl_get_cipher_methods())) {
+    elseif (in_array($algorithms[2], $ciphers)) {
         $idx = 2;
     }
     else {

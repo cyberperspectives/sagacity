@@ -391,7 +391,8 @@ function get_checklist_data($tgt, $chk) {
       "JOIN sagacity.pdi_checklist_lookup pcl ON pcl.pdi_id = pdi.pdi_id",
       "JOIN sagacity.target_checklist tc ON tc.chk_id = pcl.checklist_id",
       "JOIN sagacity.stigs s ON s.pdi_id = pdi.pdi_id"
-    ]
+    ],
+    'group' => 'STIG_ID'
   ]);
   $pdis = $db->help->execute();
 

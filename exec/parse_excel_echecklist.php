@@ -254,8 +254,7 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
             $hl->setTargetName($tgt->get_Name());
             if ($ip) {
                 $hl->setTargetIp($ip);
-            }
-            elseif (is_array($tgt->interfaces) && count($tgt->interfaces)) {
+            } elseif (is_array($tgt->interfaces) && count($tgt->interfaces)) {
                 foreach ($tgt->interfaces as $int) {
                     if (!in_array($int->get_IPv4(), ['0.0.0.0', '127.0.0.1'])) {
                         $ip = $int->get_IPv4();
@@ -301,8 +300,7 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
         $idx['consistent']     += $increase;
         $idx['notes']          += $increase;
         $idx['check_contents'] += $increase;
-    }
-    elseif (empty($tgts)) {
+    } elseif (empty($tgts)) {
 		$log->warning("Failed to identify targets in worksheet {$wksht->getTitle()}");
         continue;
     }
@@ -343,8 +341,7 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
 
         if (is_array($stig) && count($stig) && isset($stig[0]) && is_a($stig[0], 'stig')) {
             $stig = $stig[0];
-        }
-        else {
+        } else {
             $pdi    = new pdi(null, $cat_lvl, $dt->format("Y-m-d"));
             $pdi->set_Short_Title($short_title);
             $pdi->set_Group_Title($short_title);
@@ -360,6 +357,14 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
         foreach ($tgts as $tgt) {
             $status = $wksht->getCell(Coordinate::stringFromColumnIndex($idx['target'] + $x) . $row->getRowIndex())
                 ->getValue();
+            if(!in_array(strtolower($status), ['not reviewed', 'not a finding', 'open', 'not applicable', 'no data', 'exception', 'false positive'])) {
+                if(!preg_match("/Formula found in status column/", $notes)) {
+                    $notes .= "Formula found in status column";
+                }
+                $status = "Not Reviewed";
+                $scan->set_Host_Error($tgt->get_ID(), true, "Formula found in the status column");
+                $scan->setScanError(true);
+            }
 
 			$findings = $tgt_findings[$tgt->get_ID()];
 			if (is_array($findings) && count($findings) && isset($findings[$stig->get_PDI_ID()]) && is_a($findings[$stig->get_PDI_ID()], 'finding')) {
@@ -369,12 +374,13 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
                 $tmp->set_Finding_Status_By_String($status);
                 $tmp->set_Notes($notes);
                 $tmp->set_Category($cat_lvl);
+                $tmp->set_Scan_ID($scan->get_ID());
 
                 $updated_findings[] = $tmp;
-            }
-            else {
+            } else {
                 $tmp = new finding($tgt->get_ID(), $stig->get_PDI_ID(), $scan->get_ID(), $status, $notes, null, null, null);
                 $tmp->set_Category($cat_lvl);
+                $tmp->set_Scan_ID($scan->get_ID());
 
                 $new_findings[] = $tmp;
             }
@@ -390,7 +396,7 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
                 $new_findings = [];
             }
         }
-
+ 
         $db->update_Running_Scan($base_name, ['name' => 'perc_comp', 'value' => (($row->getRowIndex() - 10) / $highestRow) * 100]);
         if (PHP_SAPI == 'cli') {
             print "\r" . sprintf("%.2f%%", (($row->getRowIndex() - 10) / $highestRow) * 100);

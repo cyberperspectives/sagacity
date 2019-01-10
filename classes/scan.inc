@@ -83,7 +83,7 @@ class scan
     /**
      * Array of hosts
      *
-     * @var array
+     * @var array:host_list
      */
     protected $host_list = array();
 
@@ -612,6 +612,25 @@ class scan
     public function set_Total_Host_Count($total_host_count_in)
     {
         $this->host_count = $total_host_count_in;
+    }
+    
+    /**
+     * Method to set a host error
+     * 
+     * @param int $tgt_id
+     * @param boolean $is_error
+     * @param string $err_msg
+     */
+    public function set_Host_Error($tgt_id, $is_error, $err_msg = null)
+    {
+        foreach($this->host_list as $x => $h) {
+            /** @var host_list $h */
+            if($h->getTargetId() == $tgt_id) {
+                $this->host_list[$x]->setScanError($is_error);
+                $this->host_list[$x]->setScanNotes($err_msg);
+                break;
+            }
+        }
     }
 
     /**

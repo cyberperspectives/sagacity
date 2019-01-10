@@ -299,6 +299,7 @@ foreach ($findings as $worksheet_name => $data) {
       ->applyFromArray($borders);
   $sheet->freezePane("A11");
   $sheet->setAutoFilter("A10:{$sheet->getHighestDataColumn()}10");
+  $sheet->protectCellsByColumnAndRow(1, 11, 5, $sheet->getHighestDataRow(), "sagacity");
 
   updateHostHeader($sheet, $data['target_list'], $db);
 

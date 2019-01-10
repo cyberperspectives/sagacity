@@ -5,13 +5,14 @@
  REM Purpose: Windows / XAMPP Uninstallation Script
  REM Created: Oct 3, 2018
 
- REM Copyright 2018: Cyber Perspective, All rights reserved
+ REM Copyright 2018-2019: Cyber Perspective, All rights reserved
  REM Released under the Apache v2.0 License
 
  REM See license.txt for details
  
  REM Change Log:
  REM - Oct 3, 2018 - File created
+ REM - Jan 10, 2019 - Killed stray php processes, wait for uninstall to finish in background, move www folder (and this script) deletion to the end to avoid errors.
  
 @echo.
 @echo This will completely uninstall Sagacity and XAMPP and delete 

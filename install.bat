@@ -30,6 +30,7 @@
  REM - Sep 19, 2018 - Deleting unnecessary C:\xampp\htdocs folder.
  REM - Oct 3, 2018 - Redirected deletion of htdocs folder to nul
  REM - Nov 27, 2018 - Added php-dev.ini to conf folder and added prompts to allow for development installation
+ REM - Jan 10, 2019 - Separated the dev installation out into a separate script and streamlined the installation process.
 
  REM To install the php xdebug development tools, use install-dev.bat
  

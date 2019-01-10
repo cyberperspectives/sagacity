@@ -1,11 +1,11 @@
 @echo off
 
- REM File: install.bat
- REM Author: Ryan Prather
+ REM File: install-dev.bat
+ REM Author: Ryan Prather, Jeff Odegard
  REM Purpose: Windows / XAMPP Installation Script
  REM Created: Jan 5, 2015
 
- REM Portions Copyright 2016-2019: Cyber Perspectives, LLC, All rights reserved
+ REM Portions Copyright 2016-2019: Cyber Perspective, All rights reserved
  REM Released under the Apache v2.0 License
 
  REM Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -31,8 +31,31 @@
  REM - Oct 3, 2018 - Redirected deletion of htdocs folder to nul
  REM - Nov 27, 2018 - Added php-dev.ini to conf folder and added prompts to allow for development installation
 
- REM To install the php xdebug development tools, use install-dev.bat
- 
+@echo The Sagacity dev configuration installs and enables php xdebug used for troubleshooting and development work.  
+echo.
+@echo NOTE: The dev configuration will *noticably* impact Sagacity's performance.
+@echo       *** For a production environment, please use install.bat instead! ***
+@echo.
+
+@echo For your dev installation we also recommend installing QCacheGrindWin from
+@echo.
+@echo       https://sourceforge.net/projects/qcachegrindwin/
+@echo.
+
+set /p dev="Do you want to install the dev configuration? (y/N) "
+set result=0
+if "%dev%"=="Y" (set result=1)
+if "%dev%"=="y" (set result=1)
+if "%dev%"=="Yes" (set result=1)
+if "%dev%"=="YES" (set result=1)
+if "%dev%"=="yes" (set result=1)
+
+if "%result%"=="0" (
+	@echo Dev installation aborted.
+	@echo Please use install.bat for a production installation.
+	exit
+)
+
 @echo    - Create PHP log folder
 mkdir c:\xampp\php\logs
 
@@ -53,8 +76,9 @@ copy c:\xampp\www\conf\httpd-ssl.conf c:\xampp\apache\conf\extra
 rename c:\xampp\apache\conf\extra\httpd-xampp.conf httpd-xampp.conf.old
 copy c:\xampp\www\conf\httpd-xampp.conf c:\xampp\apache\conf\extra
 rename c:\xampp\php\php.ini php.ini.old
-copy c:\xampp\www\conf\php.ini c:\xampp\php
-del c:\xampp\www\conf\php_xdebug-2.6.0-7.2-vc15.dll 1>nul
+
+copy c:\xampp\www\conf\php-dev.ini c:\xampp\php\php.ini
+copy c:\xampp\www\conf\php_xdebug-2.6.0-7.2-vc15.dll c:\xampp\php\ext\php_xdebug-2.6.0-7.2-vc15.dll
 
 @echo    - Deleting unnecessary C:\xampp\htdocs folder.
 del /F /S /Q c:\xampp\htdocs 1>nul
@@ -70,7 +94,7 @@ net start apache2.4
 @echo If you like this tool, please tell a friend or co-worker!
 @echo.
 
-set /p foo="Press enter to continue setup."
+set /p browser="Press enter to continue setup with http://localhost/setup.php"
 
 start http://localhost
 

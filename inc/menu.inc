@@ -56,6 +56,9 @@ elseif (preg_match('/report/', $script_name)) {
     if (id && typeof id == 'string') {
       $('#' + id).show();
     }
+	var ele = $('#' + id).parent().children('dt');
+	$('#' + id).css('left', ele.position().left + ele.width());
+	$('#' + id).css('top', ele.position().top + ele.height());
   }
 </script>
 

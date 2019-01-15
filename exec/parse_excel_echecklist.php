@@ -248,27 +248,29 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
             $tgts[] = $tgt;
 
             $log->debug("Adding new target to host list", ['row_count' => $row_count, 'tgt_id' => $tgt->get_ID(), 'tgt_name' => $tgt->get_Name()]);
-            $hl = new host_list();
-            $hl->setFindingCount($row_count);
-            $hl->setTargetId($tgt->get_ID());
-            $hl->setTargetName($tgt->get_Name());
-            if ($ip) {
-                $hl->setTargetIp($ip);
-            } elseif (is_array($tgt->interfaces) && count($tgt->interfaces)) {
-                foreach ($tgt->interfaces as $int) {
-                    if (!in_array($int->get_IPv4(), ['0.0.0.0', '127.0.0.1'])) {
-                        $ip = $int->get_IPv4();
-                        break;
-                    }
-                }
-                $hl->setTargetIp($ip);
-            }
-
             if(!isset($scan->get_Host_List()[$tgt->get_ID()])) {
+                $hl = new host_list();
+                $hl->setFindingCount($row_count);
+                $hl->setTargetId($tgt->get_ID());
+                $hl->setTargetName($tgt->get_Name());
+                if ($ip) {
+                    $hl->setTargetIp($ip);
+                } elseif (is_array($tgt->interfaces) && count($tgt->interfaces)) {
+                    foreach ($tgt->interfaces as $int) {
+                        if (!in_array($int->get_IPv4(), ['0.0.0.0', '127.0.0.1'])) {
+                            $ip = $int->get_IPv4();
+                            break;
+                        }
+                    }
+                    $hl->setTargetIp($ip);
+                }
+                
                 $scan->add_Target_to_Host_List($hl);
             } else {
-                $existingFindingCount = $scan->get_Host_List()[$tgt->get_ID()]->getFindingCount();
-                $hl->addFindingCount($existingFindingCount);
+                $hl = $scan->get_Host_List()[$tgt->get_ID()];
+                
+                $hl->addFindingCount($row_count);
+                
                 $scan->add_Target_to_Host_List($hl);
             }
         }
@@ -400,13 +402,13 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
             print "\r" . sprintf("%.2f%%", (($row->getRowIndex() - 10) / $highestRow) * 100);
         }
     }
+    
+    $db->update_Scan_Host_List($scan);
 
     if (!$db->add_Findings_By_Target($updated_findings, $new_findings)) {
         print "Error adding finding" . PHP_EOL;
     }
 }
-
-$db->update_Scan_Host_List($scan);
 
 unset($objSS);
 if (!isset($cmd['debug'])) {

@@ -625,13 +625,15 @@ class scan
      */
     public function set_Host_Error($tgt_id, $is_error, $err_msg = null)
     {
-        foreach($this->host_list as $x => $h) {
-            /** @var host_list $h */
-            if($h->getTargetId() == $tgt_id) {
-                $this->host_list[$x]->setScanError($is_error);
-                $this->host_list[$x]->setScanNotes($err_msg);
-                return true;
-            }
+        if(isset($this->host_list[$tgt_id])) {
+            $h = $this->host_list[$tgt_id];
+            
+            $h->setScanError($is_error);
+            $h->setScanNotes($err_msg);
+            
+            $this->host_list[$tgt_id] = $h;
+            
+            return true;
         }
         
         return false;

@@ -3427,7 +3427,9 @@ class db
                     }
                 } else {
                     $ret[$worksheet_name]['stigs'][$row['stig_id']][$row['tgt_name']] = $row['finding_status'];
-                    $ret[$worksheet_name]['stigs'][$row['stig_id']]['echecklist']->append_Notes($row['notes'] . PHP_EOL);
+                    if(stripos($ret[$worksheet_name]['stigs'][$row['stig_id']]['echecklist']->get_Notes(), $row['notes']) === false) {
+                        $ret[$worksheet_name]['stigs'][$row['stig_id']]['echecklist']->append_Notes($row['notes'] . PHP_EOL);
+                    }
                 }
 
                 if ($row['chk_type'] == 'manual') {
@@ -8417,8 +8419,7 @@ EOQ;
         }
         if ($new_Scan->get_ID()) {
             $this->help->update("scans", [
-                'src_id' => $new_Scan->get_Source()
-                    ->get_ID(),
+                'src_id' => $new_Scan->get_Source()->get_ID(),
                 'itr' => $new_Scan->get_Itr(),
                 'file_date' => $new_Scan->get_File_DateTime(),
                 'pid' => $new_Scan->get_PID(),
@@ -8439,14 +8440,10 @@ EOQ;
             if (! $this->help->execute()) {
                 $this->help->debug(E_ERROR);
             }
-
-            $this->update_Scan_Host_List($new_Scan, $new_Scan->get_Host_List());
         } else {
             $this->help->insert("scans", [
-                'src_id' => $new_Scan->get_Source()
-                    ->get_ID(),
-                'ste_id' => $new_Scan->get_STE()
-                    ->get_ID(),
+                'src_id' => $new_Scan->get_Source()->get_ID(),
+                'ste_id' => $new_Scan->get_STE()->get_ID(),
                 'itr' => $new_Scan->get_Itr(),
                 'file_name' => $new_Scan->get_File_Name(),
                 'file_date' => $new_Scan->get_File_DateTime(),
@@ -8466,9 +8463,10 @@ EOQ;
             }
 
             $new_Scan->set_ID($this->conn->insert_id);
-
-            $this->update_Scan_Host_List($new_Scan, $new_Scan->get_Host_List());
         }
+        
+        $this->update_Scan_Host_List($new_Scan, $new_Scan->get_Host_List());
+        
         return $new_Scan->get_ID();
     }
 
@@ -8598,6 +8596,8 @@ EOQ;
                     $host->getScanError(),
                     $host->getScanNotes()
                 ];
+                
+                $this->update_Target_Counts($host->getTargetId());
             }
         } else {
             foreach ($host_list as $host) {
@@ -8611,6 +8611,8 @@ EOQ;
                     $host->getScanError(),
                     $host->getScanNotes()
                 ];
+                
+                $this->update_Target_Counts($host->getTargetId());
             }
         }
 

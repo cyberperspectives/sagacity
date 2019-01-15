@@ -358,12 +358,11 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
             $status = $wksht->getCell(Coordinate::stringFromColumnIndex($idx['target'] + $x) . $row->getRowIndex())
                 ->getValue();
             if(!in_array(strtolower($status), ['not reviewed', 'not a finding', 'open', 'not applicable', 'no data', 'exception', 'false positive'])) {
-                if(!preg_match("/Formula found in status column/", $notes)) {
+                if(stripos($notes, "Formula found in status column") === false) {
                     $notes .= "Formula found in status column";
                 }
                 $status = "Not Reviewed";
                 $scan->set_Host_Error($tgt->get_ID(), true, "Formula found in the status column");
-                $scan->setScanError(true);
             }
 
 			$findings = $tgt_findings[$tgt->get_ID()];
@@ -380,13 +379,12 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
             } else {
                 $tmp = new finding($tgt->get_ID(), $stig->get_PDI_ID(), $scan->get_ID(), $status, $notes, null, null, null);
                 $tmp->set_Category($cat_lvl);
-                $tmp->set_Scan_ID($scan->get_ID());
 
                 $new_findings[] = $tmp;
             }
             $log->debug("{$tgt->get_Name()} {$stig->get_ID()} ({$tmp->get_Finding_Status_String()})");
             $x++;
-        }         
+        }
         
         if(count($updated_findings) + count($new_findings) >= 1000) {
             if(!$db->add_Findings_By_Target($updated_findings, $new_findings)) {
@@ -408,10 +406,7 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
     }
 }
 
-/** @var host_list $h */
-foreach($scan->get_Host_List() as $h) {
-    $db->update_Target_Counts($h->getTargetId());
-}
+$db->update_Scan_Host_List($scan);
 
 unset($objSS);
 if (!isset($cmd['debug'])) {

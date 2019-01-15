@@ -59,6 +59,16 @@ else {
 
 print "Destination: $dest" . PHP_EOL;
 
+$status_map = [
+    'Not Reviewed' => 'Not_Reviewed',
+    'Not a Finding' => 'NotAFinding',
+    'Open' => 'Open',
+    'Not Applicable' => 'Not_Applicable',
+    'No Data' => 'Not_Reviewed',
+    'Exception' => 'Open',
+    'False Positive' => 'NotAFinding'
+];
+
 $xml = new Array2XML();
 $xml->standalone = true;
 $xml->formatOutput = true;
@@ -110,12 +120,13 @@ if ($tgt_count = count($tgts)) {
       }
 
       $arr = [
+        '@comment' => "CyberPerspectives Sagacity v" . VER,
         'ASSET' => [
-          'ASSET_TYPE'      => 'Computing',
+          'ROLE'			=> 'None',
+		  'ASSET_TYPE'      => 'Computing',
           'HOST_NAME'       => $tgt->get_Name(),
           'HOST_IP'         => $host_ip,
           'HOST_MAC'        => $host_mac,
-          'HOST_GUID'       => '',
           'HOST_FQDN'       => $host_fqdn,
           'TECH_AREA'       => '',
           'TARGET_KEY'      => '',
@@ -182,10 +193,11 @@ if ($tgt_count = count($tgts)) {
       $total_stigs += $pdi_count = (is_array($pdis) ? count($pdis) : 0);
       $count = 0;
 
+      $findings = $db->get_Finding($tgt);
+
       foreach ($pdis as $pdi) {
-        $find = $db->get_Finding($tgt, new stig($pdi['pdi_id'], $pdi['STIG_ID'], null));
-        if (is_array($find) && count($find) && isset($find[0]) && is_a($find[0], 'finding')) {
-          $find = $find[0];
+        if (isset($findings[$pdi['pdi_id']])) {
+          $find = $findings[$pdi['pdi_id']];
         }
 
         $sev = 'low';
@@ -306,20 +318,11 @@ if ($tgt_count = count($tgts)) {
           ]
             ], $cci_list);
 
-        $status = "Not_Reviewed";
+        $status = 'Not_Reviewed';
         $notes = '';
 
         if (is_a($find, 'finding')) {
-          $status = $find->get_Finding_Status_String();
-          if ($status == 'Not a Finding' || $status == 'False Positive') {
-            $status = "NotAFinding";
-          }
-          elseif($status == 'Exception') {
-              $status = 'Open';
-          }
-          else {
-            $status = str_replace(" ", "_", $status);
-          }
+          $status = $status_map[$find->get_Finding_Status_String()];
           $notes = $find->get_Notes();
         }
 
@@ -355,7 +358,8 @@ Total STIGs: $total_stigs
 EOO;
 
 /**
- *
+ * Function to retrieve all the PDIs for a specified target and checklist
+ * 
  * @global db $db
  *
  * @param target $tgt
@@ -387,7 +391,8 @@ function get_checklist_data($tgt, $chk) {
       "JOIN sagacity.pdi_checklist_lookup pcl ON pcl.pdi_id = pdi.pdi_id",
       "JOIN sagacity.target_checklist tc ON tc.chk_id = pcl.checklist_id",
       "JOIN sagacity.stigs s ON s.pdi_id = pdi.pdi_id"
-    ]
+    ],
+    'group' => 'STIG_ID'
   ]);
   $pdis = $db->help->execute();
 

@@ -25,6 +25,8 @@
  *  - Aug 28, 2017 - Fixed couple minor bugs
  *  - Jan 15, 2018 - Formatting, reorganized use statements, and cleaned up
  *  - May 24, 2018 - Attempt to fix bug #413
+ *  - Nov 6, 2018 - performance improvements, ensure duplicate findings are not created, make eChecklist true status, update for removing findings.id 
+ *  - Nov 8, 2018 - added functionality to assign OS and checklists based on worksheet contents
  */
 $cmd = getopt("f:", ['debug::', 'help::']);
 set_time_limit(0);
@@ -111,6 +113,7 @@ else {
     $scan->set_ID($scan_id);
 }
 
+/** @var software $gen_os */
 $gen_os = $db->get_Software("cpe:/o:generic:generic:-", true);
 if (is_array($gen_os) && count($gen_os) && isset($gen_os[0]) && is_a($gen_os[0], 'software')) {
     $gen_os = $gen_os[0];
@@ -124,9 +127,12 @@ foreach ($objSS->getWorksheetIterator() as $wksht) {
     elseif (isset($conf['ignore']) && $wksht->getSheetState() == Worksheet::SHEETSTATE_HIDDEN) {
 		$log->info("Skipping hidden worksheet {$wksht->getTitle()}");
         continue;
+    } elseif ($wksht->getTitle() == 'Orphan') {
+        $log->info("Skipping Orphan worksheet because it creates problems right now");
+        continue;
     }
 
-$scan->isTerminated();
+    $scan->isTerminated();
 
 	$log->notice("Reading from {$wksht->getTitle()}");
 
@@ -138,6 +144,11 @@ $scan->isTerminated();
 			$log->warning("Invalid headers in {$wksht->getTitle()}");
         continue;
     }
+    
+    $chk_arr = explode(', ', $wksht->getCell("B9")->getValue());
+    $checklists = $db->get_Checklist_By_Name($chk_arr);
+    $os_str = $wksht->getCell("G4")->getValue();
+    $os = $db->get_Software_By_String($os_str);
 
     $idx             = [
         'stig_id'        => 1,
@@ -155,6 +166,7 @@ $scan->isTerminated();
     $short_title_col = Coordinate::stringFromColumnIndex($idx['short_title']);
     $row_count       = $highestRow = $wksht->getHighestDataRow() - 10;
     $highestCol      = $wksht->getHighestDataColumn(10);
+    $tgt_findings    = [];
 
     for ($col = 'F' ; $col != $highestCol ; $col++) {
         $cell = $wksht->getCell($col . '10');
@@ -171,22 +183,59 @@ $scan->isTerminated();
 
             if ($tgt_id = $db->check_Target($conf['ste'], $cell->getValue())) {
                 $log->debug("Found host for {$cell->getValue()}");
+                /** @var target $tgt */
                 $tgt = $db->get_Target_Details($conf['ste'], $tgt_id);
                 if (is_array($tgt) && count($tgt) && isset($tgt[0]) && is_a($tgt[0], 'target')) {
                     $tgt = $tgt[0];
+                    if($tgt->get_OS_ID() == $gen_os->get_ID() && is_a($os, 'software')) {
+                        $log->debug("Assigning operating system to {$tgt->get_Name()}", [$os]);
+                        $tgt->set_OS_ID($os->get_ID());
+                        $tgt->set_OS_String($os->get_Shortened_SW_String());
+                    }
                 }
                 else {
 					$log->error("Could not find host {$cell->getValue()}");
                 }
+                
+                if(is_a($checklists, 'checklist')) {
+                    if(!isset($tgt->checklists[$checklists->get_ID()])) {
+                        $log->debug("Assigning checklists to {$tgt->get_Name()}", [$checklists]);
+                        $tgt->checklists[$checklists->get_ID()] = $checklists;
+                    }
+                } elseif(is_array($checklists) && count($checklists)) {
+                    $log->debug("Assigning checklists to {$tgt->get_Name()}", $checklists);
+                    foreach($checklists as $c) {
+                        /** @var checklist $c */
+                        if(!isset($tgt->checklists[$c->get_ID()])) {
+                            $tgt->checklists[$c->get_ID()] = $c;
+                        }
+                    }
+                }
+                
+                $db->save_Target($tgt);
             }
             else {
                 $log->debug("Creating new target {$cell->getValue()}");
                 $tgt = new target($cell->getValue());
-                $tgt->set_OS_ID($gen_os->get_ID());
+                $tgt->set_OS_ID((is_a($os, 'software') ? $os->get_ID() : $gen_os->get_ID()));
+                $tgt->set_OS_String((is_a($os, 'software') ? $os->get_Shortened_SW_String() : $gen_os->get_Shortened_SW_String()));
                 $tgt->set_STE_ID($conf['ste']);
                 $tgt->set_Location($conf['location']);
                 $tgt->set_Notes('New Target');
-
+                
+                if(is_a($checklists, 'checklist')) {
+                    if(!isset($tgt->checklists[$checklists->get_ID()])) {
+                        $tgt->checklists[$checklists->get_ID()] = $checklists;
+                    }
+                } elseif(is_array($checklists) && count($checklists)) {
+                    foreach($checklists as $c) {
+                        /** @var checklist $c */
+                        if(!isset($tgt->checklists[$c->get_ID()])) {
+                            $tgt->checklists[$c->get_ID()] = $c;
+                        }
+                    }
+                }
+                
                 if (preg_match('/((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}/', $cell->getValue())) {
                     $ip                       = $cell->getValue();
                     $int                      = new interfaces(null, null, null, $ip, null, null, null, null);
@@ -199,30 +248,49 @@ $scan->isTerminated();
             $tgts[] = $tgt;
 
             $log->debug("Adding new target to host list", ['row_count' => $row_count, 'tgt_id' => $tgt->get_ID(), 'tgt_name' => $tgt->get_Name()]);
-            $hl = new host_list();
-            $hl->setFindingCount($row_count);
-            $hl->setTargetId($tgt->get_ID());
-            $hl->setTargetName($tgt->get_Name());
-            if ($ip) {
-                $hl->setTargetIp($ip);
-            }
-            elseif (is_array($tgt->interfaces) && count($tgt->interfaces)) {
-                foreach ($tgt->interfaces as $int) {
-                    if (!in_array($int->get_IPv4(), ['0.0.0.0', '127.0.0.1'])) {
-                        $ip = $int->get_IPv4();
-                        break;
+            if(!isset($scan->get_Host_List()[$tgt->get_ID()])) {
+                $hl = new host_list();
+                $hl->setFindingCount($row_count);
+                $hl->setTargetId($tgt->get_ID());
+                $hl->setTargetName($tgt->get_Name());
+                if ($ip) {
+                    $hl->setTargetIp($ip);
+                } elseif (is_array($tgt->interfaces) && count($tgt->interfaces)) {
+                    foreach ($tgt->interfaces as $int) {
+                        if (!in_array($int->get_IPv4(), ['0.0.0.0', '127.0.0.1'])) {
+                            $ip = $int->get_IPv4();
+                            break;
+                        }
                     }
+                    $hl->setTargetIp($ip);
                 }
-                $hl->setTargetIp($ip);
+                
+                $scan->add_Target_to_Host_List($hl);
+            } else {
+                $hl = $scan->get_Host_List()[$tgt->get_ID()];
+                
+                $hl->addFindingCount($row_count);
+                
+                $scan->add_Target_to_Host_List($hl);
             }
-
-            $scan->add_Target_to_Host_List($hl);
         }
 
-        if (preg_match('/Overall/i', $cell->getValue())) {
+        $db->update_Scan_Host_List($scan);
+        $tgt_findings[$tgt->get_ID()] = $db->get_Finding($tgt);
+
+        if (preg_match('/overall/i', $cell->getValue())) {
             $log->debug("Found overall: {$cell->getColumn()}");
             break;
         }
+    }
+    
+    if(count($tgts) > 100) {
+        $db->update_Running_Scan($base_name, ['name' => 'status', 'value' => 'ERROR']);
+        $db->update_Running_Scan($base_name, ['name' => 'notes', 'value' => "Too many targets in worksheet {$wksht->getTitle()}"]);
+        $log->error("Too many targets in worksheet {$wksht->getTitle()}");
+        unset($objSS);
+        rename($cmd['f'], TMP . "/terminated/$base_name");
+        die();
     }
 
     $db->update_Running_Scan($base_name, ['name' => 'host_count', 'value' => count($tgts)]);
@@ -234,8 +302,7 @@ $scan->isTerminated();
         $idx['consistent']     += $increase;
         $idx['notes']          += $increase;
         $idx['check_contents'] += $increase;
-    }
-    elseif (empty($tgts)) {
+    } elseif (empty($tgts)) {
 		$log->warning("Failed to identify targets in worksheet {$wksht->getTitle()}");
         continue;
     }
@@ -276,8 +343,7 @@ $scan->isTerminated();
 
         if (is_array($stig) && count($stig) && isset($stig[0]) && is_a($stig[0], 'stig')) {
             $stig = $stig[0];
-        }
-        else {
+        } else {
             $pdi    = new pdi(null, $cat_lvl, $dt->format("Y-m-d"));
             $pdi->set_Short_Title($short_title);
             $pdi->set_Group_Title($short_title);
@@ -293,41 +359,36 @@ $scan->isTerminated();
         foreach ($tgts as $tgt) {
             $status = $wksht->getCell(Coordinate::stringFromColumnIndex($idx['target'] + $x) . $row->getRowIndex())
                 ->getValue();
+            if(!in_array(strtolower($status), ['not reviewed', 'not a finding', 'open', 'not applicable', 'no data', 'exception', 'false positive'])) {
+                if(stripos($notes, "Formula found in status column") === false) {
+                    $notes .= "Formula found in status column";
+                }
+                $status = "Not Reviewed";
+                $scan->set_Host_Error($tgt->get_ID(), true, "Formula found in the status column");
+            }
 
-			$log->debug("{$tgt->get_Name()} {$stig->get_ID()} ($status)");
-
-            $finding = $db->get_Finding($tgt, $stig);
-
-            if (is_array($finding) && count($finding) && isset($finding[0]) && is_a($finding[0], 'finding')) {
+			$findings = $tgt_findings[$tgt->get_ID()];
+			if (is_array($findings) && count($findings) && isset($findings[$stig->get_PDI_ID()]) && is_a($findings[$stig->get_PDI_ID()], 'finding')) {
                 /** @var finding $tmp */
-                $tmp = $finding[0];
+                $tmp = $findings[$stig->get_PDI_ID()];
 
-                if(preg_match("/Not a Finding|Not Applicable/i", $status)) {
-                    $ds = $tmp->get_Deconflicted_Status($status);
-                    $tmp->set_Finding_Status_By_String($ds);
-                }
-                else {
-                    $tmp->set_Finding_Status_By_String($status);
-                }
-
+                $tmp->set_Finding_Status_By_String($status);
                 $tmp->set_Notes($notes);
                 $tmp->set_Category($cat_lvl);
+                $tmp->set_Scan_ID($scan->get_ID());
 
                 $updated_findings[] = $tmp;
-            }
-            else {
-                $tmp = new finding(null, $tgt->get_ID(), $stig->get_PDI_ID(), $scan->get_ID(), $status, $notes, null, null, null);
+            } else {
+                $tmp = new finding($tgt->get_ID(), $stig->get_PDI_ID(), $scan->get_ID(), $status, $notes, null, null, null);
                 $tmp->set_Category($cat_lvl);
 
                 $new_findings[] = $tmp;
             }
-
+            $log->debug("{$tgt->get_Name()} {$stig->get_ID()} ({$tmp->get_Finding_Status_String()})");
             $x++;
         }
-
-        $row_count++;
-
-        if($row_count % 100 == 0) {
+        
+        if(count($updated_findings) + count($new_findings) >= 1000) {
             if(!$db->add_Findings_By_Target($updated_findings, $new_findings)) {
                 die(print_r(debug_backtrace(), true));
             } else {
@@ -335,12 +396,14 @@ $scan->isTerminated();
                 $new_findings = [];
             }
         }
-
+ 
         $db->update_Running_Scan($base_name, ['name' => 'perc_comp', 'value' => (($row->getRowIndex() - 10) / $highestRow) * 100]);
         if (PHP_SAPI == 'cli') {
             print "\r" . sprintf("%.2f%%", (($row->getRowIndex() - 10) / $highestRow) * 100);
         }
     }
+    
+    $db->update_Scan_Host_List($scan);
 
     if (!$db->add_Findings_By_Target($updated_findings, $new_findings)) {
         print "Error adding finding" . PHP_EOL;
@@ -348,7 +411,6 @@ $scan->isTerminated();
 }
 
 unset($objSS);
-$db->update_Scan_Host_List($scan, $host_list);
 if (!isset($cmd['debug'])) {
     rename($cmd['f'], TMP . "/echecklist/$base_name");
 }

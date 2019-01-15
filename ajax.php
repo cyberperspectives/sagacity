@@ -48,9 +48,13 @@
  */
 set_time_limit(0);
 
+include_once 'vendor/autoload.php';
 include_once 'config.inc';
 include_once 'import.inc';
 include_once 'helper.inc';
+
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
 chdir(dirname(__FILE__));
 
@@ -229,8 +233,10 @@ elseif ($action == 'get-cat-data') {
     $checklist = $db->get_Checklist_By_File($fname);
 
     if (isset($checklist[0])) {
-        $checklist[0]->type = ucfirst($checklist[0]->type);
-        print header(JSON) . json_encode($checklist[0]);
+        $chk = $checklist[0];
+        
+        $chk->type = ucfirst($chk->type);
+        print header(JSON) . json_encode($chk);
     }
     else {
         print header(JSON) . json_encode(array('error' => 'Error finding checklist'));
@@ -542,8 +548,7 @@ function sw_filter($is_os = false)
         'table_joins' => [
             "LEFT JOIN `sagacity`.`target_software` ts ON ts.`sft_id` = s.`id`" . ($tgt_id ? " AND ts.`tgt_id` = $tgt_id" : "")
         ],
-        'order'       => 's.cpe',
-        'limit'       => 25
+        'order'       => 's.cpe'
     ]);
 
     $sw = $db->help->execute();
@@ -1482,9 +1487,11 @@ function get_hosts($cat_id = null)
     $ste_id = filter_input(INPUT_COOKIE, 'ste', FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
     $tgts   = [];
 
+    $exp_scan_srcs = null;
     if ($cat_id) {
         $ste_cat = $db->get_Category($cat_id)[0];
         $tgts    = $db->get_Target_By_Category($cat_id);
+        $exp_scan_srcs = $db->get_Expected_Category_Sources($ste_cat);
     }
     elseif (is_numeric($ste_id)) {
         $tgts = $db->get_Unassigned_Targets($ste_id);
@@ -1494,13 +1501,8 @@ function get_hosts($cat_id = null)
     }
 
     foreach ($tgts as $tgt) {
+        /** @var target $tgt */
         $chks = $db->get_Target_Checklists($tgt->get_ID());
-        if ($cat_id) {
-            $exp_scan_srcs = $db->get_Expected_Category_Sources($ste_cat);
-        }
-        else {
-            $exp_scan_srcs = null;
-        }
         $scan_srcs = $db->get_Target_Scan_Sources($tgt, $exp_scan_srcs);
         $icons     = [];
         $icon_str  = '';
@@ -1518,18 +1520,20 @@ function get_hosts($cat_id = null)
         foreach ($icons as $icon => $data) {
             $icon_str .= "<img src='/img/checklist_icons/$icon' title='{$data['name']}' class='checklist_image' />";
         }
-
+        
         foreach ($scan_srcs as $src) {
-            $icon = $src['src']->get_Icon();
-            if($src['scan_error']) {
-                $icon = strtolower($src['src']->get_Name()) . "-failed.png";
+            if(isset($src['src']) && is_a($src['src'], 'source')) {
+                $icon = $src['src']->get_Icon();
+                if(isset($src['scan_error']) && $src['scan_error']) {
+                    $icon = strtolower($src['src']->get_Name()) . "-failed.png";
+                }
+                
+                $src_str .= "<img src='/img/scan_types/{$icon}' title='{$src['src']->get_Name()}";
+                if (isset($src['file_name']) && $src['file_name']) {
+                    $src_str .= "\n{$src['file_name']}";
+                }
+                $src_str .= "' class='checklist_image' />";
             }
-
-            $src_str .= "<img src='/img/scan_types/{$icon}' title='{$src['src']->get_Name()}";
-            if (isset($src['count']) && $src['count']) {
-                $src_str .= " ({$src['count']})";
-            }
-            $src_str .= "' class='checklist_image' />";
         }
 
         $ret['targets'][] = array_merge([
@@ -1552,8 +1556,8 @@ function get_hosts($cat_id = null)
             'cat_1'    => $tgt->getCat1Count(),
             'cat_2'    => $tgt->getCat2Count(),
             'cat_3'    => $tgt->getCat3Count(),
-            'comp'     => $tgt->getCompliantPercent(),
-            'assessed' => $tgt->getAssessedPercent()
+            'comp'     => floatval(number_format($tgt->getCompliantPercent(), 6)),
+            'assessed' => floatval(number_format($tgt->getAssessedPercent(), 6))
         ]);
     }
 

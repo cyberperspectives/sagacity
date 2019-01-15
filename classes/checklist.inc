@@ -21,6 +21,7 @@
  *  - May 13, 2017 - Added WindowsFirewall.jpg image for checklist
  *  - May 19, 2017 - Fixed typo for WindowsFirewall
  *  - Aug 23, 2017 - JO, Expanded checklist icons
+ *  - Nov 6, 2018 - Deleted duplicate BIND 9 checklist icon entry
  */
 
 /**
@@ -544,9 +545,6 @@ class checklist
                     break;
                 case (preg_match("/Mobile Device/i", $this->name) ? true : false):
                     $this->icon = 'mobile-device.jpg';
-                    break;
-                case (preg_match("/BIND 9/i", $this->name) ? true : false):
-                    $this->icon = 'BIND DNS.jpg';
                     break;
                 case (preg_match("/Remote Access/i", $this->name) ? true : false):
                     $this->icon = 'remote-access.gif';

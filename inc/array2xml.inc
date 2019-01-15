@@ -103,6 +103,10 @@ class Array2XML {
         //return from recursion, as a note with cdata cannot have child nodes.
         return $node;
       }
+      elseif(isset($arr['@comment']) && is_string($arr['@comment'])) {
+          $node->appendChild($xml->createComment(self::bool2str($arr['@comment'])));
+          unset($arr['@comment']);
+      }
     }
 
     //create subnodes using recursion

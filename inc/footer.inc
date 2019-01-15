@@ -26,7 +26,7 @@
 ?>
 
 <div id='copyright-text'>
-  <p>Portions Copyright &copy; 2016-2018 Cyber Perspective, LLC All rights reserved.</p>
+  <p>Portions Copyright &copy; 2016-2018 Cyber Perspectives, LLC All rights reserved.</p>
   <p>Portions Copyright &copy; 2012-2015 Salient Federal Solutions</p>
   <p>Portions Copyright &copy; 2008-2011 Science Applications International Corp.</p>
 </div>

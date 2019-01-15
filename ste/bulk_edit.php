@@ -334,8 +334,6 @@ include_once 'header.inc';
             <li>Click the Save button</li>
           </ol>
 
-          <input type='button' name='update_bulk' value='Save' onclick='validate_bulk();' />
-
           <table>
             <tbody>
               <tr>
@@ -415,7 +413,7 @@ include_once 'header.inc';
               </tr>
               <tr>
                 <th title='Select to change' style='vertical-align:bottom;'>
-                  Checklists:<br />
+                  Checklists:<br /><span style='font-size: 10pt;'>(control + click to select multiple)</span><br />
                   <input type='text' name='chk_filter' id='chk_filter' placeholder="Filter..." onkeyup="javascript:filter_checklists($('#hide_old').is(':checked'));" style='width:132px;' /><br />
                   Remove Existing Checklists:
                   <input type='checkbox' name='remove_existing' value='1' />
@@ -424,8 +422,9 @@ include_once 'header.inc';
                   <select name='checklists[]' class='checklists' id="checklists" multiple='multiple'>
                     <?php
                     $all_chks = $db->get_Checklist();
-                    foreach ($all_chks as $key => $chk):print $chk->print_Option();
-                    endforeach;
+                    /** @var checklist $chk */
+                    foreach ($all_chks as $chk)
+                        print $chk->print_Option();
                     ?>
                   </select>
                 </td>
@@ -438,6 +437,8 @@ include_once 'header.inc';
               </tr>
             </tbody>
           </table>
+
+          <input type='button' name='update_bulk' value='Save' onclick='validate_bulk();' />
 
           <table class=''>
             <thead>

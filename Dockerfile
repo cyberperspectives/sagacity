@@ -1,4 +1,4 @@
-FROM php:7.2.8-apache-stretch
+FROM php:apache-stretch
 COPY conf/docker-php.ini /usr/local/etc/php/php.ini
 RUN apt update && apt -y install zlib1g-dev mysql-client
 RUN docker-php-ext-install mysqli zip

@@ -242,6 +242,9 @@ function FileDetection($filename)
         if (preg_match('/Checklist:|Unclassified|Secret|STIG[_| ]ID/i', $line)) {
             $name['type'] = ECHECKLIST_CSV;
         }
+        elseif (preg_match("/host\-list/", $name['base_name'])) {
+            $name['type'] = HOST_LIST;
+        }
         elseif (preg_match('/^\"NetBIOSName|^\"JobName/', $line)) {
             $name['type'] = UNSUPPORTED_RETINA_CSV;
         }
@@ -831,7 +834,7 @@ function logify($fname)
         touch(LOG_PATH . "/{$fname}.log");
     }
 
-    return LOG_PATH . "/{$fname}.log";
+    return realpath(LOG_PATH . "/{$fname}.log");
 }
 
 /**
@@ -851,4 +854,30 @@ function convert_log_level()
         default:
             return Logger::ERROR;
     }
+}
+
+/**
+ * Helper method to scrape a web page
+ *
+ * @param string $url
+ *
+ * @return string
+ */
+function scrape_webpage($url)
+{
+    $config = [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HEADER => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13',
+        CURLOPT_URL => $url
+    ];
+    $c = curl_init();
+
+    curl_setopt_array($c, $config);
+
+    $output = curl_exec($c);
+
+    return $output;
 }

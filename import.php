@@ -15,6 +15,8 @@
  *  - Apr 29, 2018 - Changed default message and formatting
  */
 
+$files = glob(TMP . "/*.*");
+
 ?>
 
 <div id="import" class="box">
@@ -112,6 +114,12 @@
     </form>
 
     <div style='margin-left: 20px;'>
+    	<?php
+    	if(is_array($files) && count($files)) {
+			natsort($files);
+    	    print "<span style='background-color:red;color:white;font-size:16px;' title='" . implode("\n", $files) . "'>NOTE: There are still files in the " . realpath(TMP) . " directory (mouse over to see)</span><br />";
+    	}
+    	?>
         <input type='text' id='location' placeholder='Physical Location...' /><br />
         <input type='button' class='button' id='add-scan' value='Add Scan Result' onclick='add_scans();' /><br />
         <label for='ignore_hidden' id='ignore_label'>Ignore Hidden Tabs in Excel eChecklists</label>

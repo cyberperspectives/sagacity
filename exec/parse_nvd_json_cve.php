@@ -49,7 +49,7 @@ $log = new Logger("nvd_cve");
 $log->pushHandler(new StreamHandler(LOG_PATH . "/nvd_cve.log", $log_level));
 
 $db            = new db();
-$json          = json_decode(file_get_contents($cmd['f']));
+$json          = json_decode(file_get_contents($cmd['f']), true);
 $existing_cves = [];
 
 $db->help->select("cve_db", ['cve_id']);
@@ -60,19 +60,21 @@ if (is_array($cves) && count($cves)) {
     }
 }
 
-print "Currently " . count($existing_cves) . " in DB" . PHP_EOL . "Parsing: " . count($json->CVE_Items) . " items" . PHP_EOL;
+print "Currently " . count($existing_cves) . " in DB" . PHP_EOL . "Parsing: " . count($json['CVE_Items']) . " items" . PHP_EOL;
 
 $db_cpes      = [];
+$db_cpes23    = [];
 $new_cves     = [];
 $new_cve_refs = [];
 $sw_rows      = [];
 $new          = 0;
 $existing     = 0;
 
-$db->help->select("software", ['id', 'cpe']);
+$db->help->select("software", ['id', 'cpe', 'cpe23']);
 $rows = $db->help->execute();
 foreach ($rows as $row) {
     $db_cpes["{$row['cpe']}"] = $row['id'];
+    $db_cpes23["{$row['cpe23']}"] = $row['id'];
 }
 
 $cve_fields = [
@@ -82,24 +84,22 @@ $ref_fields = [
     'cve_seq', 'source', 'url', 'val'
 ];
 
-foreach ($json->CVE_Items as $cve) {
-    if (!isset($existing_cves["{$cve->cve->CVE_data_meta->ID}"])) {
-        $log->debug("Adding {$cve->cve->CVE_data_meta->ID}");
+foreach ($json['CVE_Items'] as $cve) {
+    if (!isset($existing_cves["{$cve['cve']['CVE_data_meta']['ID']}"])) {
+        $log->debug("Adding {$cve['cve']['CVE_data_meta']['ID']}");
         $new++;
 
         $desc   = [];
         $status = null;
         $phase  = null;
         $cpes   = [];
-        $name   = $cve->cve->CVE_data_meta->ID;
-        $type   = $cve->cve->data_type;
-        $seq    = $cve->cve->CVE_data_meta->ID;
-        $pd     = new DateTime($cve->publishedDate);
-        $lmd    = new DateTime($cve->lastModifiedDate);
+        $name   = $cve['cve']['CVE_data_meta']['ID'];
+        $seq    = $cve['cve']['CVE_data_meta']['ID'];
+        $pd     = new DateTime($cve['publishedDate']);
 
-        if (is_array($cve->cve->description->description_data) && count($cve->cve->description->description_data)) {
-            foreach ($cve->cve->description->description_data as $d) {
-                $desc[] = $d->value;
+        if (is_array($cve['cve']['description']['description_data']) && count($cve['cve']['description']['description_data'])) {
+            foreach ($cve['cve']['description']['description_data'] as $d) {
+                $desc[] = $d['value'];
             }
         }
 
@@ -107,24 +107,21 @@ foreach ($json->CVE_Items as $cve) {
             $name, $seq, $status, $phase, $pd, implode(PHP_EOL, $desc)
         ];
 
-        if (is_array($cve->cve->references->reference_data) && count($cve->cve->references->reference_data)) {
-            foreach ($cve->cve->references->reference_data as $ref) {
-                $log->debug("Adding reference {$ref->url}");
+        if (is_array($cve['cve']['references']['reference_data']) && count($cve['cve']['references']['reference_data'])) {
+            foreach ($cve['cve']['references']['reference_data'] as $ref) {
+                $log->debug("Adding reference {$ref['url']}");
                 $new_cve_refs[] = [
-                    $name, null, $ref->url, null
+                    $name, null, $ref['url'], null
                 ];
             }
         }
 
-        if (is_array($cve->configurations->nodes) && count($cve->configurations->nodes)) {
-            foreach ($cve->configurations->nodes as $n) {
-                if (isset($n->cpe) && is_array($n->cpe) && count($n->cpe)) {
-                    foreach ($n->cpe as $cpe) {
-                        if (isset($cpe->cpe22Uri)) {
-                            $cpes[] = $cpe->cpe22Uri;
-                        }
-                        elseif (isset($cpe->cpeMatchString)) {
-                            $cpes[] = $cpe->cpeMatchString;
+        if(is_array($cve['configurations']['nodes']) && count($cve['configurations']['nodes'])) {
+            foreach($cve['configurations']['nodes'] as $n) {
+                if(isset($n['cpe_match']) && is_array($n['cpe_match']) && count($n['cpe_match'])) {
+                    foreach($n['cpe_match'] as $c) {
+                        if($c['vulnerable'] && $c['cpe23Uri']) {
+                            $cpes[] = $c['cpe23Uri'];
                         }
                     }
                 }
@@ -135,6 +132,8 @@ foreach ($json->CVE_Items as $cve) {
             foreach ($cpes as $cpe) {
                 if (isset($db_cpes["{$cpe}"])) {
                     $sw_rows[] = [$name, $db_cpes["{$cpe}"]];
+                } elseif (isset($db_cpes23["{$cpe}"])) {
+                    $sw_rows[] = [$name, $db_cpes23["{$cpe}"]];
                 }
             }
         }
@@ -185,7 +184,7 @@ if (count($sw_rows)) {
     $db->help->execute();
 }
 
-unlink($cmd['f']);
+//unlink($cmd['f']);
 
 print PHP_EOL;
 

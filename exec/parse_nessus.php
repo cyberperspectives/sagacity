@@ -1142,7 +1142,7 @@ class nessus_parser extends scan_xml_parser
                     }
                 }
                 else {
-                    $tmp = new finding(null, $this->tgt->get_ID(), $this->plugin->result->stig->get_PDI_ID(), $this->scan->get_ID(), $this->plugin->result->status, "[{$this->tgt->get_Name()}]: {$note}", finding::NC, "Nessus", 1);
+                    $tmp = new finding($this->tgt->get_ID(), $this->plugin->result->stig->get_PDI_ID(), $this->scan->get_ID(), $this->plugin->result->status, "[{$this->tgt->get_Name()}]: {$note}", finding::NC, "Nessus", 1);
                     if (!is_null($pdi)) {
                         $tmp->set_Category($pdi->get_Category_Level());
                     }
@@ -1178,7 +1178,7 @@ class nessus_parser extends scan_xml_parser
                 $stig = new stig($pdi_id, $this->plugin->result->stig, $this->plugin->desc);
                 $this->db->add_Stig($stig);
 
-                $tmp = new finding(null, $this->tgt->get_ID(), $pdi->get_ID(), $this->scan->get_ID(), $this->plugin->result->status, "[" . $this->tgt->get_Name() . "]: " . $note, finding::NC, "Nessus", 1);
+                $tmp = new finding($this->tgt->get_ID(), $pdi->get_ID(), $this->scan->get_ID(), $this->plugin->result->status, "[" . $this->tgt->get_Name() . "]: " . $note, finding::NC, "Nessus", 1);
                 $tmp->set_Category($this->plugin->result->cat);
 
                 if (isset($this->new_findings[$tmp->get_PDI_ID()])) {
@@ -1211,14 +1211,12 @@ class nessus_parser extends scan_xml_parser
             $finding = $this->db->get_Finding($this->tgt, $this->plugin->db_plugin);
 
             if (is_array($finding) && count($finding)) {
-                $finding = $finding[0];
+                $finding = current($finding[0]);
             }
 
             if (is_a($finding, 'finding')) {
+                /** @var finding $finding */
                 $this->log->script_log("Updating finding");
-                if (false) {
-                    $finding = new finding();
-                }
                 if ($this->debug) {
                     $this->log->script_log("Finding exists: " . print_r($finding, true), E_DEBUG);
                 }
@@ -1265,7 +1263,7 @@ class nessus_parser extends scan_xml_parser
             }
             else {
                 $this->log->script_log("Adding new finding");
-                $tmp = new finding(null, $this->tgt->get_ID(), $this->plugin->db_plugin->get_PDI_ID(), $this->scan->get_ID(), $this->plugin->result->status, $note, finding::NC, "Nessus", 1);
+                $tmp = new finding($this->tgt->get_ID(), $this->plugin->db_plugin->get_PDI_ID(), $this->scan->get_ID(), $this->plugin->result->status, $note, finding::NC, "Nessus", 1);
                 $tmp->set_Category($this->plugin->result->cat);
 
                 $this->new_findings[$tmp->get_PDI_ID()] = $tmp;

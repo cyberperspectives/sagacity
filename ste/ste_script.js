@@ -384,7 +384,7 @@ function display_ops_hosts(hosts) {
     var odd = true;
 
     for (var x in hosts.targets) {
-      $(cat).after(
+      $(cat).append(
               "<div class='" + (odd ? "odd_row" : "even_row") + " cat_" + cat_id + "'>" +
               "<span class='cat-cell' style='width:102px;text-align:left'>" +
               "<input type='checkbox' class='tgt-sel' value='" + hosts.targets[x].id + "' onclick='javascript:update_tgt_chk(this);' />" +
@@ -449,9 +449,9 @@ function display_stats_hosts(hosts) {
               "<span class='cat-cell na' title='Not Applicable' style='text-align:center;'>" + hosts.targets[x].na + "</span>" +
               "<span class='cat-cell nr' title='Not Reviewed' style='text-align:center;'>" + hosts.targets[x].nr + "</span>" +
               "<span class='cat-cell comp' title='Percentage Compliant' style='text-align:center;background-color: " +
-              getColorForPercentage(hosts.targets[x].comp) + ";'>" + (hosts.targets[x].comp.toFixed(2) * 100) + "%</span>" +
+              getColorForPercentage(hosts.targets[x].comp) + ";'>" + (hosts.targets[x].comp * 100).toFixed(2) + "%</span>" +
               "<span class='cat-cell assessed' title='Percentage Assessed' style='text-align:center;background-color: " +
-              getColorForPercentage(hosts.targets[x].assessed) + ";'>" + (hosts.targets[x].assessed.toFixed(2) * 100) + "%</span>" +
+              getColorForPercentage(hosts.targets[x].assessed) + ";'>" + (hosts.targets[x].assessed * 100).toFixed(2) + "%</span>" +
               "<span class='cat-cell scans'>" +
               (hosts.targets[x].scans ? hosts.targets[x].scans : "&nbsp;") +
               "</span>" +

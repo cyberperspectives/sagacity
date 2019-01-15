@@ -175,7 +175,6 @@ if ($ste_id) {
 }
 
 include_once "header.inc";
-
 ?>
 
 <script type='text/javascript' src='/ste/ste_script.min.js'></script>

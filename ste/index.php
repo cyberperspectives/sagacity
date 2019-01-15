@@ -326,6 +326,10 @@ include_once 'header.inc';
     #loading {
         display: none;
     }
+    .dz-image img {
+        width: 100%;
+        height: 100%;
+    }
 </style>
 
 <div id='wrapper'>
@@ -468,20 +472,11 @@ include_once 'header.inc';
                         }
                     }
 
+                    /**
+                     * @var ste_cat $cat
+                     */
                     foreach ($cats as $cat) {
-                        $nr   = $db->get_Finding_Count_By_Status($cat->get_ID(), "Not Reviewed");
-                        $na   = $db->get_Finding_Count_By_Status($cat->get_ID(), "Not Applicable");
-                        $nf   = $db->get_Finding_Count_By_Status($cat->get_ID(), "Not a Finding");
-                        $open = $db->get_Finding_Count_By_Status($cat->get_ID(), "Open");
-
-                        $count = $db->get_STE_Cat_TGT_Count($cat->get_ID());
-
-                        print $cat->get_Table_Row($count, [
-                                "open" => $open,
-                                "nf"   => $nf,
-                                "na"   => $na,
-                                "nr"   => $nr
-                        ]);
+                        print $cat->get_Table_Row();
                     }
                 }
                 else {
@@ -568,39 +563,49 @@ include_once 'header.inc';
     <link type="text/css" href="/script/dropzone/basic.min.css" rel="stylesheet" />
 
     <script type="text/javascript">
-            Dropzone.options.dropzone = {
-              maxFilesize: 10,
-              success: function (file, res) {
-              },
-              error: function (xhr, status, error) {
-                console.error(xhr);
-                console.error(error);
-              },
-              acceptedFiles: ".csv"
-            };
-            Dropzone.prototype.submitRequest = function (xhr, formData, files) {
-              $('#host-list-file').val(files[0].name);
-              var dt = new Date(files[0].lastModifiedDate);
-              xhr.setRequestHeader('X-FILENAME', files[0].name);
-              xhr.setRequestHeader('X-FILEMTIME', dt.toISOString());
-              return xhr.send(formData);
-            };
-            Dropzone.autoDiscover = false;
+        Dropzone.options.dropzone = {
+          maxFilesize: 10,
+          maxFiles: 1,
+          success: function (file, res) {
+            res = JSON.parse(res);
+            if (res.imageUrl) {
+              this.emit('thumbnail', file, res.imageUrl);
+            }
+          },
+          error: function (xhr, status, error) {
+            if(!xhr.accepted) {
+              alert("That file type is not allowed, CSV only files");
+            }
+          },
+          init: function() {
+            this.hiddenFileInput.removeAttribute('multiple');
+          },
+          acceptedFiles: ".csv"
+        };
+        Dropzone.prototype.submitRequest = function (xhr, formData, files) {
+          $('#host-list-file').val(files[0].name);
+          var dt = new Date(files[0].lastModifiedDate);
+          xhr.setRequestHeader('X-FILENAME', files[0].name);
+          xhr.setRequestHeader('X-FILEMTIME', dt.toISOString());
+          return xhr.send(formData);
+        };
+        Dropzone.autoDiscover = false;
 
-            $(function () {
-              var mydz = new Dropzone('#dropzone');
-            });
+        $(function () {
+          var mydz = new Dropzone('#dropzone');
+        });
     </script>
 
     <form class="dropzone" action="/upload.php" id="dropzone">
+        <div class="dz-message" data-dz-message><span>Click or Drop files here to upload</span></div>
         <div class="fallback">
             <input type="file" name="file" multiple />
         </div>
     </form>
 
     <form method='post' action='#' style='margin-left: 20px;'
-          onsubmit="$('#submit').attr('disabled', true);
-                return true;">
+          onsubmit="if(!$('#host-list-file').val()){return false;}$('#submit').attr('disabled', true);return true;" id='host-list-form'>
+        <div style='font-weight:400;color:red;'>Must keep 'host-list' as part of the filename</div>
         <input type='hidden' name='file' id='host-list-file' style='display:none;' />
         <input type='hidden' name='action' value='import_host_list' />
         <input type='hidden' name='ste' value='<?php print ($ste_id ? $ste_id : ''); ?>' />

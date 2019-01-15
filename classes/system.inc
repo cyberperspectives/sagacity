@@ -110,7 +110,7 @@ class system {
   /**
    * System diagram
    *
-   * @var binary
+   * @var mixed
    */
   protected $diagram = null;
 
@@ -294,7 +294,7 @@ class system {
   /**
    * Getter function for system diagram
    *
-   * @return binary
+   * @return mixed
    */
   public function get_Diagram() {
     return $this->diagram;
@@ -303,7 +303,7 @@ class system {
   /**
    * Setter function for system diagram
    *
-   * @param binary $bin_diag_in
+   * @param mixed $bin_diag_in
    */
   public function set_Diagram($bin_diag_in) {
     $this->diagram = $bin_diag_in;

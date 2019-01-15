@@ -237,7 +237,7 @@ do {
 }
 while ($dbh->get_Running_Script_Count($conf['ste']));
 
-if (!$debug) {
+if (!$debug && file_exists(DOC_ROOT . "/exec/parse_config.ini")) {
     unlink(DOC_ROOT . "/exec/parse_config.ini");
 }
 

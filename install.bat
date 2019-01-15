@@ -5,7 +5,7 @@
  REM Purpose: Windows / XAMPP Installation Script
  REM Created: Jan 5, 2015
 
- REM Portions Copyright 2016: Cyber Perspective, All rights reserved
+ REM Portions Copyright 2016-2019: Cyber Perspectives, LLC, All rights reserved
  REM Released under the Apache v2.0 License
 
  REM Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -29,15 +29,21 @@
  REM - Jun 27, 2017 - Removed copy cgi-bin contents
  REM - Sep 19, 2018 - Deleting unnecessary C:\xampp\htdocs folder.
  REM - Oct 3, 2018 - Redirected deletion of htdocs folder to nul
+ REM - Nov 27, 2018 - Added php-dev.ini to conf folder and added prompts to allow for development installation
+ REM - Jan 10, 2019 - Separated the dev installation out into a separate script and streamlined the installation process.
 
+ REM To install the php xdebug development tools, use install-dev.bat
+ 
+@echo    - Create PHP log folder
 mkdir c:\xampp\php\logs
 
-echo This is now going to copy configuration files for Apache, MySQL/mariaDB, and PHP after renaming the files to *.old.
+@echo    - Copy Apache, MySQL/mariaDB, and PHP configuration files
+@echo    - Renaming the original config files to *.old.
 
 rename c:\xampp\mysql\bin\my.ini my.ini.old
 copy c:\xampp\www\conf\my.ini c:\xampp\mysql\bin\
 
-@echo Installing MySQL service
+@echo    - Installing MySQL service
 c:\xampp\mysql\bin\mysqld --install mysql --defaults-file="c:\xampp\mysql\bin\my.ini"
 net start mysql
 
@@ -49,28 +55,23 @@ rename c:\xampp\apache\conf\extra\httpd-xampp.conf httpd-xampp.conf.old
 copy c:\xampp\www\conf\httpd-xampp.conf c:\xampp\apache\conf\extra
 rename c:\xampp\php\php.ini php.ini.old
 copy c:\xampp\www\conf\php.ini c:\xampp\php
+del c:\xampp\www\conf\php_xdebug-2.6.0-7.2-vc15.dll 1>nul
 
-echo Deleting unnecessary C:\xampp\htdocs folder.
+@echo    - Deleting unnecessary C:\xampp\htdocs folder.
 del /F /S /Q c:\xampp\htdocs 1>nul
 
-@echo Installing Apache service
+@echo    - Installing Apache service
 c:\xampp\apache\bin\httpd -k install
 net start apache2.4
 
-echo Thank you for installing Sagacity.  We want to know what you think!
-echo Please contact us at https://www.cyberperspectives.com/contact_us
-echo.
-echo If you like this tool, please tell a friend or co-worker!
-echo.
-set /p browser="Continue setup with http://localhost/setup.php? (Y/n) "
+@echo.
+@echo Thank you for installing Sagacity.  We want to know what you think!
+@echo Please contact us at https://www.cyberperspectives.com/contact_us
+@echo.
+@echo If you like this tool, please tell a friend or co-worker!
+@echo.
 
-set result=1
-if "%browser%"=="N" (set result=0)
-if "%browser%"=="n" (set result=0)
-if "%browser%"=="no" (set result=0)
-if "%browser%"=="No" (set result=0)
-if "%browser%"=="NO" (set result=0)
+set /p foo="Press enter to continue setup."
 
-if "%result%"=="1" (
-  start http://localhost
-)
+start http://localhost
+

@@ -101,6 +101,16 @@ class ComposerStaticInit69a0c53551ee5f4e61c53efb549e5e72
         ),
     );
 
+    public static $prefixesPsr0 = array (
+        'L' => 
+        array (
+            'LSS' => 
+            array (
+                0 => __DIR__ . '/..' . '/openlss/lib-array2xml',
+            ),
+        ),
+    );
+
     public static $classMap = array (
         'Datamatrix' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/barcodes/datamatrix.php',
         'PDF417' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/barcodes/pdf417.php',
@@ -123,6 +133,7 @@ class ComposerStaticInit69a0c53551ee5f4e61c53efb549e5e72
         return \Closure::bind(function () use ($loader) {
             $loader->prefixLengthsPsr4 = ComposerStaticInit69a0c53551ee5f4e61c53efb549e5e72::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInit69a0c53551ee5f4e61c53efb549e5e72::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit69a0c53551ee5f4e61c53efb549e5e72::$prefixesPsr0;
             $loader->classMap = ComposerStaticInit69a0c53551ee5f4e61c53efb549e5e72::$classMap;
 
         }, null, ClassLoader::class);

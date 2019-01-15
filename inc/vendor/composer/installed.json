@@ -41,17 +41,17 @@
     },
     {
         "name": "markbaker/complex",
-        "version": "1.4.6",
-        "version_normalized": "1.4.6.0",
+        "version": "1.4.7",
+        "version_normalized": "1.4.7.0",
         "source": {
             "type": "git",
             "url": "https://github.com/MarkBaker/PHPComplex.git",
-            "reference": "a78d82ae4e682c3809fc3023d1b0ce654f6ab12b"
+            "reference": "1ea674a8308baf547cbcbd30c5fcd6d301b7c000"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/MarkBaker/PHPComplex/zipball/a78d82ae4e682c3809fc3023d1b0ce654f6ab12b",
-            "reference": "a78d82ae4e682c3809fc3023d1b0ce654f6ab12b",
+            "url": "https://api.github.com/repos/MarkBaker/PHPComplex/zipball/1ea674a8308baf547cbcbd30c5fcd6d301b7c000",
+            "reference": "1ea674a8308baf547cbcbd30c5fcd6d301b7c000",
             "shasum": ""
         },
         "require": {
@@ -67,7 +67,7 @@
             "sebastian/phpcpd": "2.*",
             "squizlabs/php_codesniffer": "^3.3.0"
         },
-        "time": "2018-07-31T08:38:40+00:00",
+        "time": "2018-10-13T23:28:42+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {
@@ -217,6 +217,57 @@
         ]
     },
     {
+        "name": "openlss/lib-array2xml",
+        "version": "0.5.1",
+        "version_normalized": "0.5.1.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/nullivex/lib-array2xml.git",
+            "reference": "c8b5998a342d7861f2e921403f44e0a2f3ef2be0"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/nullivex/lib-array2xml/zipball/c8b5998a342d7861f2e921403f44e0a2f3ef2be0",
+            "reference": "c8b5998a342d7861f2e921403f44e0a2f3ef2be0",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.3.2"
+        },
+        "time": "2016-11-10T19:10:18+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-0": {
+                "LSS": ""
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "Apache-2.0"
+        ],
+        "authors": [
+            {
+                "name": "Bryan Tong",
+                "email": "contact@nullivex.com",
+                "homepage": "http://bryantong.com"
+            },
+            {
+                "name": "Tony Butler",
+                "email": "spudz76@gmail.com",
+                "homepage": "http://openlss.org"
+            }
+        ],
+        "description": "Array2XML conversion library credit to lalit.org",
+        "homepage": "http://openlss.org",
+        "keywords": [
+            "array",
+            "array conversion",
+            "xml",
+            "xml conversion"
+        ]
+    },
+    {
         "name": "pacificsec/cpe",
         "version": "1.0.1",
         "version_normalized": "1.0.1.0",
@@ -263,17 +314,17 @@
     },
     {
         "name": "phpoffice/phpspreadsheet",
-        "version": "1.4.0",
-        "version_normalized": "1.4.0.0",
+        "version": "1.4.1",
+        "version_normalized": "1.4.1.0",
         "source": {
             "type": "git",
             "url": "https://github.com/PHPOffice/PhpSpreadsheet.git",
-            "reference": "125f462a718956f37d81305ca0df4f17cef0f3b9"
+            "reference": "57404f43742a8164b5eac3ab03b962d8740885c1"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/PHPOffice/PhpSpreadsheet/zipball/125f462a718956f37d81305ca0df4f17cef0f3b9",
-            "reference": "125f462a718956f37d81305ca0df4f17cef0f3b9",
+            "url": "https://api.github.com/repos/PHPOffice/PhpSpreadsheet/zipball/57404f43742a8164b5eac3ab03b962d8740885c1",
+            "reference": "57404f43742a8164b5eac3ab03b962d8740885c1",
             "shasum": ""
         },
         "require": {
@@ -306,9 +357,9 @@
             "dompdf/dompdf": "Option for rendering PDF with PDF Writer",
             "jpgraph/jpgraph": "Option for rendering charts, or including charts with PDF or HTML Writers",
             "mpdf/mpdf": "Option for rendering PDF with PDF Writer",
-            "tecnick.com/tcpdf": "Option for rendering PDF with PDF Writer"
+            "tecnickcom/tcpdf": "Option for rendering PDF with PDF Writer"
         },
-        "time": "2018-08-06T02:58:06+00:00",
+        "time": "2018-09-30T03:57:24+00:00",
         "type": "library",
         "installation-source": "source",
         "autoload": {
@@ -451,23 +502,23 @@
     },
     {
         "name": "tecnickcom/tcpdf",
-        "version": "6.2.22",
-        "version_normalized": "6.2.22.0",
+        "version": "6.2.26",
+        "version_normalized": "6.2.26.0",
         "source": {
             "type": "git",
             "url": "https://github.com/tecnickcom/TCPDF.git",
-            "reference": "ac6e92fccc7d9383dfd787056831349621b1aca2"
+            "reference": "367241059ca166e3a76490f4448c284e0a161f15"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/ac6e92fccc7d9383dfd787056831349621b1aca2",
-            "reference": "ac6e92fccc7d9383dfd787056831349621b1aca2",
+            "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/367241059ca166e3a76490f4448c284e0a161f15",
+            "reference": "367241059ca166e3a76490f4448c284e0a161f15",
             "shasum": ""
         },
         "require": {
             "php": ">=5.3.0"
         },
-        "time": "2018-09-14T15:26:29+00:00",
+        "time": "2018-10-16T17:24:05+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {

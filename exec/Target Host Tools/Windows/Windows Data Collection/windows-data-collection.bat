@@ -112,10 +112,10 @@ echo     -- wmic /output:hotfixes.txt qfe list | tee.cmd %SUMMARYFILE%
 wmic qfe list > %OUTDIR%\hotfixes.txt
 echo.
 
-echo   * 2.021, Software Certificate Installation Files | tee.cmd %OUTDIR%\hotfixes.txt
+echo   * 2.021, Software Certificate Installation Files | tee.cmd %OUTDIR%\certificates.txt
 echo     -- dir /s /b *.p12 *.pfs (C:\) | tee.cmd %SUMMARYFILE%
 cd C:\
-dir /s /b *.p12 *.pfs > %OUTDIR%\hotfixes.txt
+dir /s /b *.p12 *.pfs > %OUTDIR%\certificates.txt
 cd %originaldir%
 echo.
 
@@ -233,8 +233,8 @@ fciv.exe -both "%OUTFILE%" >> %CHECKSUMS%
 
 echo   * Installed Software | tee.cmd %SUMMARYFILE%
 set OUTFILE=%OUTDIR%\installed-software.csv
-echo     -- wmic product /format:csv get name,version | tee.cmd %SUMMARYFILE%
-wmic product get /format:csv name,version > %OUTFILE%
+echo     -- wmic product get name,version /format:csv | tee.cmd %SUMMARYFILE%
+wmic product get name,version /format:csv > %OUTFILE%
 
 echo   * Query the registry for values | tee.cmd  %SUMMARYFILE%
 for /F "eol=; tokens=1,2 delims=," %%i in (reg-values-to-check.txt) do (

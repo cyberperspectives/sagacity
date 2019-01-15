@@ -181,10 +181,8 @@ class mssql_parser extends scan_xml_parser {
     // check for finding
     $finding = $this->db->get_Finding($this->tgt, $this->stig);
     if (is_array($finding) && count($finding)) {
+        /** @var finding $finding */
       $finding = $finding[0];
-      if (false) {
-        $finding = new finding();
-      }
 
       $finding->prepend_Notes("(MSSQL) " . $this->notes);
       if ($finding->get_Finding_Status_String() != "Not Reviewed" && $finding->get_Finding_Status_String() != $this->status) {
@@ -199,7 +197,7 @@ class mssql_parser extends scan_xml_parser {
       $this->updated_findings[$finding->get_PDI_ID()] = $finding;
     }
     else {
-      $finding = new finding(null, $this->tgt->get_ID(), $this->stig->get_PDI_ID(), $this->scan->get - ID(), $this->status, $this->notes, finding::NC, "MSSQL", 1);
+      $finding = new finding($this->tgt->get_ID(), $this->stig->get_PDI_ID(), $this->scan->get - ID(), $this->status, $this->notes, finding::NC, "MSSQL", 1);
 
       $this->new_findings[$this->stig->get_PDI_ID()] = $finding;
     }

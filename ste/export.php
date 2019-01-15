@@ -29,6 +29,7 @@
  *      fixed invalid function call to stringFromColumnIndex as it was moved to a different class and changed to 1-based instead of 0-based,
  *      syntax updates, updated PDF writer to Tcpdf class, added die if constant ECHECKLIST_FORMAT is not set as expected
  *  - Jan 15, 2018 - Formatting, updated use statements, not seeing behavior explained in #373
+ *  - Nov 8, 2018 - Minor change to OS listing and added add_cell_comment method to migrate scanner notes to a comment instead of the main note (separating the scanner and anaylst comments)
  */
 include_once 'config.inc';
 include_once 'database.inc';
@@ -43,8 +44,11 @@ use PhpOffice\PhpSpreadsheet\Writer\Ods;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use PhpOffice\PhpSpreadsheet\Writer\Html;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Worksheet;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
+
+global $conditions, $validation, $borders;
 
 set_time_limit(0);
 $db = new db();
@@ -137,7 +141,6 @@ $host_status = array(
 foreach ($findings as $worksheet_name => $data) {
   $log->debug("Looping through worksheet $worksheet_name");
   $chk_arr = [];
-  $named_range = '';
 
   // Build the "Checklist" cell string with titles of all checklists on this worksheet
   foreach ($data['checklists'] as $key => $chk_id) {
@@ -263,7 +266,7 @@ foreach ($findings as $worksheet_name => $data) {
     $row++;
   }
 
-  $sheet->setDataValidation("{$col}11:{$col}{$row}", clone $validation['host_status']);
+  $sheet->setDataValidation("F11:{$last_tgt_col}{$row}", clone $validation['host_status']);
   $log->debug("Set data validation for target $host_name");
 
   $log->debug("Completed STIG parsing");
@@ -296,6 +299,7 @@ foreach ($findings as $worksheet_name => $data) {
       ->applyFromArray($borders);
   $sheet->freezePane("A11");
   $sheet->setAutoFilter("A10:{$sheet->getHighestDataColumn()}10");
+  $sheet->protectCellsByColumnAndRow(1, 11, 5, $sheet->getHighestDataRow(), "sagacity");
 
   updateHostHeader($sheet, $data['target_list'], $db);
 
@@ -354,7 +358,7 @@ $log->debug("Writing complete");
 /**
  * Update the header on the worksheet
  *
- * @param \PhpOffice\PhpSpreadsheet\Worksheet $sheet
+ * @param Worksheet $sheet
  * @param array:integer $tgts
  * @param db $db
  */
@@ -375,9 +379,10 @@ function updateHostHeader($sheet, $tgts, &$db) {
   foreach ($tgts as $tgt_name => $col_id) {
     $log->notice("tgt_name: $tgt_name\tcol_id: $col_id");
     $tgt = $db->get_Target_Details($ste_id, $tgt_name)[0];
+    /** @var software $os */
     $os = $db->get_Software($tgt->get_OS_ID())[0];
 
-    $oses[] = "{$os->man} {$os->name} {$os->ver}";
+    $oses[] = $os->get_SW_String();
     $host_names[] = $tgt->get_Name();
 
     if (is_array($tgt->interfaces) && count($tgt->interfaces)) {
@@ -502,4 +507,28 @@ function deduplicateString($str)
     $ret = html_entity_decode(implode("\r", $ret));
 
     return $ret;
+}
+
+/**
+ * Method to add a comment to a particular cell
+ *
+ * @param PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet
+ * @param string $cell
+ * @param string $note
+ */
+function add_cell_comment(&$sheet, $cell, $note)
+{
+    $sheet->getActiveSheet()
+        ->getComment($cell)
+        ->setAuthor(CREATOR);
+    $commentRichText = $sheet->getActiveSheet()
+        ->getComment($cell)
+        ->getText()->createTextRun('Scanner Notes:');
+    $commentRichText->getFont()->setBold(true);
+    $sheet->getActiveSheet()
+        ->getComment($cell)
+        ->getText()->createTextRun("\r\n");
+    $sheet->getActiveSheet()
+        ->getComment($cell)
+        ->getText()->createTextRun($note);
 }

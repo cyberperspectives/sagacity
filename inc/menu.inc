@@ -33,116 +33,117 @@ $report = '';
 $script_name = filter_input(INPUT_SERVER, 'SCRIPT_NAME', FILTER_SANITIZE_STRING);
 
 if (preg_match('/ste|proc/', $script_name)) {
-  $ops = " class='active'";
-}
-elseif (preg_match('/results/', $script_name)) {
-  $results = " class='active'";
-}
-elseif (preg_match('/data/', $script_name)) {
-  $data = " class='active'";
-}
-elseif (preg_match('/report/', $script_name)) {
-  $report = " class='active'";
+    $ops = " class='active'";
+} elseif (preg_match('/results/', $script_name)) {
+    $results = " class='active'";
+} elseif (preg_match('/data/', $script_name)) {
+    $data = " class='active'";
+} elseif (preg_match('/report/', $script_name)) {
+    $report = " class='active'";
 }
 ?>
 
 <script type='text/javascript'>
-  $(function () {
+$(function () {
     window.onload = montre;
-  });
+});
 
-  function montre(id) {
+function montre(id) {
     $("dd[id^='smenu']").hide();
     if (id && typeof id == 'string') {
-      $('#' + id).show();
+		$('#' + id).show();
+        var ele = $('#' + id).parent().children('dt');
+        $('#' + id).css('left', ele.position().left + ele.width());
+        $('#' + id).css('top', ele.position().top + ele.height());
     }
-  }
+}
 </script>
 
 <style type="text/css">
-  dl, dt, dd, ul, li {
-    margin: 0;
-    padding: 0;
-    list-style-type: none;
-    z-index: 100;
-  }
-  #menu {
-    width: 25px;
-    display: table-cell;
-  }
+dl, dt, dd, ul, li {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+	z-index: 100;
+}
 
-  #menu dt {
-    cursor: pointer;
-    text-align: center;
-    font-weight: bold;
-  }
+#menu {
+	width: 25px;
+	display: table-cell;
+}
 
-  #menu dd {
-    position: fixed;
-    z-index: 100;
-    width: 10em;
-    background: #B4B2B2;
-    border: 1px solid gray;
-  }
+#menu dt {
+	cursor: pointer;
+	text-align: center;
+	font-weight: bold;
+}
 
-  #menu ul {
-    padding: 2px;
-  }
-  #menu li {
-    text-align: center;
-    font-size: 85%;
-    height: 18px;
-    line-height: 18px;
-  }
-  #menu li a, #menu dt a {
-    color: #000;
-    text-decoration: none;
-    display: block;
-  }
+#menu dd {
+	position: fixed;
+	z-index: 100;
+	width: 10em;
+	background: #B4B2B2;
+	border: 1px solid gray;
+}
 
-  #menu li a:hover {
-    text-decoration: underline;
-  }
+#menu ul {
+	padding: 2px;
+}
+
+#menu li {
+	text-align: center;
+	font-size: 85%;
+	height: 18px;
+	line-height: 18px;
+}
+
+#menu li a, #menu dt a {
+	color: #000;
+	text-decoration: none;
+	display: block;
+}
+
+#menu li a:hover {
+	text-decoration: underline;
+}
 </style>
 
 <ul id="menu-bar">
-  <li<?php print $ops; ?>><a href="javascript:void(0);">Operations</a>
-    <ul>
-      <li><a href="/ste">ST&amp;E Operations</a></li>
-      <li><a href='/ste/stats.php'>Stats</a></li>
+	<li <?php print $ops; ?>><a href="javascript:void(0);">Operations</a>
+		<ul>
+			<li><a href="/ste">ST&amp;E Operations</a></li>
+			<li><a href='/ste/stats.php'>Stats</a></li>
       <?php if (file_exists(DOC_ROOT . "/proc")) { ?>
-        <li><a href = "/proc">Procedural Operations</a></li>
+        <li><a href="/proc">Procedural Operations</a></li>
       <?php } ?>
-    </ul>
-  </li>
-  <li<?php print $results; ?>><a href="javascript:void(0);">Scans</a>
-    <ul>
-      <li><a href="/results">Results</a></li>
-      <li><a href="/results/?add_scan=1">Add Scan</a></li>
-    </ul>
-  </li>
+    </ul></li>
+	<li <?php print $results; ?>><a href="javascript:void(0);">Scans</a>
+		<ul>
+			<li><a href="/results">Results</a></li>
+			<li><a href="/results/?add_scan=1">Add Scan</a></li>
+		</ul></li>
   <?php if (file_exists(DOC_ROOT . "/report")) { ?>
-    <li<?php print $report; ?>><a href="javascript:void(0);">Report</a>
-      <ul>
-        <li><a href="/report/sanity.php?step=1">Sanity Check</a></li>
-        <li><a href="/report/create.php">Create Risk Assessment</a></li>
-      </ul>
-    </li>
+    <li <?php print $report; ?>><a href="javascript:void(0);">Report</a>
+		<ul>
+			<li><a href="/report/sanity.php?step=1">Sanity Check</a></li>
+			<li><a href="/report/create.php">Create Risk Assessment</a></li>
+		</ul></li>
   <?php } ?>
-  <li<?php print $data; ?>><a href="javascript:void(0);">Management</a>
-    <ul>
-      <li><a href="/data/?p=MSMgmt">Systems</a></li>
-      <li><a href="/data/?p=SiteMgmt">Sites</a></li>
-      <li><a href="/data/?p=STEMgmt">ST&amp;E</a></li>
-      <li><a href="/data/?p=CatMgmt">Catalog</a></li>
-      <li><a href="/data/?p=Settings">Settings</a></li>
-      <li><a href="/data/?p=Search">Search</a></li>
-      <li><a href="/data/?p=TgtSearch">Target Search</a></li>
-    </ul>
-  </li>
-  <li>
-    <form method="post" action="/data/?p=Search" target="_blank" style="display:inline-block;">
-      <input type="text" style="vertical-align:text-bottom;" name="q" placeholder="Search..." />
-    </form>
-  </li>
+  <li <?php print $data; ?>><a href="javascript:void(0);">Management</a>
+		<ul>
+			<li><a href="/data/?p=MSMgmt">Systems</a></li>
+			<li><a href="/data/?p=SiteMgmt">Sites</a></li>
+			<li><a href="/data/?p=STEMgmt">ST&amp;E</a></li>
+			<li><a href="/data/?p=CatMgmt">Catalog</a></li>
+			<li><a href="/data/?p=Settings">Settings</a></li>
+			<li><a href="/data/?p=Search">Search</a></li>
+			<li><a href="/data/?p=TgtSearch">Target Search</a></li>
+		</ul></li>
+	<li>
+		<form method="post" action="/data/?p=Search" target="_blank"
+			style="display: inline-block;">
+			<input type="text" style="vertical-align: text-bottom;" name="q"
+				placeholder="Search..." />
+		</form>
+	</li>
 </ul>

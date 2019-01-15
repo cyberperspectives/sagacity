@@ -620,6 +620,8 @@ class scan
      * @param int $tgt_id
      * @param boolean $is_error
      * @param string $err_msg
+     * 
+     * @return boolean
      */
     public function set_Host_Error($tgt_id, $is_error, $err_msg = null)
     {
@@ -628,9 +630,11 @@ class scan
             if($h->getTargetId() == $tgt_id) {
                 $this->host_list[$x]->setScanError($is_error);
                 $this->host_list[$x]->setScanNotes($err_msg);
-                break;
+                return true;
             }
         }
+        
+        return false;
     }
 
     /**

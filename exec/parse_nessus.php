@@ -1205,13 +1205,11 @@ class nessus_parser extends scan_xml_parser
             if ($this->plugin->sev == 0) {
                 return;
             }
-            if (false) {
-                $this->plugin->result = new nessus_result();
-            }
+            /** @var nessus_result $this->plugin->result */
             $finding = $this->db->get_Finding($this->tgt, $this->plugin->db_plugin);
 
-            if (is_array($finding) && count($finding) && isset($finding[0])) {
-                $finding = current($finding[0]);
+            if (is_array($finding) && count($finding)) {
+                $finding = current($finding);
             }
 
             if (is_a($finding, 'finding')) {
@@ -1228,10 +1226,8 @@ class nessus_parser extends scan_xml_parser
                 }
 
                 if (is_array($orig_scan) && count($orig_scan)) {
+                    /** @var scan $orig_scan */
                     $orig_scan = $orig_scan[0];
-                    if (false) {
-                        $orig_scan = new scan();
-                    }
 
                     $finding->set_Original_Source($orig_scan->get_Source()->get_Name());
                     $finding->set_Scan_ID($this->scan->get_ID());

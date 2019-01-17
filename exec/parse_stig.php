@@ -696,6 +696,7 @@ $db->set_Setting('stig-count', $stig_count);
 
 $end = new DateTime();
 $diff = $end->diff($start);
+$total = $new_count + $updated_count;
 
 print <<<EOO
 
@@ -705,7 +706,10 @@ Execution time: {$diff->format("%H:%I:%S")}
 
 New STIGs: $new_count
 Updated STIGs: $updated_count
-Total STIGs: ($new_count + $updated_count)
+Total STIGs: $total
+
+
+EOO;
 
 $log->script_log("$groups->length complete");
 fclose($csv);

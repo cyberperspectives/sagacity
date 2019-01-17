@@ -5,7 +5,7 @@
  * Purpose: Represents a checklist that links a PDI and software package
  * Created: Sep 12, 2013
  *
- * Portions Copyright 2017: Cyber Perspectives, All rights reserved
+ * Portions Copyright 2017-2019: CyberPerspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -406,7 +406,7 @@ class checklist
                 case (preg_match("/Dot Net|DotNet/i", $this->name) ? true : false):
                     $this->icon = 'Microsoft .NET.png';
                     break;
-                case (preg_match("/Internet Explorer/i", $this->name) ? true : false):
+                case (preg_match("/Internet Explorer|Microsoft IE/i", $this->name) ? true : false):
                     $this->icon = 'Internet Explorer.png';
                     break;
                 case (preg_match("/Windows Phone/i", $this->name) ? true : false):
@@ -452,7 +452,7 @@ class checklist
                 case (preg_match("/Red ?Hat/i", $this->name) ? true : false):
                     $this->icon = 'RedHat Linux.jpg';
                     break;
-                case (preg_match("/SUSE Linux/i", $this->name) ? true : false):
+                case (preg_match("/SUSE Linux|SLES/i", $this->name) ? true : false):
                     $this->icon = 'SUSE Linux.png';
                     break;
                 case (preg_match("/Solaris/i", $this->name) ? true : false):
@@ -460,6 +460,9 @@ class checklist
                     break;
                 case (preg_match("/Storage Area/i", $this->name) ? true : false):
                     $this->icon = 'Storage Area Network.gif';
+                    break;
+                case (preg_match("/Ubuntu/i", $this->name) ? true : false):
+                    $this->icon = 'Ubuntu.png';
                     break;
                 case (preg_match("/z\/OS/i", $this->name) ? true : false):
                     $this->icon = 'ZOS.jpg';

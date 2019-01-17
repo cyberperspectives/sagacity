@@ -595,7 +595,7 @@ class software {
 
                   if ($regex2['name_match']) {
                     foreach (explode(",", $regex2['name_match']) as $idx) {
-                      if (isset($match[$idx])) {
+                      if (isset($match[$idx]) && $match[$idx]) {
                         $sw['name'] .= " " . $match[$idx];
                       }
                     }
@@ -603,7 +603,7 @@ class software {
 
                   if ($regex2['ver_match']) {
                     foreach (explode(",", $regex2['ver_match']) as $idx) {
-                      if (isset($match[$idx])) {
+                      if (isset($match[$idx]) && $match[$idx]) {
                         $sw['ver'] .= $match[$idx] . " ";
                       }
                     }

@@ -5,7 +5,7 @@
  * Purpose: Read STIG Viewer checklist files
  * Created: Apr 10, 2014
  *
- * Portions Copyright 2016-2017: Cyber Perspectives, LLC, All rights reserved
+ * Portions Copyright 2016-2019: CyberPerspectives, LLC, All rights reserved
  * Released under the Apache v2.0 License
  *
  * Portions Copyright (c) 2012-2015, Salient Federal Solutions
@@ -74,6 +74,7 @@ $host_mac  = getValue($xml, '//HOST_MAC');
 
 if (!$host_name) {
     $db->update_Running_Scan($base_name, ['name' => 'status', 'value' => 'TERMINATED']);
+    $db->update_Running_Scan($base_name, ['name' => 'notes', 'value' => 'File parsing was terminated because <HOST_NAME> was empty or absent']);
     unset($xml);
 
     rename($cmd['f'], TMP . "/terminated/{$base_name}");

@@ -16,6 +16,7 @@
  *  - May 24, 2018 - Updated constants for 1.3.2 release
  *  - Jun 2, 2018 - Added new STIG_EXCLUSIONS constant to permanently exclude STIGs
  *  - Aug 28, 2018 - Updated constants for 1.3.3 release
+ *  - Jan 15, 2019 - Updated constants for 1.3.4 release
  */
 // @new
 /**
@@ -31,7 +32,7 @@ define('DOC_ROOT', '{DOC_ROOT}');
 define('PWD_FILE', '{PWD_FILE}');
 define('TMP', '{TMP_PATH}');
 define('VER', '1.3.4');
-define('REL_DATE', '2018-11-30');
+define('REL_DATE', '2019-01-15');
 define('LOG_LEVEL', '{E_ERROR}');
 define('LOG_PATH', '{LOG_PATH}');
 define('SALT', '{SALT}');
@@ -280,6 +281,13 @@ define('PDI_CATALOG', 'PDI_CATALOG');
  * @var string
  */
 define('ECHECKLIST_CSV', 'ECHECKLIST_CSV');
+
+/**
+ * Constant for a CSV host list
+ *
+ * @var string
+ */
+define('HOST_LIST', 'HOST_LIST');
 
 /**
  * Constant for unsupported retina CSV file format

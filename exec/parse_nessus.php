@@ -148,7 +148,8 @@ class nessus_parser extends scan_xml_parser
         "cpe:\/o:microsoft:windows_2003_server::sp([\d]).*" => "cpe:/o:microsoft:windows_2003_server:-:sp$1",
         "cpe:\/o:microsoft:windows_server_2008:r2::x64.*"   => "cpe:/o:microsoft:windows_server_2008:r2",
         "cpe:\/o:redhat:enterprise_linux:([\d]+)::.*"       => "cpe:/o:redhat:enterprise_linux:$1",
-        "cpe:\/o:sun:sunos:([\d]+)::x([\d]+).*"             => "cpe:/o:oracle:solaris:$1",
+        "cpe:\/o:sun:sunos:([\d]+)::.*"             		=> "cpe:/o:oracle:solaris:$1",
+		"cpe:\/o:vmware:esx_server.*" 						=> "cpe:/o:vmware:esxi:5.0",
         "cpe:\/o:centos:centos:([\d]+).*"                   => "cpe:/o:centos:centos:$1",
     ];
 

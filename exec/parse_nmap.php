@@ -94,7 +94,13 @@ foreach ($lines as $line_num => $line) {
     $line = trim($line, "\t\n\r"); # chomp would be nice...
     $matches = [];
     if (!isset($filetype)) {
-        if (preg_match('/Starting|\-oN/', $line)) {
+        if (preg_match('/\.nmap/', $cmd['f'])) {
+            $filetype = "text";
+        }
+        elseif (preg_match('/\.gnmap/', $cmd['f'])) {
+            $filetype = "grep";
+        }
+        elseif (preg_match('/Starting|\-oN/', $line)) {
             $filetype = "text";
         }
         elseif (preg_match('/\-oG/', $line)) {

@@ -22,6 +22,7 @@
  *  - Nov 7, 2016 - Added d parameter documentation
  *  - Dec 7, 2016 - Added check for "Interesting ports on {IP}" line
  *  - Jan 30, 2017 - Updated to use parse_config.ini file, and added populating new targets with shortened os software string if available.
+ *  - Jan 21, 2019 - fixed filetype check for .nmap and .gnmap files.
  */
 $cmd = getopt("f:", ['debug::', 'help::']);
 
@@ -94,7 +95,13 @@ foreach ($lines as $line_num => $line) {
     $line = trim($line, "\t\n\r"); # chomp would be nice...
     $matches = [];
     if (!isset($filetype)) {
-        if (preg_match('/Starting|\-oN/', $line)) {
+        if (preg_match('/\.nmap/', $cmd['f'])) {
+			$filetype = "text";
+		}
+		elseif (preg_match('/\.gnmap/', $cmd['f'])) {
+            $filetype = "grep";
+        }
+		elseif (preg_match('/Starting|\-oN/', $line)) {
             $filetype = "text";
         }
         elseif (preg_match('/\-oG/', $line)) {

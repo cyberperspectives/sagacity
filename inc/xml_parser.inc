@@ -388,6 +388,8 @@ class scan_xml_parser
 
         $this->fh = fopen($this->file, "r");
         while ($data     = fread($this->fh, 4096)) {
+            $data = preg_replace("/\<[^\/]+\/[^\>]+\>[^\n]+\n/", "", $data);
+            
             try {
                 if (!xml_parse($this->parser, $data, feof($this->fh)) && !xml_get_error_code($this->parser)) {
                     $this->log->script_log(xml_error_string(xml_get_error_code($this->parser)), E_ERROR);
@@ -580,6 +582,8 @@ class basic_xml_parser
     {
         $fh   = fopen($this->file, "r");
         while ($data = fread($fh, 4096)) {
+            $data = preg_replace("\<[^\/]+\/[^\>]+\>[^\n]+\n", "", $data);
+            
             if (!xml_parse($this->parser, $data, feof($fh)) && !xml_get_error_code($this->parser)) {
                 print_r($this->stack);
                 $this->log->script_log(xml_error_string(xml_get_error_code($this->parser)), E_WARNING);

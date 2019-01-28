@@ -472,6 +472,11 @@ class scan_xml_parser
     }
 }
 
+/**
+ * XML Stream Parser class
+ * 
+ * @author Ryan Prather
+ */
 class basic_xml_parser
 {
 
@@ -491,6 +496,12 @@ class basic_xml_parser
     var $skip        = false;
     var $previous    = null;
 
+    /**
+     * Constructor
+     * 
+     * @param mixed $obj_in
+     * @param string $xml_fname
+     */
     function __construct($obj_in, $xml_fname)
     {
         $this->parser = xml_parser_create();
@@ -511,11 +522,13 @@ class basic_xml_parser
         $this->last_time   = microtime(true);
     }
 
-    function __destruct()
-    {
-
-    }
-
+    /**
+     * Method called when parsing the opening element
+     * 
+     * @param mixed $parser
+     * @param string $name
+     * @param array $attrs
+     */
     function startElement($parser, $name, $attrs)
     {
         $this->stack[] = str_replace("-", "_", str_replace(":", "_", $name));
@@ -541,6 +554,12 @@ class basic_xml_parser
         }
     }
 
+    /**
+     * Method called when parsing the ending element
+     * 
+     * @param mixed $parser
+     * @param string $name
+     */
     function stopElement($parser, $name)
     {
         if (method_exists($this->obj, implode("_", $this->stack) . "_end")) {
@@ -561,6 +580,12 @@ class basic_xml_parser
         array_pop($this->stack);
     }
 
+    /**
+     * Method to parse the element contents
+     * 
+     * @param mixed $parser
+     * @param string $data
+     */
     function characterData($parser, $data)
     {
         if (method_exists($this->obj, implode("_", $this->stack) . "_data") && !$this->skip) {
@@ -578,11 +603,14 @@ class basic_xml_parser
         }
     }
 
+    /**
+     * Method to start reading the file and parsing it
+     */
     function parse()
     {
         $fh   = fopen($this->file, "r");
         while ($data = fread($fh, 4096)) {
-            $data = preg_replace("\<[^\/]+\/[^\>]+\>[^\n]+\n", "", $data);
+            $data = preg_replace("/\<[^\/]+\/[^\>]+\>[^\n]+\n/", "", $data);
             
             if (!xml_parse($this->parser, $data, feof($fh)) && !xml_get_error_code($this->parser)) {
                 print_r($this->stack);
@@ -593,6 +621,12 @@ class basic_xml_parser
         xml_parser_free($this->parser);
     }
 
+    /**
+     * Method to output a log entry if the difference between previous call and current is more than 3 seconds
+     * 
+     * @param string $msg
+     * @param string $function
+     */
     function time_log_diff($msg, $function = null)
     {
         if (is_null($function)) {

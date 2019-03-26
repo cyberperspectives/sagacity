@@ -33,11 +33,15 @@ _Keen insight. Sound judgment. Wise decisions. Sagacity._
 
 ### Software Requirements
 Sagacity has the following software requirements. The versions listed are the minimum required for operation. For PHP, we recommend the closest version you can get to the one listed, further versions may deprecate features before we have the chance to update the code.
+
+*Please note:  Sagacity is not fully compatible with XAMPP 7.3.x or PHP 7.3.  Please use XAMPP 7.2 / PHP 7.2 instead.*
+
 - PHP 7.2
 - MySQL 5.7+ or MariaDB 10+
 - Apache 2.4+
 
 For Windows, you can install XAMPP 7.2.x from https://www.apachefriends.org/download.html
+
 
 ## Installation
 

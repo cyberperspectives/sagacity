@@ -90,7 +90,7 @@ if ($tgt_count = count($tgts)) {
     print "Target: {$tgt->get_Name()}" . PHP_EOL;
 
     foreach ($tgt->checklists as $key => $chk) {
-      if ($chk->name == 'Orphan' || $chk->type != 'manual') {
+      if ($chk->name == 'Orphan' || $chk->type == 'benchmark') {
         unset($tgt->checklists[$key]);
       }
     }
